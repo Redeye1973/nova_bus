@@ -1,0 +1,21 @@
+{
+  "agent_number": 17,
+  "name": "error_handler",
+  "status": "active",
+  "built_at": "2026-04-19T19:48:54.480Z",
+  "deployed_at": "2026-04-19T19:48:54.480Z",
+  "workflow_id": "SWQEhqMpwd6ouatV",
+  "webhook_url": "http://178.104.207.194:5680/webhook/error-handler",
+  "webhook_test_payload": {
+    "action": "report",
+    "payload": {
+      "service": "ollama_client",
+      "message": "ConnectionError to ollama on 11434"
+    }
+  },
+  "endpoints": ["/health", "/error/report", "/error/resolve", "/repair/history", "/invoke"],
+  "tests_passed": true,
+  "tests_note": "pytest 5/5 local; E2E webhook classified ollama_connection_refused with retry plan",
+  "fallback_mode": false,
+  "notes": "POC: pattern-library classification (patterns.yaml, 9 rules); in-memory ledger and exponential backoff. No Postgres/Telegram in this POC."
+}
