@@ -1,0 +1,15 @@
+{
+  "agent_number": 11,
+  "name": "monitor",
+  "status": "active",
+  "built_at": "2026-04-19T19:48:54.480Z",
+  "deployed_at": "2026-04-19T19:48:54.480Z",
+  "workflow_id": "1QNapcDCCL7ji6Ho",
+  "webhook_url": "http://178.104.207.194:5680/webhook/monitor",
+  "webhook_test_payload": { "action": "sweep" },
+  "endpoints": ["/health", "/status", "/alerts", "/metrics", "/invoke"],
+  "tests_passed": true,
+  "tests_note": "pytest 4/4 local; E2E webhook sweep returned 32 targets up",
+  "fallback_mode": false,
+  "notes": "Monitor scans 31 sister agents + sprite-jury via internal Compose network; in-memory alerts + Prometheus /metrics. No Postgres/Telegram in this POC."
+}
