@@ -1,0 +1,13 @@
+{
+  "agent_number": "02",
+  "name": "code_jury",
+  "status": "active",
+  "built_at": "2026-04-19T18:54:55.0936436Z",
+  "deployed_at": "2026-04-19T18:54:55.0936436Z",
+  "workflow_id": "13R8iKygfgy0afcb",
+  "webhook_url": "http://178.104.207.194:5680/webhook/code-review",
+  "tests_passed": true,
+  "tests_note": "pytest 6/6 local; E2E webhook python+gdscript verdict+average_score",
+  "fallback_mode": true,
+  "notes": "GDScript: heuristic syntax (no Godot binary); Python: ast/radon/pycodestyle/bandit"
+}
