@@ -181,6 +181,23 @@ services:
       timeout: 10s
       retries: 3
 
+  # Agent 02 — Code Jury (Python/GDScript review POC; internal only)
+  agent-02-code-jury:
+    build:
+      context: ./services/agent_02_code_jury
+    image: nova-v2-agent-02-code-jury:poc
+    container_name: nova-v2-agent-02
+    restart: unless-stopped
+    expose:
+      - "8102"
+    networks:
+      - nova-v2-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8102/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   minio-v2:
     image: minio/minio:latest
     container_name: nova-v2-minio

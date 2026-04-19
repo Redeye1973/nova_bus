@@ -1,0 +1,55 @@
+{
+  "name": "Agent 02 Code Jury",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "code-review",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wbh_code_jury",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "code-review"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-02-code-jury:8102/review",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ language: $json.body.language, code: $json.body.code, base64_encoded: $json.body.base64_encoded ?? false }) }}",
+        "options": {}
+      },
+      "id": "http_code_review",
+      "name": "Call Code Jury",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "rsp_code_jury",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Call Code Jury", "type": "main", "index": 0}]]
+    },
+    "Call Code Jury": {
+      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}
