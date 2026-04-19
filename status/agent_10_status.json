@@ -4,9 +4,9 @@
   "status": "active",
   "built_at": "2026-04-19T19:35:00.0000000Z",
   "deployed_at": "2026-04-19T19:35:00.0000000Z",
-  "workflow_id": "pending_bulk_import",
+  "workflow_id": "AlBQM6gP3d68Iik3",
   "webhook_url": "http://178.104.207.194:5680/webhook/balance-review",
   "tests_passed": true,
   "fallback_mode": true,
-  "notes": "Full POC jury (stats/economy/difficulty); run scripts/bulk_import_n8n_workflows.ps1 for workflow id"
+  "notes": "Deployed Hetzner; webhook E2E OK. Bulk stubs: run scripts/bulk_import_n8n_workflows.ps1 then docker compose build for remaining services."
 }
