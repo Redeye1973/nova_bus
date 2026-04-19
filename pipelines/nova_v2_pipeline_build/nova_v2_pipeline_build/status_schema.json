@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nova-v2.local/schemas/status_schema.json",
+  "title": "NOVA v2 Agent Status",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "agent_number",
+    "name",
+    "status",
+    "fallback_mode",
+    "webhook_url",
+    "built_at",
+    "tests_passed"
+  ],
+  "properties": {
+    "agent_number": {
+      "description": "Agent identifier (integer preferred; string digits accepted for legacy files).",
+      "oneOf": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "string", "pattern": "^[0-9]+$" }
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fallback_mode": {
+      "type": "boolean"
+    },
+    "webhook_url": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Full n8n (or other) webhook URL for E2E checks."
+    },
+    "built_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO 8601 timestamp when the agent artefact was built."
+    },
+    "tests_passed": {
+      "type": "boolean"
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "Optional n8n workflow id (e.g. n8n UI id)."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "dependencies": {
+      "description": "Optional list of upstream agents or external deps.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "webhook_test_payload": {
+      "description": "Optional JSON object POSTed to webhook_url during validation (default: {}).",
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
