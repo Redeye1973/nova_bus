@@ -1,0 +1,12 @@
+secrets/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.local
+.idea/
+.vscode/
+Thumbs.db
+Renders/
+*.mp4

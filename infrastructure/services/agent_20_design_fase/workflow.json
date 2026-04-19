@@ -1,0 +1,55 @@
+{
+  "name": "Agent 20 Design Fase",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "design-fase",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wbh_design_fase",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "design-fase"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-20-design-fase:8120/palette/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ theme: $json.body.theme, faction_count: $json.body.faction_count ?? 6, restrictions: $json.body.restrictions ?? {} }) }}",
+        "options": {}
+      },
+      "id": "http_palette_create",
+      "name": "Call Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "rsp_design_fase",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Call Agent", "type": "main", "index": 0}]]
+    },
+    "Call Agent": {
+      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}
