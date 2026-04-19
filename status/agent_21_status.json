@@ -1,0 +1,23 @@
+{
+  "agent_number": 21,
+  "name": "freecad_parametric",
+  "status": "active",
+  "built_at": "2026-04-19T19:48:54.480Z",
+  "deployed_at": "2026-04-19T19:48:54.480Z",
+  "workflow_id": "IZ6cFzgA8NCprt5H",
+  "webhook_url": "http://178.104.207.194:5680/webhook/freecad-parametric",
+  "webhook_test_payload": {
+    "action": "generate",
+    "payload": {
+      "base_model": { "category": "fighter" },
+      "parameter_matrix": { "length": [8.0, 12.0, 16.0] }
+    }
+  },
+  "endpoints": ["/health", "/model/build-base", "/variants/generate", "/components/assemble", "/invoke"],
+  "tests_passed": true,
+  "tests_note": "pytest 5/5 local; E2E webhook generate -> 3/3 variants accepted (capsule)",
+  "fallback_mode": true,
+  "fallback_reason": "freecad_not_installed",
+  "engine": "trimesh",
+  "notes": "FreeCAD is not present on the Hetzner host or in container; parametric generation is implemented on top of trimesh primitives (box/cylinder/capsule/sphere). STEP export is unavailable in this fallback path; STL + GLB are produced. Three jury checks (robustness, dimensional, export_quality) plus aggregate verdict are computed in-process."
+}
