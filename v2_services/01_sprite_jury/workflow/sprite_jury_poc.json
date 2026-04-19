@@ -1,0 +1,55 @@
+{
+  "name": "NOVA v2 — Sprite Jury POC",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sprite-review-poc",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wbh_sprite_poc",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "sprite-review-poc"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://sprite-jury-v2:8101/v1/verdict",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"pixel_integrity\": 8, \"jury_scores\": [8, 8, 8]}",
+        "options": {}
+      },
+      "id": "http_verdict_poc",
+      "name": "Verdict HTTP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "rsp_webhook_poc",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Verdict HTTP", "type": "main", "index": 0}]]
+    },
+    "Verdict HTTP": {
+      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {"executionOrder": "v1"}
+}

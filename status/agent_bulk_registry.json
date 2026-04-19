@@ -1,0 +1,9 @@
+{
+  "generated": "2026-04-19",
+  "mode": "poc_bulk_stubs_plus_agent10",
+  "full_implementations": ["01_sprite_jury (pre-existing)", "02_code_jury", "20_design_fase", "10_game_balance_jury"],
+  "stub_count": 29,
+  "note": "Stub agents expose POST /invoke and GET /health until upgraded per individual prompt spec.",
+  "integration_prompts": [33, 34, 35, 36],
+  "compose_fragment": "infrastructure/compose_bulk_agents.fragment.yml"
+}

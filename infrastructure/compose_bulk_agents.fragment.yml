@@ -1,0 +1,479 @@
+agent-10-game-balance-jury:
+  build:
+    context: ./services/agent_10_game_balance_jury
+  image: nova-v2-agent-10-game-balance-jury:poc
+  container_name: nova-v2-agent-10-game-balance-jury
+  restart: unless-stopped
+  expose:
+    - "8110"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8110/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-21-freecad-parametric:
+  build:
+    context: ./services/agent_21_freecad_parametric
+  image: nova-v2-agent-21-freecad-parametric:poc
+  container_name: nova-v2-agent-21-freecad-parametric
+  restart: unless-stopped
+  expose:
+    - "8121"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8121/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-22-blender-renderer:
+  build:
+    context: ./services/agent_22_blender_renderer
+  image: nova-v2-agent-22-blender-renderer:poc
+  container_name: nova-v2-agent-22-blender-renderer
+  restart: unless-stopped
+  expose:
+    - "8122"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8122/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-23-aseprite-processor:
+  build:
+    context: ./services/agent_23_aseprite_processor
+  image: nova-v2-agent-23-aseprite-processor:poc
+  container_name: nova-v2-agent-23-aseprite-processor
+  restart: unless-stopped
+  expose:
+    - "8123"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8123/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-25-pyqt-assembly:
+  build:
+    context: ./services/agent_25_pyqt_assembly
+  image: nova-v2-agent-25-pyqt-assembly:poc
+  container_name: nova-v2-agent-25-pyqt-assembly
+  restart: unless-stopped
+  expose:
+    - "8125"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8125/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-26-godot-import:
+  build:
+    context: ./services/agent_26_godot_import
+  image: nova-v2-agent-26-godot-import:poc
+  container_name: nova-v2-agent-26-godot-import
+  restart: unless-stopped
+  expose:
+    - "8126"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8126/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-11-monitor:
+  build:
+    context: ./services/agent_11_monitor
+  image: nova-v2-agent-11-monitor:poc
+  container_name: nova-v2-agent-11-monitor
+  restart: unless-stopped
+  expose:
+    - "8111"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8111/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-17-error-handler:
+  build:
+    context: ./services/agent_17_error_handler
+  image: nova-v2-agent-17-error-handler:poc
+  container_name: nova-v2-agent-17-error-handler
+  restart: unless-stopped
+  expose:
+    - "8117"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8117/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-07-narrative-jury:
+  build:
+    context: ./services/agent_07_narrative_jury
+  image: nova-v2-agent-07-narrative-jury:poc
+  container_name: nova-v2-agent-07-narrative-jury
+  restart: unless-stopped
+  expose:
+    - "8107"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8107/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-28-story-integration:
+  build:
+    context: ./services/agent_28_story_integration
+  image: nova-v2-agent-28-story-integration:poc
+  container_name: nova-v2-agent-28-story-integration
+  restart: unless-stopped
+  expose:
+    - "8128"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8128/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-13-pdok-downloader:
+  build:
+    context: ./services/agent_13_pdok_downloader
+  image: nova-v2-agent-13-pdok-downloader:poc
+  container_name: nova-v2-agent-13-pdok-downloader
+  restart: unless-stopped
+  expose:
+    - "8113"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8113/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-15-qgis-processor:
+  build:
+    context: ./services/agent_15_qgis_processor
+  image: nova-v2-agent-15-qgis-processor:poc
+  container_name: nova-v2-agent-15-qgis-processor
+  restart: unless-stopped
+  expose:
+    - "8115"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8115/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-14-blender-baker:
+  build:
+    context: ./services/agent_14_blender_baker
+  image: nova-v2-agent-14-blender-baker:poc
+  container_name: nova-v2-agent-14-blender-baker
+  restart: unless-stopped
+  expose:
+    - "8114"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8114/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-05-gis-jury:
+  build:
+    context: ./services/agent_05_gis_jury
+  image: nova-v2-agent-05-gis-jury:poc
+  container_name: nova-v2-agent-05-gis-jury
+  restart: unless-stopped
+  expose:
+    - "8105"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8105/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-24-aseprite-anim-jury:
+  build:
+    context: ./services/agent_24_aseprite_anim_jury
+  image: nova-v2-agent-24-aseprite-anim-jury:poc
+  container_name: nova-v2-agent-24-aseprite-anim-jury
+  restart: unless-stopped
+  expose:
+    - "8124"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8124/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-29-elevenlabs:
+  build:
+    context: ./services/agent_29_elevenlabs
+  image: nova-v2-agent-29-elevenlabs:poc
+  container_name: nova-v2-agent-29-elevenlabs
+  restart: unless-stopped
+  expose:
+    - "8129"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8129/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-03-audio-jury:
+  build:
+    context: ./services/agent_03_audio_jury
+  image: nova-v2-agent-03-audio-jury:poc
+  container_name: nova-v2-agent-03-audio-jury
+  restart: unless-stopped
+  expose:
+    - "8103"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8103/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-30-audio-asset-jury:
+  build:
+    context: ./services/agent_30_audio_asset_jury
+  image: nova-v2-agent-30-audio-asset-jury:poc
+  container_name: nova-v2-agent-30-audio-asset-jury
+  restart: unless-stopped
+  expose:
+    - "8130"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8130/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-18-prompt-director:
+  build:
+    context: ./services/agent_18_prompt_director
+  image: nova-v2-agent-18-prompt-director:poc
+  container_name: nova-v2-agent-18-prompt-director
+  restart: unless-stopped
+  expose:
+    - "8118"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8118/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-16-cost-guard:
+  build:
+    context: ./services/agent_16_cost_guard
+  image: nova-v2-agent-16-cost-guard:poc
+  container_name: nova-v2-agent-16-cost-guard
+  restart: unless-stopped
+  expose:
+    - "8116"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8116/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-27-storyboard:
+  build:
+    context: ./services/agent_27_storyboard
+  image: nova-v2-agent-27-storyboard:poc
+  container_name: nova-v2-agent-27-storyboard
+  restart: unless-stopped
+  expose:
+    - "8127"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8127/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-08-character-art-jury:
+  build:
+    context: ./services/agent_08_character_art_jury
+  image: nova-v2-agent-08-character-art-jury:poc
+  container_name: nova-v2-agent-08-character-art-jury
+  restart: unless-stopped
+  expose:
+    - "8108"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8108/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-31-qgis-analysis:
+  build:
+    context: ./services/agent_31_qgis_analysis
+  image: nova-v2-agent-31-qgis-analysis:poc
+  container_name: nova-v2-agent-31-qgis-analysis
+  restart: unless-stopped
+  expose:
+    - "8131"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8131/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-32-grass-gis:
+  build:
+    context: ./services/agent_32_grass_gis
+  image: nova-v2-agent-32-grass-gis:poc
+  container_name: nova-v2-agent-32-grass-gis
+  restart: unless-stopped
+  expose:
+    - "8132"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8132/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-35-raster-2d:
+  build:
+    context: ./services/agent_35_raster_2d
+  image: nova-v2-agent-35-raster-2d:poc
+  container_name: nova-v2-agent-35-raster-2d
+  restart: unless-stopped
+  expose:
+    - "8135"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8135/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-09-illustration-jury:
+  build:
+    context: ./services/agent_09_illustration_jury
+  image: nova-v2-agent-09-illustration-jury:poc
+  container_name: nova-v2-agent-09-illustration-jury
+  restart: unless-stopped
+  expose:
+    - "8109"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8109/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-12-bake-orchestrator:
+  build:
+    context: ./services/agent_12_bake_orchestrator
+  image: nova-v2-agent-12-bake-orchestrator:poc
+  container_name: nova-v2-agent-12-bake-orchestrator
+  restart: unless-stopped
+  expose:
+    - "8112"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8112/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-04-3d-model-jury:
+  build:
+    context: ./services/agent_04_3d_model_jury
+  image: nova-v2-agent-04-3d-model-jury:poc
+  container_name: nova-v2-agent-04-3d-model-jury
+  restart: unless-stopped
+  expose:
+    - "8104"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8104/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-06-cad-jury:
+  build:
+    context: ./services/agent_06_cad_jury
+  image: nova-v2-agent-06-cad-jury:poc
+  container_name: nova-v2-agent-06-cad-jury
+  restart: unless-stopped
+  expose:
+    - "8106"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8106/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
+
+agent-19-distribution:
+  build:
+    context: ./services/agent_19_distribution
+  image: nova-v2-agent-19-distribution:poc
+  container_name: nova-v2-agent-19-distribution
+  restart: unless-stopped
+  expose:
+    - "8119"
+  networks:
+    - nova-v2-network
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8119/health')"]
+    interval: 60s
+    timeout: 15s
+    retries: 3
