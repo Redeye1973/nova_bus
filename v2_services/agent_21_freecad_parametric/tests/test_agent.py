@@ -16,8 +16,10 @@ def test_health():
     assert r.status_code == 200
     body = r.json()
     assert body["agent"] == "21_freecad_parametric"
+    # Without HOST_BRIDGE_URL set the agent must fall back to trimesh.
+    assert body["bridge"]["configured"] is False
     assert body["fallback_mode"] is True
-    assert body["fallback_reason"] == "freecad_not_installed"
+    assert body["engine"] == "trimesh"
 
 
 def test_build_base_fighter():

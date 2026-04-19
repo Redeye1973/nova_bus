@@ -3,21 +3,28 @@
   "name": "freecad_parametric",
   "status": "active",
   "built_at": "2026-04-19T19:48:54.480Z",
-  "deployed_at": "2026-04-19T19:48:54.480Z",
+  "deployed_at": "2026-04-19T20:21:00.000Z",
   "workflow_id": "IZ6cFzgA8NCprt5H",
   "webhook_url": "http://178.104.207.194:5680/webhook/freecad-parametric",
   "webhook_test_payload": {
-    "action": "generate",
+    "action": "build_base",
     "payload": {
-      "base_model": { "category": "fighter" },
-      "parameter_matrix": { "length": [8.0, 12.0, 16.0] }
+      "category": "vehicle",
+      "dimensions": { "length": 4.5, "width": 1.8, "height": 1.6 }
     }
   },
   "endpoints": ["/health", "/model/build-base", "/variants/generate", "/components/assemble", "/invoke"],
   "tests_passed": true,
-  "tests_note": "pytest 5/5 local; E2E webhook generate -> 3/3 variants accepted (capsule)",
-  "fallback_mode": true,
-  "fallback_reason": "freecad_not_installed",
-  "engine": "trimesh",
-  "notes": "FreeCAD is not present on the Hetzner host or in container; parametric generation is implemented on top of trimesh primitives (box/cylinder/capsule/sphere). STEP export is unavailable in this fallback path; STL + GLB are produced. Three jury checks (robustness, dimensional, export_quality) plus aggregate verdict are computed in-process."
+  "tests_note": "pytest 5/5 local (trimesh path) + E2E Hetzner -> bridge -> FreeCAD: vehicle box V=12.96 mm3, 6 faces watertight, real ISO-10303-21 STEP downloadable @ ~560ms",
+  "fallback_mode": false,
+  "fallback_reason": null,
+  "engine": "freecad_via_bridge",
+  "engine_fallback": "trimesh",
+  "bridge": {
+    "url": "http://100.64.0.2:8500",
+    "transport": "tailscale",
+    "tailnet_host": "alex-main-1",
+    "freecad_version": "FreeCAD 1.0.2 Revision: 39319 (Git)"
+  },
+  "notes": "Agent 21 v0.2.0 routes parametric work to the NOVA Host Bridge over the existing Tailscale mesh (PC alex-main-1). Real FreeCAD 1.0.2 produces FCStd + STEP + STL; agent returns downloadable bridge URLs. If the bridge is unreachable the agent transparently falls back to trimesh primitives (no STEP). Variants_generate runs jury per variant using bridge metrics when bridge is up."
 }

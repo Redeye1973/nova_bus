@@ -1,9 +1,14 @@
-"""NOVA v2 Agent 21 — FreeCAD Parametric (trimesh-based fallback).
+"""NOVA v2 Agent 21 — FreeCAD Parametric.
 
-FreeCAD is not installed on this Hetzner deployment. This service implements the
-spec'ed endpoints using the `trimesh` library to generate parametric primitives,
-variants, and simple component assemblies. STEP export is not available in the
-fallback path; STL/GLB are produced instead and metadata reports are emitted.
+Two backends:
+
+1. **bridge** — when HOST_BRIDGE_URL env var is set, parametric work is
+   routed to the NOVA Host Bridge (real FreeCAD on the developer PC,
+   reachable over Tailscale). Produces STEP + STL + FCStd. This is the
+   preferred path.
+2. **trimesh** — local fallback when the bridge is unreachable. Produces
+   STL + GLB only and uses trimesh primitives. Same response shape so
+   downstream consumers don't care about backend.
 
 Endpoints:
 - GET  /health
@@ -20,9 +25,10 @@ import logging
 import os
 import time
 import uuid
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional, Tuple
 
+import httpx
 import numpy as np
 import trimesh
 from fastapi import FastAPI, HTTPException
@@ -33,6 +39,66 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 
 OUTPUT_DIR = Path(os.getenv("FREECAD_OUTPUT_DIR", "/tmp/freecad_parametric"))
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+HOST_BRIDGE_URL = (os.getenv("HOST_BRIDGE_URL") or "").rstrip("/") or None
+BRIDGE_TOKEN = os.getenv("BRIDGE_TOKEN") or None
+BRIDGE_TIMEOUT_S = float(os.getenv("HOST_BRIDGE_TIMEOUT_S", "60"))
+BRIDGE_DEFAULT_EXPORTS = ["fcstd", "step", "stl"]
+
+
+def _bridge_headers() -> Dict[str, str]:
+    h = {"Content-Type": "application/json"}
+    if BRIDGE_TOKEN:
+        h["Authorization"] = f"Bearer {BRIDGE_TOKEN}"
+    return h
+
+
+def _bridge_probe() -> Dict[str, Any]:
+    if not HOST_BRIDGE_URL:
+        return {"available": False, "reason": "HOST_BRIDGE_URL_not_set"}
+    try:
+        r = httpx.get(f"{HOST_BRIDGE_URL}/tools", timeout=5.0, headers=_bridge_headers())
+        r.raise_for_status()
+        info = r.json()
+        fc = info.get("freecad", {})
+        if not fc.get("available"):
+            return {"available": False, "reason": fc.get("reason", "freecad_unavailable_at_bridge")}
+        return {"available": True, "version": fc.get("version"), "url": HOST_BRIDGE_URL}
+    except Exception as e:
+        return {"available": False, "reason": f"{type(e).__name__}:{e}"}
+
+
+def _bridge_file_urls(bridge_resp: Dict[str, Any]) -> Dict[str, str]:
+    """Convert bridge absolute Windows file paths to downloadable URLs.
+
+    Bridge stores files at <bridge_url>/jobs/<workdir_name>/files/<basename>.
+    Uses PureWindowsPath so backslash-separated paths from the bridge parse
+    correctly even when this agent runs in a Linux container.
+    """
+    files = bridge_resp.get("files") or {}
+    workdir = bridge_resp.get("workdir") or ""
+    job_name = PureWindowsPath(workdir).name if workdir else ""
+    out: Dict[str, str] = {}
+    for kind, full_path in files.items():
+        if not full_path or not job_name:
+            continue
+        basename = PureWindowsPath(full_path).name
+        out[kind] = f"{HOST_BRIDGE_URL}/jobs/{job_name}/files/{basename}"
+    return out
+
+
+def _bridge_metrics_to_local(bridge_metrics: Dict[str, Any]) -> Dict[str, Any]:
+    """Map FreeCAD-style metrics to the trimesh-style schema we expose."""
+    bbox = (bridge_metrics or {}).get("bounding_box") or {}
+    extents = bbox.get("extents") or [0.0, 0.0, 0.0]
+    return {
+        "extents": [float(x) for x in extents],
+        "volume": float(bridge_metrics.get("volume", 0.0)) if bridge_metrics.get("volume") is not None else None,
+        "surface_area": float(bridge_metrics.get("surface_area", 0.0)),
+        "watertight": bool(bridge_metrics.get("is_closed", False)),
+        "vertex_count": int(bridge_metrics.get("vertex_count", 0)),
+        "face_count": int(bridge_metrics.get("face_count", 0)),
+    }
 
 CATEGORY_DEFAULTS: Dict[str, Dict[str, Any]] = {
     "fighter":   {"primitive": "capsule", "default": {"length": 12.0, "radius": 1.5}},
@@ -129,18 +195,81 @@ class AssembleRequest(BaseModel):
     output_name: Optional[str] = None
 
 
-app = FastAPI(title="NOVA v2 Agent 21 - FreeCAD Parametric (trimesh fallback)", version="0.1.0")
+app = FastAPI(title="NOVA v2 Agent 21 - FreeCAD Parametric", version="0.2.0")
+
+_BRIDGE_INFO: Dict[str, Any] = {"available": False, "checked_at": 0.0}
+
+
+def _refresh_bridge_info(force: bool = False) -> Dict[str, Any]:
+    global _BRIDGE_INFO
+    now = time.time()
+    if force or (now - _BRIDGE_INFO.get("checked_at", 0)) > 30:
+        info = _bridge_probe()
+        info["checked_at"] = now
+        _BRIDGE_INFO = info
+    return _BRIDGE_INFO
+
+
+@app.on_event("startup")
+def _startup_bridge_probe() -> None:
+    info = _refresh_bridge_info(force=True)
+    if info.get("available"):
+        logger.info("host_bridge available: %s @ %s", info.get("version"), info.get("url"))
+    else:
+        logger.warning("host_bridge unavailable: %s", info.get("reason"))
+
+
+def _bridge_call_freecad(category: str, dimensions: Dict[str, float],
+                         mounts: Optional[Dict[str, List[float]]] = None,
+                         exports: Optional[List[str]] = None,
+                         name: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """POST /freecad/parametric on the host bridge. Returns None on failure."""
+    if not HOST_BRIDGE_URL:
+        return None
+    payload: Dict[str, Any] = {
+        "category": category,
+        "dimensions": dimensions,
+        "exports": exports or BRIDGE_DEFAULT_EXPORTS,
+    }
+    if mounts:
+        payload["mount_points"] = mounts
+    if name:
+        payload["name"] = name
+    try:
+        r = httpx.post(
+            f"{HOST_BRIDGE_URL}/freecad/parametric",
+            json=payload,
+            timeout=BRIDGE_TIMEOUT_S,
+            headers=_bridge_headers(),
+        )
+        r.raise_for_status()
+        data = r.json()
+        if data.get("ok"):
+            return data
+        logger.warning("bridge freecad call returned ok=false: %s", data.get("error"))
+        return None
+    except Exception as e:
+        logger.warning("bridge freecad call failed: %s", e)
+        return None
 
 
 @app.get("/health")
 def health() -> Dict[str, Any]:
+    info = _refresh_bridge_info()
+    bridge_up = bool(info.get("available"))
     return {
         "status": "ok",
         "agent": "21_freecad_parametric",
-        "version": "0.1.0",
-        "fallback_mode": True,
-        "fallback_reason": "freecad_not_installed",
-        "engine": "trimesh",
+        "version": "0.2.0",
+        "fallback_mode": not bridge_up,
+        "fallback_reason": None if bridge_up else info.get("reason"),
+        "engine": "freecad_via_bridge" if bridge_up else "trimesh",
+        "bridge": {
+            "configured": bool(HOST_BRIDGE_URL),
+            "url": HOST_BRIDGE_URL,
+            "available": bridge_up,
+            "freecad_version": info.get("version"),
+        },
     }
 
 
@@ -151,7 +280,6 @@ def build_base(req: BuildBaseRequest) -> Dict[str, Any]:
         raise HTTPException(400, detail=f"unknown_category:{cat}; valid={list(CATEGORY_DEFAULTS)}")
     cfg = CATEGORY_DEFAULTS[cat]
     dims = {**cfg["default"], **(req.dimensions or {})}
-    mesh = _make_primitive(cfg["primitive"], dims)
 
     mounts: Dict[str, List[float]] = {}
     if req.mount_points_config:
@@ -160,6 +288,26 @@ def build_base(req: BuildBaseRequest) -> Dict[str, Any]:
                 continue
             mounts[name] = [float(v) for v in xyz]
 
+    bridge_info = _refresh_bridge_info()
+    if bridge_info.get("available"):
+        bridge_resp = _bridge_call_freecad(cat, dims, mounts=mounts)
+        if bridge_resp is not None:
+            return {
+                "category": cat,
+                "primitive": bridge_resp.get("primitive", cfg["primitive"]),
+                "dimensions": {k: float(v) for k, v in dims.items()},
+                "mount_points": mounts,
+                "files": _bridge_file_urls(bridge_resp),
+                "metrics": _bridge_metrics_to_local(bridge_resp.get("metrics") or {}),
+                "step_export": _bridge_file_urls(bridge_resp).get("step"),
+                "engine_used": "freecad_via_bridge",
+                "freecad_version": bridge_resp.get("freecad_version"),
+                "bridge_job_id": bridge_resp.get("job_id"),
+                "bridge_elapsed_ms": bridge_resp.get("elapsed_ms"),
+            }
+        logger.info("bridge build_base failed; falling back to trimesh for category=%s", cat)
+
+    mesh = _make_primitive(cfg["primitive"], dims)
     paths = _save_mesh(mesh, prefix=f"base_{cat}")
     return {
         "category": cat,
@@ -169,7 +317,8 @@ def build_base(req: BuildBaseRequest) -> Dict[str, Any]:
         "files": paths,
         "metrics": _bbox_metrics(mesh),
         "step_export": None,
-        "step_export_note": "freecad_not_installed; STL/GLB only",
+        "step_export_note": "freecad_not_available; STL/GLB only",
+        "engine_used": "trimesh",
     }
 
 
@@ -246,30 +395,72 @@ def variants_generate(req: VariantGenRequest) -> Dict[str, Any]:
     if req.count is not None:
         combos = combos[: max(0, int(req.count))]
 
+    bridge_info = _refresh_bridge_info()
+    bridge_up = bool(bridge_info.get("available"))
+    engines_used: Dict[str, int] = {"freecad_via_bridge": 0, "trimesh": 0}
+
     variants: List[Dict[str, Any]] = []
     for combo in combos:
         dims = dict(base_dims)
         for k, v in zip(keys, combo):
             dims[k] = float(v)
         try:
-            mesh = _make_primitive(cfg["primitive"], dims)
-            paths = _save_mesh(mesh, prefix=f"variant_{cat}")
-            metrics = _bbox_metrics(mesh)
-            jury = {
-                "robustness": _evaluate_robustness(cat, dims),
-                "dimensional": _evaluate_dimensional(cat, mesh),
-                "export_quality": _evaluate_export_quality(mesh),
-            }
-            verdict = _judge(jury["robustness"], jury["dimensional"], jury["export_quality"])
-            variants.append({
+            entry: Dict[str, Any] = {
                 "params": {k: float(v) for k, v in zip(keys, combo)},
                 "dimensions": {k: float(v) for k, v in dims.items()},
-                "files": paths,
-                "metrics": metrics,
-                "jury": jury,
-                "verdict": verdict["verdict"],
-                "average_score": verdict["average_score"],
-            })
+            }
+
+            bridge_resp = _bridge_call_freecad(cat, dims) if bridge_up else None
+            if bridge_resp is not None:
+                metrics = _bridge_metrics_to_local(bridge_resp.get("metrics") or {})
+                # Build a synthetic mesh-less jury using bridge metrics.
+                robust = _evaluate_robustness(cat, dims)
+                dim_issues: List[str] = []
+                if any(x <= 0 for x in metrics["extents"]):
+                    dim_issues.append("non_positive_extent")
+                if (metrics.get("volume") or 0) <= 0:
+                    dim_issues.append("non_positive_volume")
+                dim = {"category": cat, "bbox": metrics["extents"], "issues": dim_issues,
+                       "score": 10.0 if not dim_issues else 4.0}
+                exp_issues: List[str] = []
+                if not metrics["watertight"]:
+                    exp_issues.append("not_watertight")
+                if metrics["face_count"] < 4:
+                    exp_issues.append("face_count_too_low")
+                exp_score = 10.0 - (5.0 if "not_watertight" in exp_issues else 0.0) - (5.0 if "face_count_too_low" in exp_issues else 0.0)
+                exp = {"score": max(0.0, exp_score), "issues": exp_issues,
+                       "vertex_count": metrics["vertex_count"], "face_count": metrics["face_count"]}
+                verdict = _judge(robust, dim, exp)
+                entry.update({
+                    "files": _bridge_file_urls(bridge_resp),
+                    "metrics": metrics,
+                    "jury": {"robustness": robust, "dimensional": dim, "export_quality": exp},
+                    "verdict": verdict["verdict"],
+                    "average_score": verdict["average_score"],
+                    "engine_used": "freecad_via_bridge",
+                    "freecad_version": bridge_resp.get("freecad_version"),
+                })
+                engines_used["freecad_via_bridge"] += 1
+            else:
+                mesh = _make_primitive(cfg["primitive"], dims)
+                paths = _save_mesh(mesh, prefix=f"variant_{cat}")
+                metrics = _bbox_metrics(mesh)
+                jury = {
+                    "robustness": _evaluate_robustness(cat, dims),
+                    "dimensional": _evaluate_dimensional(cat, mesh),
+                    "export_quality": _evaluate_export_quality(mesh),
+                }
+                verdict = _judge(jury["robustness"], jury["dimensional"], jury["export_quality"])
+                entry.update({
+                    "files": paths,
+                    "metrics": metrics,
+                    "jury": jury,
+                    "verdict": verdict["verdict"],
+                    "average_score": verdict["average_score"],
+                    "engine_used": "trimesh",
+                })
+                engines_used["trimesh"] += 1
+            variants.append(entry)
         except HTTPException:
             raise
         except Exception as e:
@@ -281,6 +472,7 @@ def variants_generate(req: VariantGenRequest) -> Dict[str, Any]:
         "primitive": cfg["primitive"],
         "variant_count": len(variants),
         "accepted": accepted,
+        "engines_used": engines_used,
         "variants": variants,
     }
 

@@ -1,0 +1,23 @@
+host_bridge:
+  url: http://100.64.0.2:8500       # Tailscale IP of dev PC (alex-main-1)
+  bind: 0.0.0.0
+  port: 8500
+
+tailnet:
+  hetzner:
+    ip: 100.64.0.1
+    hostname: nova-hetzner
+  dev_pc:
+    ip: 100.64.0.2
+    hostname: alex-main-1
+
+host_tools:
+  freecad:
+    bin: 'C:\Program Files\FreeCAD 1.0\bin'
+    cmd: 'freecadcmd.exe'
+    version: '1.0.2'
+  qgis:
+    bin: 'C:\Program Files\QGIS 3.40.13\bin'
+    headless: 'qgis_process-qgis-ltr.bat'
+    version: '3.40.13'
+    edition: 'LTR Bratislava'
