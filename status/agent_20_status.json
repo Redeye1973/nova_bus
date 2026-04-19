@@ -1,0 +1,19 @@
+{
+  "agent_number": "20",
+  "name": "design_fase",
+  "status": "active",
+  "built_at": "2026-04-19T18:50:20.8486666Z",
+  "deployed_at": "2026-04-19T18:50:20.8486666Z",
+  "workflow_id": "jdww5BkKhjQZJVwl",
+  "webhook_url": "http://178.104.207.194:5680/webhook/design-fase",
+  "endpoints": [
+    "/palette/create",
+    "/palette/validate",
+    "/silhouette/check",
+    "/consistency/check"
+  ],
+  "tests_passed": true,
+  "tests_note": "pytest 4/4 local; E2E webhook returns master_palette 32 colors",
+  "fallback_mode": true,
+  "notes": "POC: delta-E76 Lab without colormath; Qdrant/Ollama deferred per FALLBACK_PROCEDURES"
+}
