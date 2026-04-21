@@ -13,11 +13,16 @@ tailnet:
 
 host_tools:
   freecad:
-    bin: 'C:\Program Files\FreeCAD 1.0\bin'
+    bin: 'L:\ZZZ Software\FreeCad\bin'
     cmd: 'freecadcmd.exe'
-    version: '1.0.2'
+    version: '1.1.1'
   qgis:
     bin: 'C:\Program Files\QGIS 3.40.13\bin'
     headless: 'qgis_process-qgis-ltr.bat'
     version: '3.40.13'
     edition: 'LTR Bratislava'
+  gimp:
+    bin: 'L:\ZZZ Software\GIMP 3\bin'
+    headless: 'gimp-console.exe'      # batch mode: -i -b "(script)" -b "(gimp-quit 0)"
+    script_fu: 'gimp-script-fu-interpreter-3.0.exe'
+    version: '3.2.4'

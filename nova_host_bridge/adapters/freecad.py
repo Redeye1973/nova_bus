@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("bridge.freecad")
 
-DEFAULT_FREECAD_BIN = r"C:\Program Files\FreeCAD 1.0\bin"
+DEFAULT_FREECAD_BIN = r"L:\ZZZ Software\FreeCad\bin"
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "freecad_parametric.py"
 
 CATEGORY_DEFAULTS: Dict[str, Dict[str, Any]] = {
