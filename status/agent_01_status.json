@@ -1,0 +1,24 @@
+{
+  "agent_number": 1,
+  "name": "01_sprite_jury",
+  "status": "active",
+  "built_at": "2026-04-19T13:00:00Z",
+  "deployed_at": "2026-04-19T13:00:00Z",
+  "tests_passed": true,
+  "fallback_mode": true,
+  "v1_delegation": "skipped_no_orchestrator_endpoint; V1 used read-only API elsewhere",
+  "service": {
+    "compose_service": "sprite-jury-v2",
+    "container": "nova-v2-sprite-jury",
+    "internal_url": "http://sprite-jury-v2:8101",
+    "health_path": "/health"
+  },
+  "webhook_url": "http://178.104.207.194:5680/webhook/sprite-review-poc",
+  "n8n_v2": {
+    "workflow_id": "RG7kvtJECmWOePMT",
+    "workflow_name": "NOVA v2 - Sprite Jury POC",
+    "webhook_path": "sprite-review-poc",
+    "activated": true
+  },
+  "notes": "POC: rule-based verdict + PIL pixel check; Ollama jury members deferred. E2E webhook test returns verdict JSON."
+}

@@ -16,6 +16,8 @@ from fastapi import Depends, FastAPI, HTTPException, Header
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+import requests
+
 from adapters import freecad as fc_adapter
 from adapters import qgis as qgis_adapter
 from adapters import aseprite as aseprite_adapter
@@ -31,6 +33,13 @@ CONFIG_DEFAULT_PATH = Path(os.getenv("NOVA_CONFIG_PATH", r"L:\!Nova V2\nova_conf
 WORKDIR_ROOT = Path(os.getenv("BRIDGE_WORKDIR", str(ROOT / "jobs")))
 WORKDIR_ROOT.mkdir(parents=True, exist_ok=True)
 BRIDGE_TOKEN = os.getenv("BRIDGE_TOKEN", "").strip()
+
+# Where the local Agent 26 (godot_import) service listens. This is a
+# same-host loopback by design: NovaCore reaches this bridge on the
+# Tailscale IP (100.64.0.2:8500) and the bridge forwards here, so all
+# NOVA v2 files Agent 26 writes land on the machine that owns Godot.
+AGENT26_LOCAL_URL = os.getenv("AGENT26_LOCAL_URL", "http://127.0.0.1:8126/invoke")
+AGENT26_TIMEOUT_S = int(os.getenv("AGENT26_TIMEOUT_S", "300"))
 
 
 def _load_config() -> Dict[str, Any]:
@@ -269,6 +278,67 @@ def godot_script(req: GodotScriptRequest) -> Dict[str, Any]:
         )
     except godot_adapter.GodotUnavailable as e:
         raise HTTPException(503, detail={"reason": "godot_unavailable", "error": str(e)})
+
+
+# ---- Godot import forwarder (Agent 26) --------------------------------------
+#
+# NOVA v2 architecture contract:
+#
+#   NovaCore  --POST-->  http://100.64.0.2:8500/godot/import  (this route)
+#                         │
+#                         └── forwards to Agent 26 on same host (loopback)
+#                                 │
+#                                 └── copies assets into res://, runs headless
+#                                     Godot via /godot/script, returns report
+#
+# Keeping this as a thin forwarder (rather than mounting Agent 26 in the
+# bridge process) means Agent 26 can be restarted / replaced without
+# touching the bridge, and the bridge can enforce auth uniformly.
+
+
+@app.post("/godot/import", dependencies=[Depends(require_token)])
+def godot_import_forwarder(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Forward a godot_import request to the local Agent 26 service.
+
+    Accepts either:
+      - ``{"agent_id": "godot_import", "task": {...}}`` (NovaCore envelope)
+      - ``{"assets": [...], "type": "sprite|model|level"}`` (flat)
+
+    Returns Agent 26's full response unchanged. HTTP status mirrors the
+    agent's result (200 on agent success, 502 on agent error so callers
+    can distinguish "bridge reached agent and agent failed" from
+    "bridge couldn't reach agent" (504)).
+    """
+    logger.info(
+        "godot/import forwarder -> %s (keys=%s)",
+        AGENT26_LOCAL_URL, list(payload.keys()) if isinstance(payload, dict) else type(payload).__name__,
+    )
+    try:
+        r = requests.post(AGENT26_LOCAL_URL, json=payload, timeout=AGENT26_TIMEOUT_S)
+    except requests.Timeout as exc:
+        logger.exception("agent-26 timeout")
+        raise HTTPException(
+            status_code=504,
+            detail={"reason": "agent_26_timeout", "error": str(exc), "agent_url": AGENT26_LOCAL_URL},
+        )
+    except requests.RequestException as exc:
+        logger.exception("agent-26 unreachable")
+        raise HTTPException(
+            status_code=502,
+            detail={"reason": "agent_26_unreachable", "error": str(exc), "agent_url": AGENT26_LOCAL_URL},
+        )
+
+    try:
+        body = r.json() if r.text else {}
+    except ValueError:
+        body = {"raw": r.text[:2000]}
+
+    if not r.ok:
+        # Re-raise whatever the agent returned with a bridge-marker tag.
+        detail = body if isinstance(body, dict) else {"raw": body}
+        detail["forwarded_status_code"] = r.status_code
+        raise HTTPException(status_code=502, detail=detail)
+    return body if isinstance(body, dict) else {"value": body}
 
 
 # ---- File retrieval ---------------------------------------------------------

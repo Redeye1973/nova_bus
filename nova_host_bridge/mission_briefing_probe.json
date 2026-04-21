@@ -1,0 +1,12 @@
+{
+  "status": "ok",
+  "python": "3.11.9",
+  "blender_scene": "Scene",
+  "objects": [
+    "Camera",
+    "Cube",
+    "Light"
+  ],
+  "frame_current": 1,
+  "nova": "v2-mission-probe"
+}

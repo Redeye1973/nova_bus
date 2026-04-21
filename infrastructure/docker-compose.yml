@@ -84,6 +84,12 @@ services:
         condition: service_healthy
       redis-v2:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   n8n-v2-worker-1:
     image: n8nio/n8n:latest

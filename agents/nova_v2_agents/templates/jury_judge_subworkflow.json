@@ -1,0 +1,219 @@
+{
+  "name": "NOVA_v2_Jury_Judge_Template",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jury-judge",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "trigger-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "jury-judge-template"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse input and prepare for jury\nconst input = $input.first().json;\n\nreturn {\n  job_id: input.job_id || `job_${Date.now()}`,\n  domain: input.domain,\n  artifact: input.artifact,\n  context: input.context || {},\n  jury_config: {\n    parallel: true,\n    timeout_per_member: 60000,\n    min_members_required: 3\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse & Prepare",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:8001/jury/{{ $json.domain }}/member1",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "jury-member-1",
+      "name": "Jury Member 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:8001/jury/{{ $json.domain }}/member2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "jury-member-2",
+      "name": "Jury Member 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:8001/jury/{{ $json.domain }}/member3",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "jury-member-3",
+      "name": "Jury Member 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByIndex"
+      },
+      "id": "merge-jury",
+      "name": "Merge Jury Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Aggregate jury scores\nconst results = $input.all();\nconst scores = results.map(r => r.json);\n\nconst validScores = scores.filter(s => s.score !== undefined);\nconst avgScore = validScores.reduce((sum, s) => sum + s.score, 0) / validScores.length;\nconst scoreVariance = validScores.reduce((sum, s) => sum + Math.pow(s.score - avgScore, 2), 0) / validScores.length;\nconst stdDev = Math.sqrt(scoreVariance);\n\nreturn {\n  job_id: scores[0]?.job_id,\n  jury_scores: validScores,\n  aggregate: {\n    mean: avgScore,\n    std_dev: stdDev,\n    min: Math.min(...validScores.map(s => s.score)),\n    max: Math.max(...validScores.map(s => s.score)),\n    count: validScores.length\n  }\n};"
+      },
+      "id": "aggregate-scores",
+      "name": "Aggregate Scores",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8001/judge",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "judge-call",
+      "name": "Judge",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.verdict }}",
+        "rules": {
+          "rules": [
+            {"value2": "accept", "output": 0},
+            {"value2": "experimental", "output": 1},
+            {"value2": "review", "output": 2},
+            {"value2": "reject", "output": 3}
+          ]
+        }
+      },
+      "id": "verdict-switch",
+      "name": "Verdict Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return { status: 'accepted', action: 'save_to_production', ...$json };"
+      },
+      "id": "handle-accept",
+      "name": "Handle Accept",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1650, 150]
+    },
+    {
+      "parameters": {
+        "functionCode": "return { status: 'experimental', action: 'save_to_experimental_bucket', ...$json };"
+      },
+      "id": "handle-experimental",
+      "name": "Handle Experimental",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1650, 250]
+    },
+    {
+      "parameters": {
+        "functionCode": "return { status: 'review_needed', action: 'queue_for_human', ...$json };"
+      },
+      "id": "handle-review",
+      "name": "Handle Review",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1650, 350]
+    },
+    {
+      "parameters": {
+        "functionCode": "return { status: 'rejected', action: 'log_and_discard', ...$json };"
+      },
+      "id": "handle-reject",
+      "name": "Handle Reject",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1650, 450]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Parse & Prepare", "type": "main", "index": 0 }]]
+    },
+    "Parse & Prepare": {
+      "main": [[
+        { "node": "Jury Member 1", "type": "main", "index": 0 },
+        { "node": "Jury Member 2", "type": "main", "index": 0 },
+        { "node": "Jury Member 3", "type": "main", "index": 0 }
+      ]]
+    },
+    "Jury Member 1": {
+      "main": [[{ "node": "Merge Jury Results", "type": "main", "index": 0 }]]
+    },
+    "Jury Member 2": {
+      "main": [[{ "node": "Merge Jury Results", "type": "main", "index": 1 }]]
+    },
+    "Jury Member 3": {
+      "main": [[{ "node": "Merge Jury Results", "type": "main", "index": 2 }]]
+    },
+    "Merge Jury Results": {
+      "main": [[{ "node": "Aggregate Scores", "type": "main", "index": 0 }]]
+    },
+    "Aggregate Scores": {
+      "main": [[{ "node": "Judge", "type": "main", "index": 0 }]]
+    },
+    "Judge": {
+      "main": [[{ "node": "Verdict Router", "type": "main", "index": 0 }]]
+    },
+    "Verdict Router": {
+      "main": [
+        [{ "node": "Handle Accept", "type": "main", "index": 0 }],
+        [{ "node": "Handle Experimental", "type": "main", "index": 0 }],
+        [{ "node": "Handle Review", "type": "main", "index": 0 }],
+        [{ "node": "Handle Reject", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0",
+  "meta": {
+    "description": "NOVA v2 Jury-Judge template. Parallel jury execution, aggregation, judge, verdict routing. Aanpassen per domein: URL's van jury members, aantal jury leden, verdict-categorieen.",
+    "usage": "Import in N8n, dupliceer per domein (sprite, code, audio, etc), pas URLs en parameters aan."
+  }
+}

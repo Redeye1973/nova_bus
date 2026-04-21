@@ -1,0 +1,6 @@
+; Minimal Godot 4.x project for smoke test
+config_version=5
+
+[application]
+config/name="smoke_test"
+config/features=PackedStringArray("4.6")

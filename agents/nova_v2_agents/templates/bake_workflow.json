@@ -1,0 +1,240 @@
+{
+  "name": "NOVA_v2_Bake_Workflow_Template",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bake-city",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "bake-trigger",
+      "name": "Bake Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 400],
+      "webhookId": "bake-city-trigger"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Validate input and prepare job\nconst input = $input.first().json;\n\nif (!input.postcode) {\n  throw new Error('postcode required');\n}\n\nreturn {\n  job_id: `bake_${input.postcode}_${Date.now()}`,\n  postcode: input.postcode,\n  priority: input.priority || 'normal',\n  force_rebuild: input.force_rebuild || false,\n  started_at: new Date().toISOString()\n};"
+      },
+      "id": "prepare-job",
+      "name": "Prepare Job",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8010/resources/check",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({postcode: $json.postcode}) }}"
+      },
+      "id": "check-resources",
+      "name": "Check Resources",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {"value1": "={{ $json.can_proceed }}", "value2": true}
+          ]
+        }
+      },
+      "id": "resources-ok",
+      "name": "Resources OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8011/pdok/download",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({postcode: $json.postcode, datasets: ['bag','bgt','ahn','nwb']}) }}",
+        "options": {
+          "timeout": 1800000
+        }
+      },
+      "id": "pdok-download",
+      "name": "PDOK Download",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8012/qgis/process",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 1800000
+        }
+      },
+      "id": "qgis-process",
+      "name": "QGIS Process",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8013/blender/bake",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 7200000
+        }
+      },
+      "id": "blender-bake",
+      "name": "Blender Bake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/webhook/jury-judge",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({job_id: $json.job_id, domain: 'gis', artifact: {type: 'path', path: $json.output_path}, context: {postcode: $json.postcode}}) }}"
+      },
+      "id": "gis-jury",
+      "name": "GIS Jury Validation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1650, 250]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/webhook/jury-judge",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({job_id: $json.job_id, domain: '3d', artifact: {type: 'path', path: $json.output_path}, context: {postcode: $json.postcode}}) }}"
+      },
+      "id": "3d-jury",
+      "name": "3D Model Jury",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1650, 350]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByIndex"
+      },
+      "id": "merge-validations",
+      "name": "Merge Validations",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Check alle validations passed\nconst results = $input.all();\nconst allAccepted = results.every(r => r.json.verdict === 'accept');\nconst anyReject = results.some(r => r.json.verdict === 'reject');\n\nreturn {\n  ...$input.first().json,\n  validation_passed: allAccepted,\n  validation_failed: anyReject,\n  needs_review: !allAccepted && !anyReject\n};"
+      },
+      "id": "evaluate-validation",
+      "name": "Evaluate Validation",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2050, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {"value1": "={{ $json.validation_passed }}", "value2": true}
+          ]
+        }
+      },
+      "id": "validation-passed",
+      "name": "Validation Passed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8019/distribute",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "distribute",
+      "name": "Distribute Package",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2450, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8017/error/report",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({service: 'bake_orchestrator', severity: 'medium', message: 'Bake validation failed', context: $json}) }}"
+      },
+      "id": "report-failure",
+      "name": "Report Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2450, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8016/cost/log",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({service: 'bake', context: $json}) }}"
+      },
+      "id": "log-cost",
+      "name": "Log Cost",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2650, 300]
+    }
+  ],
+  "connections": {
+    "Bake Trigger": {"main": [[{"node": "Prepare Job", "type": "main", "index": 0}]]},
+    "Prepare Job": {"main": [[{"node": "Check Resources", "type": "main", "index": 0}]]},
+    "Check Resources": {"main": [[{"node": "Resources OK?", "type": "main", "index": 0}]]},
+    "Resources OK?": {
+      "main": [
+        [{"node": "PDOK Download", "type": "main", "index": 0}],
+        [{"node": "Report Failure", "type": "main", "index": 0}]
+      ]
+    },
+    "PDOK Download": {"main": [[{"node": "QGIS Process", "type": "main", "index": 0}]]},
+    "QGIS Process": {"main": [[{"node": "Blender Bake", "type": "main", "index": 0}]]},
+    "Blender Bake": {
+      "main": [[
+        {"node": "GIS Jury Validation", "type": "main", "index": 0},
+        {"node": "3D Model Jury", "type": "main", "index": 0}
+      ]]
+    },
+    "GIS Jury Validation": {"main": [[{"node": "Merge Validations", "type": "main", "index": 0}]]},
+    "3D Model Jury": {"main": [[{"node": "Merge Validations", "type": "main", "index": 1}]]},
+    "Merge Validations": {"main": [[{"node": "Evaluate Validation", "type": "main", "index": 0}]]},
+    "Evaluate Validation": {"main": [[{"node": "Validation Passed?", "type": "main", "index": 0}]]},
+    "Validation Passed?": {
+      "main": [
+        [{"node": "Distribute Package", "type": "main", "index": 0}],
+        [{"node": "Report Failure", "type": "main", "index": 0}]
+      ]
+    },
+    "Distribute Package": {"main": [[{"node": "Log Cost", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "versionId": "1.0.0",
+  "meta": {
+    "description": "NOVA v2 Bake Workflow. End-to-end van postcode naar gedistribueerd city package.",
+    "usage": "Trigger via POST /webhook/bake-city met {postcode: '7901', priority: 'normal'}"
+  }
+}
