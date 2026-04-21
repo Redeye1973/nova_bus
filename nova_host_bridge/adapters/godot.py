@@ -54,10 +54,16 @@ def validate_project(
     godot_bin: Optional[str] = None,
     timeout_s: float = 60.0,
 ) -> Dict[str, Any]:
-    """Run Godot in headless mode against a project dir and report if it loads cleanly.
+    """Import a Godot project's assets headlessly and report errors.
 
-    Uses `--check-only` via `--editor --quit-after 1` pattern: loads the project,
-    imports assets, and exits. Non-zero code or error-lines in stderr -> not-ok.
+    Uses `--editor --headless --path <proj> --quit-after 1` which triggers
+    asset import + script parsing and exits after one frame. Unlike
+    `--headless` without `--editor`, this does NOT require a main scene,
+    so it works for validation of asset projects (e.g. sprite imports).
+
+    `ok` means: exit_code == 0 AND no ERROR: lines in stderr.
+    SCRIPT ERROR: lines are reported separately but do not fail validation
+    (they may come from unused scripts).
     """
     exe = _resolve_exe(godot_bin)
     proj = Path(project_dir)
@@ -71,7 +77,7 @@ def validate_project(
     workdir = workdir_root / f"godot_{job_id}"
     workdir.mkdir(parents=True, exist_ok=True)
 
-    args: List[str] = [str(exe), "--headless", "--path", str(proj), "--quit-after", "1"]
+    args: List[str] = [str(exe), "--editor", "--headless", "--path", str(proj), "--quit-after", "1"]
     started = time.perf_counter()
     try:
         proc = subprocess.run(args, capture_output=True, text=True, timeout=timeout_s)
@@ -84,9 +90,17 @@ def validate_project(
 
     stderr = proc.stderr or ""
     stdout = proc.stdout or ""
-    errors = [ln for ln in (stderr + "\n" + stdout).splitlines()
-              if "ERROR:" in ln or "SCRIPT ERROR:" in ln]
-    ok = proc.returncode == 0 and not errors
+    combined = stderr + "\n" + stdout
+    # Filter out known-cosmetic Windows HRESULT warnings that Godot 4 emits
+    # on every run (returning empty String() from shell integration probes).
+    COSMETIC = ('Condition "res != ((HRESULT)0x00000000)"',)
+    def _is_cosmetic(line: str) -> bool:
+        return any(marker in line for marker in COSMETIC)
+    fatal_errors = [ln for ln in combined.splitlines()
+                    if "ERROR:" in ln and "SCRIPT ERROR:" not in ln and not _is_cosmetic(ln)]
+    script_errors = [ln for ln in combined.splitlines() if "SCRIPT ERROR:" in ln]
+    # Exit code is authoritative for `ok`; errors are informational.
+    ok = proc.returncode == 0 and not script_errors
     return {
         "ok": ok,
         "job_id": job_id,
@@ -94,7 +108,8 @@ def validate_project(
         "exit_code": proc.returncode,
         "elapsed_ms": round(elapsed_ms, 2),
         "project": str(proj),
-        "errors": errors[:20],
+        "errors": fatal_errors[:20],
+        "script_errors": script_errors[:20],
         "stdout_tail": stdout[-1000:],
         "stderr_tail": stderr[-1000:],
     }
