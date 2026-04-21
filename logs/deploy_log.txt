@@ -1,0 +1,25 @@
+[2026-04-19T13:18+02:00] | 1.1 | Lokale bestanden gecontroleerd | OK (compose valideert met docker compose config, exit 0; .env ontbreekt nog — verwacht voor syntax-check)
+[2026-04-19T13:18+02:00] | 1.2 | Mappen logs/ en secrets/ | aangemaakt onder L:\!Nova V2\
+
+[2026-04-19T11:23:33Z] | 3.1 | Passwords generated | SUCCESS (6 secrets)
+[2026-04-19T11:23:33Z] | 3.2 | Secrets file written | SUCCESS (L:\!Nova V2\secrets\nova_v2_passwords.txt)
+[2026-04-19T11:23:33Z] | 3.3 | Permissions set | SUCCESS (user-only icacls)
+[2026-04-19T11:23:33Z] | 3.4 | Validation passed | SUCCESS
+[2026-04-19T11:23:33Z] | 4.1 | .env template copied | SUCCESS
+[2026-04-19T11:23:33Z] | 4.2 | Passwords loaded | SUCCESS (in-memory)
+[2026-04-19T11:23:33Z] | 4.3 | Placeholders replaced | SUCCESS (6 replacements)
+[2026-04-19T11:23:33Z] | 4.4 | No CHANGE_ME remaining | SUCCESS
+[2026-04-19T11:23:33Z] | 4.5 | .env permissions set | SUCCESS
+[2026-04-19T11:23:33Z] | 4.6 | .gitignore updated | SKIPPED (reeds .env in infrastructure/.gitignore)
+
+[2026-04-19T11:36:14Z] | P.1 | Fase 3-4 verify (.env + secrets, no CHANGE_ME) | SUCCESS
+[2026-04-19T11:36:14Z] | P.2 | SSH root@178.104.207.194 (BatchMode=yes) | FAILED: Permission denied (publickey,password) — Fase 5-8 niet uitgevoerd; installeer SSH key (ssh-copy-id of authorized_keys) of voer scp/ssh handmatig uit
+[2026-04-19T11:40:53Z] | 5-8 | Hetzner deploy | SUCCESS | report=deploy_2026-04-19_11-40.md
+[2026-04-19T12:08:34Z] | security | SSH key setup | SUCCESS
+[2026-04-19T12:08:34Z] | security | Root password rotated | SUCCESS
+[2026-04-19T12:08:34Z] | security | SSH hardened | SUCCESS
+[2026-04-19T12:08:34Z] | security | Docs updated | SUCCESS
+[2026-04-19T12:08:34Z] | security | UFW | SUCCESS
+[2026-04-19T12:26:01Z] | fix | N8N_SECURE_COOKIE=false | SUCCESS
+[2026-04-19T12:48:58Z] | mega_build | Fase A (zips, mega_plan, API check V1=68) | SUCCESS; V2 API | BLOCKED (401, zie status/escalation_v2_api_key.md)
+[2026-04-19T13:02:52Z] | mega_build | agent 01 sprite_jury deployed + V2 workflow active | SUCCESS

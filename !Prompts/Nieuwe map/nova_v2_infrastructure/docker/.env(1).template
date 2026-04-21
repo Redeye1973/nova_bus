@@ -1,0 +1,57 @@
+# NOVA v2 Infrastructure Environment Variables
+# Kopieer naar .env en vul waardes in
+# NOOIT committen naar git!
+
+# ============================================
+# POSTGRES (voor N8n database)
+# ============================================
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=CHANGE_ME_STRONG_PASSWORD_32_CHARS
+POSTGRES_DB=n8n_v2
+POSTGRES_NON_ROOT_USER=n8n_user
+POSTGRES_NON_ROOT_PASSWORD=CHANGE_ME_ANOTHER_STRONG_PASS_32
+
+# ============================================
+# REDIS (voor queue mode)
+# ============================================
+REDIS_PASSWORD=CHANGE_ME_REDIS_PASSWORD_32_CHARS
+
+# ============================================
+# N8N CORE
+# ============================================
+N8N_HOST=178.104.207.194
+N8N_PORT=5679
+N8N_PROTOCOL=http
+WEBHOOK_URL=http://178.104.207.194:5680/
+
+# Encryption keys - GENEREER UNIEKE VIA: openssl rand -hex 32
+N8N_ENCRYPTION_KEY=CHANGE_ME_64_CHAR_HEX_STRING
+N8N_JWT_SECRET=CHANGE_ME_64_CHAR_HEX_STRING
+
+# ============================================
+# MINIO (S3-compatible storage)
+# ============================================
+MINIO_ROOT_USER=nova_admin
+MINIO_ROOT_PASSWORD=CHANGE_ME_STRONG_PASSWORD_32_CHARS
+
+# ============================================
+# NOTES
+# ============================================
+# Genereer strong passwords met:
+#   openssl rand -base64 32
+#
+# Of in PowerShell:
+#   [System.Web.Security.Membership]::GeneratePassword(32, 8)
+#
+# Of online: https://www.random.org/passwords/
+#
+# Hetzner IP: 178.104.207.194 (per memory)
+# Poorten:
+#   5679 = N8n main UI
+#   5680 = N8n webhook endpoint
+#   9000 = MinIO S3 API
+#   9001 = MinIO Web console
+#   6333 = Qdrant HTTP
+#   6334 = Qdrant gRPC
+#
+# Oude NOVA v1 blijft op poort 5678 draaien

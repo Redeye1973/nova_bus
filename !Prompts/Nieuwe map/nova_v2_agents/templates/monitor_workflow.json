@@ -1,0 +1,206 @@
+{
+  "name": "NOVA_v2_Monitor_Workflow_Template",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {"interval": [{"field": "hours", "hoursInterval": 1}]}
+      },
+      "id": "cron-trigger",
+      "name": "Hourly Cron",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8021/pdok/check-updates"
+      },
+      "id": "check-pdok",
+      "name": "Check PDOK Updates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8022/health/all"
+      },
+      "id": "check-health",
+      "name": "Check Service Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8023/feedback/recent"
+      },
+      "id": "check-feedback",
+      "name": "Check Feedback Queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8016/cost/current"
+      },
+      "id": "check-costs",
+      "name": "Check Current Costs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 500]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8024/storage/usage"
+      },
+      "id": "check-storage",
+      "name": "Check Storage Usage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [500, 600]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition"
+      },
+      "id": "merge-signals",
+      "name": "Merge All Signals",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [750, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Analyze all signals and generate recommendations\nconst signals = $input.all().map(i => i.json);\n\nconst recommendations = [];\nconst alerts = [];\n\n// Check each signal source\nfor (const signal of signals) {\n  // PDOK updates\n  if (signal.postcodes_with_changes?.length > 0) {\n    for (const pc of signal.postcodes_with_changes) {\n      if (pc.delta_count > 100) {\n        recommendations.push({\n          type: 'bake_recommended',\n          target: pc.postcode,\n          reason: `${pc.delta_count} BAG mutations detected`,\n          priority: pc.delta_count > 500 ? 'high' : 'normal'\n        });\n      }\n    }\n  }\n  \n  // Health issues\n  if (signal.services) {\n    for (const [name, status] of Object.entries(signal.services)) {\n      if (status.status !== 'healthy') {\n        alerts.push({\n          type: 'service_issue',\n          service: name,\n          status: status.status,\n          severity: status.status === 'down' ? 'critical' : 'warning'\n        });\n      }\n    }\n  }\n  \n  // Cost warnings\n  if (signal.pct_used > 85) {\n    alerts.push({\n      type: 'cost_warning',\n      current_pct: signal.pct_used,\n      severity: signal.pct_used > 95 ? 'critical' : 'warning'\n    });\n  }\n  \n  // Storage warnings\n  if (signal.usage_pct > 80) {\n    alerts.push({\n      type: 'storage_warning',\n      current_pct: signal.usage_pct,\n      severity: signal.usage_pct > 90 ? 'critical' : 'warning'\n    });\n  }\n  \n  // Feedback backlog\n  if (signal.critical_count > 5) {\n    alerts.push({\n      type: 'feedback_backlog',\n      critical_items: signal.critical_count,\n      severity: 'warning'\n    });\n  }\n}\n\nreturn {\n  timestamp: new Date().toISOString(),\n  recommendations,\n  alerts,\n  summary: {\n    total_recommendations: recommendations.length,\n    total_alerts: alerts.length,\n    critical_alerts: alerts.filter(a => a.severity === 'critical').length\n  }\n};"
+      },
+      "id": "analyze-signals",
+      "name": "Analyze Signals",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [950, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {"value1": "={{ $json.summary.critical_alerts }}", "operation": "larger", "value2": 0}
+          ]
+        }
+      },
+      "id": "has-critical",
+      "name": "Has Critical?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1150, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8025/notify/telegram",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({priority: 'urgent', message: 'CRITICAL: ' + JSON.stringify($json.alerts.filter(a => a.severity === 'critical'))}) }}"
+      },
+      "id": "telegram-alert",
+      "name": "Telegram Urgent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1350, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {"value1": "={{ $json.summary.total_recommendations }}", "operation": "larger", "value2": 0}
+          ]
+        }
+      },
+      "id": "has-recommendations",
+      "name": "Has Recommendations?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1350, 500]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Queue bake recommendations\nconst recs = $json.recommendations;\nconst highPriority = recs.filter(r => r.priority === 'high');\n\nreturn highPriority.map(r => ({json: {\n  action: 'queue_bake',\n  postcode: r.target,\n  priority: r.priority,\n  reason: r.reason\n}}));"
+      },
+      "id": "queue-bakes",
+      "name": "Queue Bakes",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1550, 500]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/webhook/bake-city",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "trigger-bake",
+      "name": "Trigger Bake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1750, 500]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8024/dashboard/update",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Analyze Signals').item.json) }}"
+      },
+      "id": "update-dashboard",
+      "name": "Update Dashboard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1550, 700]
+    }
+  ],
+  "connections": {
+    "Hourly Cron": {
+      "main": [[
+        {"node": "Check PDOK Updates", "type": "main", "index": 0},
+        {"node": "Check Service Health", "type": "main", "index": 0},
+        {"node": "Check Feedback Queue", "type": "main", "index": 0},
+        {"node": "Check Current Costs", "type": "main", "index": 0},
+        {"node": "Check Storage Usage", "type": "main", "index": 0}
+      ]]
+    },
+    "Check PDOK Updates": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 0}]]},
+    "Check Service Health": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 1}]]},
+    "Check Feedback Queue": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 2}]]},
+    "Check Current Costs": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 3}]]},
+    "Check Storage Usage": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 4}]]},
+    "Merge All Signals": {"main": [[{"node": "Analyze Signals", "type": "main", "index": 0}]]},
+    "Analyze Signals": {
+      "main": [[
+        {"node": "Has Critical?", "type": "main", "index": 0},
+        {"node": "Has Recommendations?", "type": "main", "index": 0},
+        {"node": "Update Dashboard", "type": "main", "index": 0}
+      ]]
+    },
+    "Has Critical?": {
+      "main": [
+        [{"node": "Telegram Urgent", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Has Recommendations?": {
+      "main": [
+        [{"node": "Queue Bakes", "type": "main", "index": 0}],
+        []
+      ]
+    },
+    "Queue Bakes": {"main": [[{"node": "Trigger Bake", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "versionId": "1.0.0",
+  "meta": {
+    "description": "NOVA v2 Monitor Workflow. Elke uur: health checks, PDOK updates, feedback queue, costs, storage. Alerts + auto-bake triggers.",
+    "usage": "Import als scheduled workflow. Pas endpoint URLs aan per jouw setup."
+  }
+}

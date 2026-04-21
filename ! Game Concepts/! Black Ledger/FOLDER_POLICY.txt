@@ -1,0 +1,14 @@
+Inplement Me — map Clean (NOVA)
+
+Clean = WACHTRIJ VOOR DE GAME
+  Bestanden hier zijn klaar om uit te voeren: opgeschoonde instructies/specs
+  (geen oude asset-fabriek / verkeerde paden) die je nog moet implementeren
+  in het Godot-project (bv. Dark Ledger: L:\1 Nova Cursor Output\Dark Ledger\).
+
+  Werk ze af in de game → verplaats het bestand daarna naar ..\Done\
+
+Done (..\Done)
+  Alleen nadat de inhoud van het bestand daadwerkelijk in de build zit.
+
+Inplement Me (bovenliggende map)
+  Nieuwe ruwe todos / nog niet opgeschoond / nog niet klaar voor Clean.

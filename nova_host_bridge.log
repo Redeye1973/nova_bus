@@ -1,0 +1,75 @@
+﻿[2026-04-19 22:49:11.289] [INFO] starting nova_host_bridge wrapper pid=37816 user=ALEX-MAIN-1$
+[2026-04-19 22:49:11.341] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-19 22:49:11.352] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-19 22:49:11.355] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-19 22:49:11.357] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-19 22:49:11.386] [INFO] uvicorn pid=28904
+[2026-04-19 22:51:51.139] [INFO] starting nova_host_bridge wrapper pid=18604 user=ALEX-MAIN-1$
+[2026-04-19 22:51:51.551] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-19 22:51:51.630] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-19 22:51:51.635] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-19 22:51:51.635] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-19 22:51:51.724] [INFO] uvicorn pid=17368
+[2026-04-20 17:42:42.614] [INFO] starting nova_host_bridge wrapper pid=12300 user=ALEX-MAIN-1$
+[2026-04-20 17:42:42.888] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-20 17:42:42.913] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-20 17:42:42.913] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-20 17:42:42.913] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-20 17:42:43.008] [INFO] uvicorn pid=18056
+[2026-04-21 13:12:49.599] [INFO] starting nova_host_bridge wrapper pid=15172 user=ALEX-MAIN-1$
+[2026-04-21 13:12:49.949] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-21 13:12:49.975] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-21 13:12:49.975] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-21 13:12:49.981] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-21 13:12:50.093] [INFO] uvicorn pid=6484
+[2026-04-21 16:22:33.889] [WARN] uvicorn exited code=-1 (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-21 16:24:59.527] [INFO] starting nova_host_bridge wrapper pid=29636 user=ALEX-MAIN-1$
+[2026-04-21 16:24:59.599] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-21 16:24:59.611] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-21 16:24:59.616] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-21 16:24:59.619] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-21 16:24:59.655] [INFO] uvicorn pid=30028
+[2026-04-21 16:27:05.236] [WARN] uvicorn exited code=-1 (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-21 16:27:08.559] [INFO] starting nova_host_bridge wrapper pid=17716 user=ALEX-MAIN-1$
+[2026-04-21 16:27:08.611] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-21 16:27:08.618] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-21 16:27:08.619] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-21 16:27:08.621] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-21 16:27:08.623] [INFO] retry policy: max=3 delay=60s healthy_after=300s
+[2026-04-21 16:27:08.628] [INFO] attempt 1 of 4: launching uvicorn
+[2026-04-21 16:27:08.651] [INFO] uvicorn pid=29820
+[2026-04-21 16:27:14.472] [WARN] uvicorn exited code=-1 after 6s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-21 16:27:14.476] [INFO] retrying in 60s (attempt 2 of 4)
+[2026-04-21 16:28:14.490] [INFO] attempt 2 of 4: launching uvicorn
+[2026-04-21 16:28:14.510] [INFO] uvicorn pid=11388
+[2026-04-21 16:50:10.483] [INFO] starting nova_host_bridge wrapper pid=21364 user=ALEX-MAIN-1$
+[2026-04-21 16:50:10.579] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-21 16:50:10.592] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-21 16:50:10.598] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-21 16:50:10.603] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-21 16:50:10.607] [INFO] retry policy: max=3 delay=60s healthy_after=300s
+[2026-04-21 16:50:10.614] [INFO] attempt 1 of 4: launching uvicorn
+[2026-04-21 16:50:10.655] [INFO] uvicorn pid=15996
+[2026-04-21 17:47:26.383] [INFO] starting nova_host_bridge wrapper pid=4388 user=ALEX-MAIN-1$
+[2026-04-21 17:47:26.459] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-21 17:47:26.500] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-21 17:47:26.503] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-21 17:47:26.506] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-21 17:47:26.508] [INFO] retry policy: max=3 delay=60s healthy_after=300s
+[2026-04-21 17:47:26.514] [INFO] attempt 1 of 4: launching uvicorn
+[2026-04-21 17:47:26.560] [INFO] uvicorn pid=30872
+[2026-04-21 17:53:35.110] [INFO] starting nova_host_bridge wrapper pid=17528 user=ALEX-MAIN-1$
+[2026-04-21 17:53:35.163] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-21 17:53:35.169] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-21 17:53:35.172] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-21 17:53:35.175] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-21 17:53:35.178] [INFO] retry policy: max=3 delay=60s healthy_after=300s
+[2026-04-21 17:53:35.182] [INFO] attempt 1 of 4: launching uvicorn
+[2026-04-21 17:53:35.208] [INFO] uvicorn pid=30968
+[2026-04-21 17:54:24.765] [INFO] starting nova_host_bridge wrapper pid=5496 user=ALEX-MAIN-1$
+[2026-04-21 17:54:24.844] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-21 17:54:24.846] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-21 17:54:24.849] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-21 17:54:24.851] [INFO] retry policy: max=3 delay=60s healthy_after=300s
+[2026-04-21 17:54:24.856] [INFO] attempt 1 of 4: launching uvicorn
+[2026-04-21 17:54:24.891] [INFO] uvicorn pid=19572

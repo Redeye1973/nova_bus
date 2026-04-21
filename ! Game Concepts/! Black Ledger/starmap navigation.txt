@@ -1,0 +1,307 @@
+Create a NOVA module at L:\Nova\godot_modules\dark_ledger_navigation_and_justice\ that adds four interconnected systems to Dark Ledger (`L:\1 Nova Cursor Output\Dark Ledger\`): starmap navigation with jumpholes and secret wormholes, cargo scan enforcement, bounty/hunter simulation, and Punisher-style revenge storyline integration. Install target: res://addons/dark_ledger_navigation/ as Godot plugin.
+
+## CONTEXT (NOVA stack — houd je hieraan)
+
+- Godot 4.6.2, GDScript, Nederlandse comments, Engelse variabelnamen
+- Doel project (canon): `L:\1 Nova Cursor Output\Dark Ledger\` — referentie: `L:\Nova\SpaceShooter\`. Visueel: `res://Assets/` + **AssetCatalog** (`L:\Nova\1ToDo\Inplement Me\Clean\1st.txt`).
+- Bestaande systemen HERGEBRUIKEN: GameConstants, ReputationManager, FactionData, MissionData, MissionManager, MissionGenerator, LevelGenerator, SecretLevelManager, NewsBroadcastSystem, RemnantLance, StoryManager
+- Werkt naast dark_ledger_universe addon (biomes + open-space missions)
+- Protagonist: Rex Varn. 4 acts, 3 endings (Clean Slate / New Ledger / Ghosted)
+- Seed-based determinisme waar van toepassing
+- Geen placeholder code. Max 2 pogingen dan alternatief zoeken.
+
+## TONAL DIRECTION (hard gecodeerd in content)
+
+Noir-industrial. Grijze moraal. Rex Varn is gebroken man, niet hero. News events en NPC dialoog reflecteren consequenties van player actions zonder te oordelen. Revenge verhaal is ambigu: sommige targets blijken pionnen, sommige unschuldig, sommige verdienen het echt.
+
+---
+
+## MODULE 1 — STARMAP & NAVIGATION
+
+### Architectuur
+
+res://addons/dark_ledger_navigation/starmap/
+├── starmap_controller.gd         # Main UI controller
+├── star_system.gd                 # Resource: 1 system met alle metadata
+├── system_connection.gd           # Resource: jumphole OF wormhole link
+├── universe_data.gd               # Autoload, laadt alle systems + connections
+├── starmap_ui.tscn                # Full-screen star map scene
+├── system_node.gd                 # Visuele representatie op map
+├── route_planner.gd               # A* pathfinding over jumphole graph
+├── faction_territory_layer.gd     # Kleurgebied per faction op map
+└── rumor_pin_system.gd            # Markers voor secret wormholes, bounty targets
+
+### StarSystem data model
+```gdscript
+class_name StarSystem extends Resource
+@export var id: StringName
+@export var display_name: String
+@export var position: Vector2                    # op starmap
+@export var owner_faction: StringName
+@export var contested_by: Array[StringName]
+@export var security_level: int                  # 0-5, bepaalt scan intensity
+@export var wealth: int                          # beïnvloedt trade prijzen
+@export var locations: Array[StationReference]   # stations, planeten, manen, bases
+@export var biome_seed: int                      # voor open-space scenes in dit system
+@export var canonical: bool = false              # story-relevant, niet procedureel
+```
+
+### Jumphole connections
+- Bidirectioneel tussen 2 systems
+- Scanned: ja/nee (security_level driven)
+- Toll: sommige factions charge jumphole usage
+- Visueel op map: gekleurde lijn in faction color
+
+### Wormhole connections (secret)
+- Uni-directioneel soms
+- Discovery state: unknown / rumored / confirmed / well-known
+- Well-known wormholes worden automatisch gepatrouilleerd door space police na 3+ player uses
+- Exit heeft instability_factor: random offset op exit position, damage to hull
+- Visueel: alleen zichtbaar op map bij confirmed+ state
+
+### StarmapController
+- Full-screen UI over gameplay, pauzeer game
+- Zoom via mousewheel (8 zoom levels)
+- Klik system → info panel (faction, locations, rumors)
+- Rechter-klik → "set destination" → route planner toont path
+- Route kan multi-jump zijn: visualiseer sequence
+- Filter toggles: show_jumpholes / show_wormholes / show_bounties / show_missions / show_rumors / show_faction_territory
+
+### Route executie
+- Start route → per jump: laad jump scene (shader warp effect, 2-3s)
+- Bij wormhole: extra "instability" damage mini-event, random exit offset
+- Bij jumphole in guarded system: trigger CargoScan (zie Module 2)
+
+---
+
+## MODULE 2 — CARGO SCAN & ENFORCEMENT
+
+### Architectuur
+
+res://addons/dark_ledger_navigation/enforcement/
+├── cargo_scan_controller.gd       # Bepaalt of scan plaatsvindt, voert uit
+├── cargo_manifest.gd              # Resource op PlayerShip: wat is aan boord
+├── cargo_item.gd                  # Resource per item: legal_status, mass, value
+├── scan_encounter.tscn            # Scene voor scan confrontation
+├── police_ship.gd                 # AI voor inspector ships
+├── bribery_system.gd              # Corruption calculator per faction/officer
+└── contraband_registry.gd         # Welke goederen illegal in welke faction
+
+### CargoItem legal status
+- LEGAL: overal ok
+- RESTRICTED: legal in sommige factions, illegal in andere (bv. weapons in Corporate)
+- ILLEGAL: contraband (drugs, stolen tech, slaves, bio-weapons)
+- BLACK_BOX: story cargo, altijd illegal, speciale behandeling
+
+### Scan trigger conditions
+- Entry into guarded system via jumphole: kans = security_level × 15%
+- Random inspection in space: kans = 2% per minute in guarded territory
+- Station docking: altijd scan behalve bribed stations
+- Wormhole exits: GEEN scan (dat is het hele punt)
+- Bounty-marked player: +30% scan kans cumulatief
+
+### Scan encounter flow
+1. Police ship(s) spawn en hailen player
+2. Dialog: "Cut engines and prepare for inspection"
+3. Player keuze:
+   - **Comply**: scan loopt, contraband detected? → sub-choice
+   - **Bribe**: toont credits requirement (faction corruption + officer stats)
+   - **Flee**: police opent vuur, faction reputation -25, bounty +1 tier
+4. Bij detection:
+   - **Surrender cargo**: cargo weg, reputation -5, no heat
+   - **Bribe (late)**: 2x normale prijs, reputation intact
+   - **Fight**: kill police → reputation -40, bounty +2 tiers, news event
+5. NewsBroadcastSystem registreert elke scan-uitkomst
+
+### BriberySystem regels
+- Elke faction heeft base_corruption (0-100)
+- Syndicate: 75, Corporate: 10, Remnant: 40, Harkon: 25
+- Officer heeft individual modifier ±20
+- Bribery cost = cargo_value × 0.3 × (100 - faction_corruption) / 100
+- Failed bribe (low faction corruption): reputation -10 extra
+
+---
+
+## MODULE 3 — BOUNTY & HUNTER SYSTEM
+
+### Architectuur
+
+res://addons/dark_ledger_navigation/bounty/
+├── bounty_manager.gd              # Autoload, tracks player bounty + hunt list
+├── player_bounty.gd               # Resource: huidige heat op player
+├── bounty_board.gd                # UI in stations, list of available targets
+├── hunter_spawner.gd              # Spawnt hunters in systems based on bounty level
+├── hunter_ai.gd                   # Tactical AI, different from regular enemies
+├── hunter_encounter.tscn          # Scripted scene voor hunter attack
+├── target_npc.gd                  # Resource voor hunted NPCs (incl story targets)
+└── bounty_clearing.gd             # Pardon systems, identity wipes
+
+### Player bounty tiers
+- CLEAN (0): geen hunters
+- MARKED (1-500 cr): 5% spawn kans per jump in hostile territory, low-tier hunter
+- WANTED (500-5k): 15% spawn, mid-tier, soms in groups van 2
+- PRIORITY (5k-50k): 30% spawn, high-tier, in groups, gebruikt tracking
+- DEAD_OR_ALIVE (50k+): 50% spawn, elite hunters, ambushes bij stations, planetside attempts
+
+### Hunter AI
+- Volgt player door jumpholes (1 system achter)
+- Wacht bij stations waar player dockt
+- Gebruikt tactiek: flanking, missile from range, EMP to disable
+- Hunters HEBBEN NAMEN — persistent NPCs. Kill er een → reputation bump, naam in newsfeed
+- Sommige hunters zijn recurrent — ontsnappen als ze verliezen, komen later terug sterker
+
+### Bounty clearing options
+1. Pardon buy: duur, alleen in corrupt systems, faction-specific
+2. Faction favor: grote missie voor law-abiding faction → amnesty
+3. Identity wipe: underground service, resets bounty MAAR ook reputation+credits partial loss
+4. Story beats: sommige main plot events clearen bounty automatisch
+
+### Player-as-hunter side
+- Bounty board in elke station toont targets
+- Target data: last_known_system, estimated_ship, bounty_value, wanted_for
+- Targets bewegen actief door universe (simulated, even when player not watching)
+- Finding target = scanning systems + bar rumors + mission chains
+- High-value targets hebben bodyguards + sit in fortified locations (koppel naar planetside in toekomst)
+
+---
+
+## MODULE 4 — REVENGE STORYLINE INTEGRATION
+
+### Architectuur
+
+res://addons/dark_ledger_navigation/revenge/
+├── revenge_manager.gd             # Autoload, tracks storyline progression
+├── revenge_target.gd              # Resource: 1 target met metadata
+├── revenge_arc.gd                 # Overarching 4-act structure
+├── memory_fragment.gd             # Collectibles die backstory reveal
+├── target_confrontation.gd       # Scripted encounter scenes
+└── ending_evaluator.gd            # Bepaalt welke ending unlocked
+
+### Rex's backstory (canon, hard-coded)
+Rex Varn's vrouw Elena en dochter Maya werden 7 jaar voor game start vermoord bij een "industrial accident" op Kessler-III mining colony. Rex heeft bewijs dat het sabotage was. Vier partijen zijn verantwoordelijk op verschillende niveaus:
+
+1. **Marcus Venn** (Harkon enforcer) — pulled the trigger, directe uitvoerder
+2. **Director Halston** (Corporate exec) — gave the order to silence whistleblowers
+3. **The Auditor** (Syndicate fixer) — supplied the false accident report
+4. **Unknown 4th** — het brein achter alles. Reveal in Act 4.
+
+Elk target heeft eigen personality, verdediging, context. Sommige zijn evil, sommige zijn ambigu, de vierde is **niet wie de speler denkt** (grote twist — ik zou voorstellen dat het iemand is die Rex heeft vertrouwd, zoals zijn huidige fixer of bar contact).
+
+### Act progression
+- **Act 1**: Rex leert dat Elena's dood geen accident was. Eerste target (Venn) reveal en bereikbaar.
+- **Act 2**: Halston reveal via Venn's info. Politieke complicaties.
+- **Act 3**: Auditor. Syndicate war triggered by Rex's investigation.
+- **Act 4**: 4th target reveal. Twist. Final choice defines ending.
+
+### Player choice per target
+Bij elke target-confrontation drie keuzes:
+1. **Kill** — bloed, catharsis, bounty increase, news event, leans toward NEW_LEDGER ending
+2. **Expose** — leak info to enemies of target, target's faction destroys them for you, leans toward CLEAN_SLATE
+3. **Spare** — let go, target owes you, may return as ally or new threat, leans toward GHOSTED
+
+### Memory fragments
+- Verzameld door environments (scans, bars, NPCs)
+- Elk fragment reveal deel van waarheid
+- Fragments komen in sommige gevallen in conflict: dezelfde event verschillend beschreven door verschillende bronnen
+- Rex heeft een "ledger book" UI waar hij fragments annoteert: player sees Rex's eigen twijfel groeien
+
+### Ending evaluator
+Checkt alle 4 targets + side decisions + planetside choices (indien aanwezig):
+- Mostly Kill + high bounty + hoge kills → NEW_LEDGER (Rex wordt wat hij bejaagde)
+- Mostly Expose + reputation diverse + factions verzwakt door Rex → CLEAN_SLATE (system change)
+- Mostly Spare + memory fragments contradicted + low kills → GHOSTED (Rex verdwijnt, twijfelt aan eigen verhaal)
+- Gemengd → variant van dichtstbijzijnde ending met modifier
+
+---
+
+## MODULE 5 — INTEGRATIE
+
+### Extend NewsBroadcastSystem
+Nieuwe event types: CARGO_SCAN_EVADED, POLICE_KILL, BOUNTY_ESCALATED, HUNTER_DEFEATED, TARGET_CONFRONTED, FACTION_TERRITORY_SHIFT, WORMHOLE_DISCOVERED, REVENGE_PROGRESS. Elk met neutraal/ambigue tone, niet judgmental.
+
+### Extend ReputationManager
+Add bounty_level coupling: bounty_level beïnvloedt hunter spawn maar staat los van reputation. Nieuwe methods: add_heat(), clear_bounty(), get_hunter_intensity().
+
+### Extend MissionGenerator
+Nieuwe mission types: BOUNTY_HUNT (kill target), CARGO_SMUGGLE (transport illegal), INVESTIGATION (find memory fragment), REVENGE_BEAT (scripted story moment).
+
+### Hook naar bestaande LevelGenerator
+Wanneer player jumps naar new system, LevelGenerator raadpleegt UniverseData voor biome_seed + faction_affinity voor spawn pools. Scan/hunter encounters kunnen midden in normale levels triggeren.
+
+### Autoload toevoegingen
+UniverseData, BountyManager, RevengeManager, CargoManifest worden autoloads in project.godot.
+
+---
+
+## BESTANDSSTRUCTUUR (exact)
+
+L:\Nova\godot_modules\dark_ledger_navigation_and_justice\
+├── addon_root\
+│   └── addons\
+│       └── dark_ledger_navigation\
+│           ├── plugin.cfg
+│           ├── plugin.gd
+│           ├── starmap\
+│           │   ├── starmap_controller.gd
+│           │   ├── star_system.gd
+│           │   ├── system_connection.gd
+│           │   ├── universe_data.gd
+│           │   ├── starmap_ui.tscn
+│           │   ├── system_node.gd
+│           │   ├── route_planner.gd
+│           │   ├── faction_territory_layer.gd
+│           │   └── rumor_pin_system.gd
+│           ├── enforcement\
+│           │   ├── cargo_scan_controller.gd
+│           │   ├── cargo_manifest.gd
+│           │   ├── cargo_item.gd
+│           │   ├── scan_encounter.tscn
+│           │   ├── police_ship.gd
+│           │   ├── bribery_system.gd
+│           │   └── contraband_registry.gd
+│           ├── bounty\
+│           │   ├── bounty_manager.gd
+│           │   ├── player_bounty.gd
+│           │   ├── bounty_board.gd
+│           │   ├── hunter_spawner.gd
+│           │   ├── hunter_ai.gd
+│           │   ├── hunter_encounter.tscn
+│           │   ├── target_npc.gd
+│           │   └── bounty_clearing.gd
+│           ├── revenge\
+│           │   ├── revenge_manager.gd
+│           │   ├── revenge_target.gd
+│           │   ├── revenge_arc.gd
+│           │   ├── memory_fragment.gd
+│           │   ├── target_confrontation.gd
+│           │   └── ending_evaluator.gd
+│           ├── shaders\
+│           │   ├── jumphole_warp.gdshader
+│           │   ├── wormhole_distortion.gdshader
+│           │   └── starmap_glow.gdshader
+│           └── README.md
+├── data\
+│   ├── default_universe.tres      # 40-60 systems pre-defined
+│   ├── factions_extended.tres     # Territory claims, corruption, wealth
+│   ├── revenge_targets.tres       # 4 story targets met full data
+│   └── contraband_lists.tres      # Per faction legal/illegal
+└── test_scenes\
+    ├── test_starmap.tscn
+    ├── test_cargo_scan.tscn
+    ├── test_hunter_encounter.tscn
+    └── test_revenge_confrontation.tscn
+
+---
+
+## HARD RULES
+
+- Elk systeem moet optional zijn: Dark Ledger moet speelbaar blijven zonder bounty system actief
+- CargoScan kans NOOIT hardcoded 100% zonder player warning — always a tell (news event, NPC tip)
+- Hunter spawn rate gecapped: max 1 hunter encounter per 10 minutes real-time, ongeacht bounty level (anti-frustration)
+- Revenge targets zijn NEVER auto-completed — player moet actief pursuing
+- Ending evaluator toont Rex's current lean in ledger_book UI zodat speler bewust koers kan bijsturen
+- Alle 40-60 default systems hebben name, position, faction — geen placeholder
+- Starmap UI moet playable zijn op 1920x1080 EN 1280x720
+- Jump shader effect MOET zichtbaar verschil tonen tussen jumphole (clean) en wormhole (distorted, unstable)
+- News events om revenge targets zijn neutraal getoond: geen "Rex rid galaxy of scum" maar "Enforcer Venn found dead in Kessler hub"
+- Memory fragments bevatten contradictions by design — player moet zelf bepalen wat waar is

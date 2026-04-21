@@ -1,0 +1,39 @@
+NOVA v2 Mega Build — log (autonome start)
+========================================
+Session date: 2026-04-19
+
+FASE A — Voorbereiding
+-----------------------
+- nova_mega_plan.zip uitgepakt naar L:\!Nova V2\mega_plan\ (kopie van !Prompts extract).
+- nova_v2_agents.zip → L:\!Nova V2\agents\nova_v2_agents\
+- nova_v2_extensions.zip → L:\!Nova V2\extensions\nova_v2_extensions\
+- shmup_pipeline.zip → L:\!Nova V2\shmup\shmup_pipeline\
+- nova_v2_infrastructure(_final).zip: niet overschreven (bestaande live infrastructure behouden).
+
+Mappen: briefings/, status/, logs/, v2_services/ aangemaakt/gebruikt.
+briefings/master_build_brief.md geschreven.
+infrastructure/.env backup: logs/backup_env_v2_20260419_144807.env
+
+API
+---
+- V1: GET .../5678/api/v1/workflows?limit=250 — 68 workflows (key: secrets/N8n WorkHorse.txt).
+- V2: GET .../5679/api/v1/workflows — 401 met geteste keys; zie status/escalation_v2_api_key.md.
+
+FASE B/C
+--------
+- Master briefing document staat klaar voor orchestrator-delegatie; V2 API-import geblokkeerd tot N8N_V2_API_KEY beschikbaar is.
+- Volledige 35-agent bouwloop (V1-delegatie + deploy) niet afgerond in deze run — zie status/phase_a_complete.json en escalation note.
+
+Volgende stappen
+----------------
+1. Gebruiker: V2 API key toevoegen (zie escalation_v2_api_key.md).
+2. Resume: Fase C agent-loop (fallback: Cursor genereert uit .md specs per mega_plan).
+
+[2026-04-19T13:02:51Z] Fase C — agent 01_sprite_jury
+- v2_services + infrastructure/services/sprite_jury; compose service sprite-jury-v2
+- Hetzner: build+up OK; health OK inside container
+- V2 workflow imported+activated id=RG7kvtJECmWOePMT webhook=sprite-review-poc E2E OK
+- pytest local: 4 passed
+- fallback_mode: true (no V1 orchestrator POST)
+- status: agent_01_status.json, progress_milestone_01.md, docs/v2_deployment_report.md updated
+

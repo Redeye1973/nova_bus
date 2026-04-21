@@ -1,0 +1,269 @@
+Create a NOVA module at L:\Nova\godot_modules\dark_ledger_universe\ that gives Dark Ledger (`L:\1 Nova Cursor Output\Dark Ledger\`) two new systems: infinite procedural biomes and an open-space Privateer-style mission framework with escort/elimination/scan missions and destructible asteroids. Install target: res://addons/dark_ledger_universe/ als Godot plugin.
+
+## CONTEXT (NOVA stack — houd je hieraan)
+
+- Godot 4.6.2, GDScript, Nederlandse comments, Engelse variabelnamen
+- Doel project (canon): `L:\1 Nova Cursor Output\Dark Ledger\` — referentie-logica: `L:\Nova\SpaceShooter\` (niet overschrijven). Zie ook `L:\Nova\1ToDo\Inplement Me\Clean\1st.txt`.
+- Bestaande managers HERGEBRUIKEN niet vervangen: GameConstants, ReputationManager, FactionData, MissionData, MissionManager, MissionGenerator, LevelGenerator, SecretLevelManager, NewsBroadcastSystem, RemnantLance, StoryManager
+- Visuele assets: **gekochte SHMUP pixel-art** onder `res://Assets/` (ships, 6 faction enemy pools, bosses, projectiles, explosions, backgrounds, UI) via **AssetCatalog** — **geen** oude 66-weapon / 432-enemy PyQt5-sprite workflows meer.
+- Protagonist: Rex Varn. Setting: Helios Fringe. 4 acts, 3 endings (Clean Slate / New Ledger / Ghosted)
+- Geen placeholder code, altijd werkend. Max 2 pogingen zelfde aanpak dan alternatief zoeken
+- Seed-based determinisme: zelfde seed = zelfde biome = zelfde mission layout, reproduceerbaar voor savegames
+- Perspective blijft top-down 2D (niet 3D). Asteroid-velden en parallax in 2D lagen
+
+---
+
+## MODULE 1 — PROCEDURAL BIOME GENERATOR
+
+Genereert oneindig veel unieke biomes uit parameter-ruimtes. Niet een vaste lijst — echte procedurele generatie.
+
+### Architectuur
+
+res://addons/dark_ledger_universe/biome/
+├── biome_generator.gd          # seed → BiomeProfile
+├── biome_profile.gd            # Resource: alle parameters
+├── palette_generator.gd        # Harmonie-regels, geen random kleuren
+├── parallax_composer.gd        # 4-layer parallax builder
+├── prop_spawner.gd             # Terrain props (asteroids, debris, stations)
+├── hazard_system.gd            # Biome hazards (nebula slow, radiation, mijnenvelden)
+├── ambient_controller.gd       # Audio ambience + shader params
+└── biome_library.gd            # Cache per seed, hergebruikbaar voor savegames
+
+### BiomeProfile parameters
+
+- theme_tags: 2-3 uit [frozen, volcanic, nebula, wreckage, industrial, organic, pristine, corrupted, radioactive, crystal]
+- base_palette: 5 kleuren via harmonie-regels
+- accent_palette: 2 complementaire kleuren
+- parallax_layers: 4 lagen {deep_stars, mid_nebula, far_terrain, near_objects} elk met density (0.1-1.0) en scroll_speed
+- prop_density: sparse/medium/dense/extreme
+- prop_pool: gewogen lijst uit {small_asteroid, large_asteroid, debris_chunk, dead_station, nebula_cloud, ice_crystal, organic_growth, wreck_hull, mine_cluster}
+- hazard_set: 0-3 uit {slow_fog, damage_field, sensor_jam, gravity_well, mine_field, solar_flare}
+- ambient_mood: {oppressive, serene, tense, alien, industrial, void}
+- faction_affinity: Dict[faction_id → float 0-1] bepaalt wie hier spawnt
+- shader_params: {saturation, contrast, bloom, vignette, scanlines, chromatic_aberration}
+
+### PaletteGenerator regels
+
+Gebruik een van vijf harmonie-strategieën (seed-gekozen):
+1. Analogous (HSL rotation ±30°)
+2. Complementary (±180°)
+3. Triadic (±120°)
+4. Split-complementary
+5. Monochrome + 1 accent
+
+Lightness + saturation worden gescaled op theme_tags: frozen = hoge lightness/lage sat, volcanic = lage lightness/hoge sat, nebula = medium met hoge bloom, wreckage = desaturated + grijstonen dominant.
+
+### ParallaxComposer
+
+Bouwt een ParallaxBackground node met 4 ParallaxLayers. Elke layer krijgt tiled TextureRect of gegenereerde Noise2D texture. Scroll speeds: 0.1 / 0.3 / 0.6 / 1.0 vast.
+
+### PropSpawner
+
+Spawnt props volgens prop_density curve. Elke prop heeft collision + hit_points + on_destroyed signal. Belangrijk: PROPS ZIJN SCHIETBAAR (zie MODULE 2 — asteroid-escort eist dit).
+
+---
+
+## MODULE 2 — OPEN-SPACE MISSION FRAMEWORK (Privateer-style)
+
+Vervangt niet MissionManager/MissionGenerator — haakt erin via nieuwe mission_type enum waardes en nieuwe sub-mission scripts.
+
+### Architectuur
+
+res://addons/dark_ledger_universe/missions/
+├── open_space_controller.gd    # Main scene controller voor open-space missies
+├── waypoint_system.gd          # Waypoint graph + navigatie
+├── waypoint_marker.gd          # Visueel: pijl op edge + distance + state color
+├── objective_tracker.gd        # Voortgang per objective, geeft events aan NewsBroadcastSystem
+├── mission_types/
+│   ├── escort_mission.gd       # Bescherm vrachtschip door asteroid-veld
+│   ├── eliminate_mission.gd    # Vernietig alle vijanden op waypoint(s)
+│   ├── scan_mission.gd         # Scan objecten op waypoint(s)
+│   ├── patrol_mission.gd       # Bezoek alle waypoints, reageer op spawns
+│   ├── intercept_mission.gd    # Onderschep bewegend doelwit
+│   └── hunt_mission.gd         # Zoek + elimineer specifiek doelwit in biome
+├── escort_target.gd            # AI voor vrachtschip (volgen, ontwijken, schade state)
+└── encounter_generator.gd      # Random encounters tussen waypoints
+
+### Open Space Scene structure
+
+OpenSpaceScene (Node2D)
+├── BiomeLayer (ParallaxBackground uit Module 1)
+├── WorldLayer (Node2D, speelveld zelf)
+│   ├── PlayerShip
+│   ├── EscortTarget (optioneel per mission)
+│   ├── AsteroidField (PropSpawner output)
+│   ├── EnemySpawner
+│   └── Waypoints
+├── HUD (CanvasLayer)
+│   ├── MiniMap
+│   ├── WaypointCompass (pijl op schermrand naar actief waypoint)
+│   ├── ObjectiveList
+│   └── EscortHealthBar (alleen bij escort)
+└── Camera2D (volgt player met lead-based smoothing)
+
+### WaypointSystem
+
+- Waypoint = {id, position: Vector2, type: enum, objective_data: Dict, activation_state}
+- Types: NAV (gewoon navigeren), COMBAT (elimineer vijanden), SCAN (scan target), RENDEZVOUS (wacht op NPC), EXIT (missie eind)
+- Graph: waypoints hebben connections, sommige missies vereisen volgorde, andere niet
+- Activation: waypoint wordt actief als player binnen ACTIVATION_RADIUS komt (default 300px)
+- Compleet: waypoint checkt eigen objective conditie, emit completed signal
+- Next waypoint auto-targeted via compass HUD
+
+### EscortMission (het scenario dat je beschreef)
+
+```
+SCENARIO:
+Vrachtschip spawnt naast player bij start-waypoint.
+Route: 3-6 waypoints door asteroid-biome.
+Tussen waypoints: procedureel asteroid-veld gegenereerd uit BiomeProfile.prop_pool.
+Vrachtschip volgt route automatisch maar LANGZAAM (speed ~60% van player).
+Asteroiden drijven richting vrachtschip-route (gescripte paden, niet pure fysica).
+```
+
+Kernregels voor asteroid-escort:
+- Asteroiden hebben hit_points (small: 1, medium: 3, large: 8, huge: 20)
+- Grote asteroiden splitsen bij vernietiging in 2-3 kleinere (Asteroids arcade stijl)
+- Elke asteroid die het vrachtschip raakt doet damage gebaseerd op size
+- Vrachtschip HP = missionschaal variabele (default 100). Op 0 = mission failed
+- Vrachtschip heeft eigen kleine turrets die op VIJANDEN schieten (niet asteroiden) — player moet asteroiden zelf opruimen
+- Visual warning: asteroiden op koers met vrachtschip krijgen rode trajectory-line (2s vooruitgeprojecteerd)
+- Escort_target.gd heeft states: FOLLOWING_ROUTE, EVADING, DAMAGED (rook), CRITICAL (vlammen), DESTROYED
+
+```gdscript
+# escort_target.gd core interface
+class_name EscortTarget extends CharacterBody2D
+
+signal waypoint_reached(waypoint_id)
+signal health_critical
+signal destroyed
+
+@export var max_hp: float = 100.0
+@export var follow_speed: float = 120.0
+@export var route: Array[Vector2]
+
+func apply_damage(amount: float, source: String) -> void
+func get_projected_position(seconds_ahead: float) -> Vector2
+func is_in_danger_from(body: Node2D) -> bool
+```
+
+Asteroiden-AI:
+- Free-floating met linear velocity (random direction + speed 20-80 px/s)
+- Bij escort-missie: sommige asteroiden krijgen biased trajectory richting escort route (ActiveThreat subtype)
+- Op vernietiging: emit_signal("destroyed", position, size) voor loot/score/chain-explosion
+- Performance: max 150 asteroiden tegelijk, culling buiten 2x screen bounds
+
+### EliminateMission
+
+- Waypoint(s) hebben spawn-trigger: bij binnenkomst player spawnen N vijanden uit faction_affinity pool
+- Wave structure: 2-4 waves per waypoint, 3-8 enemies per wave, interval 3-5s
+- Waypoint completed als alle waves leeg EN alle enemies dood
+- Enemies gebruiken bestaande 432-sprite pool via FactionData
+- Difficulty schaalt met act (1-4) en ReputationManager status
+
+### ScanMission
+
+- Elk waypoint heeft scan_target (een object, debris, derelict, signal source)
+- Scan actie: player moet binnen SCAN_RADIUS (200px) blijven voor SCAN_DURATION (3-8s)
+- Break als player eruit vliegt: progress bevriest, niet reset
+- Sommige scan-targets triggeren enemy ambush op 50% scan progress
+- Rewards via ReputationManager (faction die je info betaalt) + NewsBroadcastSystem event
+
+### PatrolMission / InterceptMission / HuntMission
+
+Analoge structuur: elk heeft eigen objective_tracker logica, deelt waypoint/asteroid/enemy systemen.
+
+### EncounterGenerator
+
+Tussen waypoints (op route maar buiten waypoint-radius): random kleine encounters.
+- Kans per afstand-unit: 0.02 (tuneable)
+- Types: distress_call, pirate_ambush, cargo_debris, friendly_patrol, mystery_signal
+- Reputation-gevoelig: pirates komen vaker als reputation met Syndicate slecht is
+- Haakt in op bestaande MissionGenerator voor side-opportunities
+
+---
+
+## MODULE 3 — INTEGRATIE met bestaande code
+
+### Extend MissionData
+Voeg mission_type enum toe: ESCORT, ELIMINATE_WAYPOINTS, SCAN_WAYPOINTS, PATROL, INTERCEPT, HUNT
+
+### Extend MissionGenerator
+Nieuwe generate_open_space_mission(seed, act, player_reputation) functie. Genereert:
+- Biome via BiomeGenerator(seed)
+- Waypoint route (3-7 waypoints)
+- Mission type op basis van ReputationManager context
+- Objectives per waypoint
+- Ingebedde encounter-spots
+
+### Hook in bestaande scenes
+Voeg OpenSpaceScene.tscn toe aan scene pool. LevelGenerator.pick_next_level() kan kiezen tussen classic_wave_level (bestaand) en open_space_mission (nieuw) op basis van mission_type.
+
+### NewsBroadcastSystem
+Elke open-space mission completion → news event: "Rex Varn escorted Kessler-class freighter through the Veil Nebula", "Scan data from derelict Harkon cruiser leaked to independent press". Kleur-gekleurd door ending-axis (Clean Slate vs Ghosted).
+
+---
+
+## BESTANDSSTRUCTUUR (exact)
+
+L:\Nova\godot_modules\dark_ledger_universe\
+├── addon_root\
+│   └── addons\
+│       └── dark_ledger_universe\
+│           ├── plugin.cfg
+│           ├── plugin.gd
+│           ├── biome\
+│           │   ├── biome_generator.gd
+│           │   ├── biome_profile.gd
+│           │   ├── palette_generator.gd
+│           │   ├── parallax_composer.gd
+│           │   ├── prop_spawner.gd
+│           │   ├── hazard_system.gd
+│           │   ├── ambient_controller.gd
+│           │   └── biome_library.gd
+│           ├── missions\
+│           │   ├── open_space_controller.gd
+│           │   ├── waypoint_system.gd
+│           │   ├── waypoint_marker.gd
+│           │   ├── objective_tracker.gd
+│           │   ├── escort_target.gd
+│           │   ├── encounter_generator.gd
+│           │   └── mission_types\
+│           │       ├── escort_mission.gd
+│           │       ├── eliminate_mission.gd
+│           │       ├── scan_mission.gd
+│           │       ├── patrol_mission.gd
+│           │       ├── intercept_mission.gd
+│           │       └── hunt_mission.gd
+│           ├── props\
+│           │   ├── asteroid.gd
+│           │   ├── asteroid_spawner.gd
+│           │   ├── debris.gd
+│           │   └── hazard_volume.gd
+│           ├── scenes\
+│           │   ├── OpenSpaceScene.tscn
+│           │   ├── Asteroid.tscn
+│           │   ├── EscortTarget.tscn
+│           │   └── Waypoint.tscn
+│           ├── shaders\
+│           │   ├── biome_palette.gdshader
+│           │   └── nebula_noise.gdshader
+│           └── README.md
+├── install.md                   # Instructies om naar Dark Ledger (`L:\1 Nova Cursor Output\Dark Ledger\`) te kopiëren / te linken als addon
+└── test_scenes\
+    ├── test_biome_viewer.tscn   # Hot-reload biomes per seed
+    └── test_escort_mission.tscn # Standalone escort test
+
+---
+
+## HARD RULES
+
+- Gebruik bestaande FactionData / GameConstants / ReputationManager, schrijf geen duplicaten
+- Alle procedurele generatie MOET deterministisch zijn: (seed, versie) → identieke output
+- Asteroid damage op escort MOET duidelijk visueel zijn: hit flash, screen shake (schaalbaar op distance), debris particles
+- Projectiel-asteroid collision werkt via Area2D, niet RigidBody physics (performance)
+- Max 150 asteroiden / 30 enemies / 5 hazards tegelijk actief (culling daarbuiten)
+- Waypoints zijn volledig data-driven via .tres resources zodat missies handmatig tunbaar blijven
+- Bij alle 6 mission_types: failure condition is nooit alleen "player dood" — ook "escort dood", "timer", "target ontsnapt" per type
+- Plugin laadt clean in **Dark Ledger** zonder andere scripts te breken — test door bestaande main scene te openen na install (referentie: `L:\Nova\SpaceShooter` alleen voor vergelijk)
+- README bevat: install stappen, test instructies, parameter uitleg, seed-voorbeelden voor mooie biomes

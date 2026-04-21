@@ -1,0 +1,6 @@
+INFO:     127.0.0.1:57309 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52790 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51579 - "POST /tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58319 - "POST /aseprite/generate_sprite HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58320 - "POST /aseprite/export_animation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58321 - "POST /blender/bake HTTP/1.1" 200 OK

@@ -1,0 +1,284 @@
+Create a NOVA module at L:\Nova\godot_modules\dark_ledger_datapad_system\ that adds the central knowledge/progression currency to Dark Ledger (`L:\1 Nova Cursor Output\Dark Ledger\`): datapads, the ledger book UI, and procedural planetside datapad raid missions. This module connects starmap, bounty, revenge, cargo, and faction systems into one coherent discovery loop. Install target: res://addons/dark_ledger_datapads/ as Godot plugin.
+
+## CONTEXT (NOVA stack — houd je hieraan)
+
+- Godot 4.6.2, GDScript, Nederlandse comments, Engelse variabelnamen
+- Doel project (canon): `L:\1 Nova Cursor Output\Dark Ledger\` — referentie-logica: `L:\Nova\SpaceShooter\`. Visueel: gekochte packs → `res://Assets/` + **AssetCatalog** (`L:\Nova\1ToDo\Inplement Me\Clean\1st.txt`).
+- Werkt naast dark_ledger_universe (biomes + open-space) en dark_ledger_navigation (starmap + bounty + revenge)
+- Bestaande systemen hergebruiken: alle bestaande managers, UniverseData, BountyManager, RevengeManager, ReputationManager
+- Protagonist: Rex Varn — informatiehandelaar. Datapads zijn thematisch zijn kern-object
+- Tonal direction: noir-industrial, grijze moraal, ambigue intel
+- Geen placeholder code. Max 2 pogingen dan alternatief zoeken.
+- Seed-based determinisme voor procedurele raid missies
+
+---
+
+## MODULE 1 — DATAPAD CORE SYSTEM
+
+### Architectuur
+
+res://addons/dark_ledger_datapads/core/
+├── datapad.gd                    # Base Resource class
+├── datapad_types/
+│   ├── coordinate_pad.gd         # Unlockt starmap locations
+│   ├── intel_pad.gd              # Reveal bounty/NPC locations
+│   ├── market_pad.gd             # Cargo prijs data per system
+│   ├── contraband_pad.gd         # Legal status per faction
+│   ├── memory_pad.gd             # Revenge storyline fragments
+│   ├── schematic_pad.gd          # Ship/weapon upgrades
+│   ├── cipher_pad.gd             # Decrypt andere datapads
+│   └── shadow_ledger_pad.gd      # NPC leverage entries
+├── datapad_registry.gd           # Autoload: alle bekende + gevonden datapads
+├── datapad_generator.gd          # Procedureel genereren uit seed + context
+└── cross_reference_engine.gd     # Vergelijkt datapads, detecteert contradicties
+
+### Datapad base Resource
+```gdscript
+class_name Datapad extends Resource
+@export var id: StringName
+@export var pad_type: StringName
+@export var title: String
+@export var content: String              # max 300 chars, Rex's note style
+@export var source_faction: StringName   # wie heeft m gemaakt
+@export var reliability: float = 1.0     # 0.0-1.0, beïnvloedt cross-reference
+@export var encrypted: bool = false
+@export var cipher_key_id: StringName    # welke cipher_pad decrypt dit
+@export var unlock_data: Dictionary      # payload wat het unlockt
+@export var discovered: bool = false
+@export var discovered_at: int           # Unix timestamp
+@export var discovered_location: StringName
+@export var player_notes: String         # Rex's eigen toegevoegde notes
+@export var tags: Array[StringName]      # voor filtering in ledger book
+```
+
+### Per datapad_type specifieke unlock_data
+
+- **CoordinatePad**: {target_system_id, target_type (system/wormhole/derelict/base)}
+- **IntelPad**: {target_npc_id, known_location, confidence, expiry_game_time}
+- **MarketPad**: {cargo_id, system_id, buy_price, sell_price, timestamp}
+- **ContrabandPad**: {cargo_id, faction_id, legal_status}
+- **MemoryPad**: {fragment_id, chronological_order, speaker_id, topic}
+- **SchematicPad**: {unlock_blueprint_id, complexity, required_schematics}
+- **CipherPad**: {decrypts_cipher_key_id}
+- **ShadowLedgerPad**: {npc_id, leverage_type, exposure_cost}
+
+### CrossReferenceEngine rules
+- Bij discover van nieuwe datapad: scan alle discovered datapads op overlappende velden (zelfde NPC, system, cargo, event)
+- Als 2+ pads over zelfde feit: check of unlock_data overeenstemt
+- Agreement: beide krijgen +0.1 reliability, UI toont groene "verified"
+- Contradiction: beide krijgen -0.2 reliability, UI toont rode "conflict", player moet handmatig kiezen welke te vertrouwen
+- False planted datapads: sommige datapads hebben hidden "misinformation" flag → designer kan specifieke contradicties triggeren voor narrative
+
+---
+
+## MODULE 2 — LEDGER BOOK UI
+
+### Architectuur
+
+res://addons/dark_ledger_datapads/ledger_book/
+├── ledger_book_controller.gd     # Main UI controller, keybind 'L'
+├── ledger_book.tscn              # Full-screen book UI
+├── tabs/
+│   ├── star_charts_tab.gd
+│   ├── people_tab.gd
+│   ├── markets_tab.gd
+│   ├── targets_tab.gd
+│   ├── memories_tab.gd
+│   └── rumors_tab.gd
+├── entry_detail_panel.gd         # Rechter paneel, toont geselecteerde entry
+├── player_note_editor.gd         # Inline text editor per entry
+├── search_filter_bar.gd          # Zoek + tag filter
+└── datapad_reader.tscn           # Modal voor volledige datapad content
+
+### Tab functies
+
+**Star Charts** — lijst van alle systems, met discovery state per system. Klik → jump naar starmap gehighlight op dat system. Filter: show_unknown / show_rumored / show_confirmed. Special: toon welke systems nog niet volledig gescand zijn (incomplete intel).
+
+**People** — NPC dossiers. Elk NPC entry: portrait (placeholder eerst), reliability rating, known locations (met timestamp — oude intel is grijs), dialogue history (laatste 3 gesprekken summarized), leverage level (shadow ledger pads), current relationship status. Filter: faction / relationship / last_seen.
+
+**Markets** — real-time prijstabel. Rows: cargo types. Columns: known systems. Cellwaarde: buy/sell price, timestamp (ouder dan 3 game-days = grijs). Toont winstmarges automatisch (groen = profit route). Filter: cargo_type / min_margin.
+
+**Targets** — alleen tabs voor bounty targets + revenge targets. Elk target: name, last_known_system, confidence, threat_level, reward. Klik → toont alle gerelateerde datapads. Action buttons: "mark on starmap" / "export to mission".
+
+**Memories** — Elena/Maya fragments chronologisch + geografisch. Mini-timeline UI boven. Fragments met conflicts gemarkeerd rood. Klik → side-by-side vergelijking van conflicting fragments. Rex kan per fragment een "believed / doubted / rejected" state zetten → beïnvloedt ending evaluator.
+
+**Rumors** — unverified intel uit bar conversations, NPC tips, overheard. Elk rumor: source, content, verification_state. Cross-reference met datapads kan rumors verifieren (reliability stijgt) of falsifieren.
+
+### Player notes
+Per entry kan Rex notes schrijven. Deze notes zijn savegame-persistent en zichtbaar in relevante in-game contexts (bv. NPC notes tonen bij gesprek met die NPC).
+
+---
+
+## MODULE 3 — PROCEDURELE PLANETSIDE DATAPAD RAID MISSIES
+
+### Architectuur
+
+res://addons/dark_ledger_datapads/planetside/
+├── raid_mission_generator.gd     # Genereert raid uit seed + faction + context
+├── raid_level_composer.gd        # Bouwt level layout
+├── raid_level.tscn               # Base scene voor planetside raid
+├── rex_side_scroll.gd            # Player character controller (Blackthorne style)
+├── rex_animations.tres           # Sprite animations (walk/jump/crouch/shoot/climb)
+├── enemy_guard.gd                # Base guard AI
+├── enemy_types/
+│   ├── security_bot.gd
+│   ├── faction_soldier.gd
+│   ├── heavy_enforcer.gd
+│   └── tech_specialist.gd
+├── raid_objectives/
+│   ├── terminal_hack.gd
+│   ├── crate_search.gd
+│   ├── vault_crack.gd
+│   └── corpse_loot.gd
+├── stealth_system.gd             # Detection cones, alarm states
+└── extraction_sequence.gd        # Timer-based escape na alarm
+
+### Raid mission structure
+
+Elke raid mission = procedureel uit template:
+- 1 entry room (landing area)
+- 2-4 corridor/chamber rooms
+- 1 objective room (main datapad cluster)
+- 1 extraction room
+
+Gegenereerd uit faction-skin (Harkon = industrieel staal, Syndicate = neon marble, Corporate = sterile white, Remnant = alien organic).
+
+### Gameplay
+
+- Rex heeft pistol (default) of shotgun (vanaf Act 2) of rifle (vanaf Act 3)
+- 3-6 HP, high lethality combat (Blackthorne style)
+- Cover system: duck achter foreground objects (Z key)
+- Stealth takedown mogelijk vanaf achter (Blackthorne kenmerk)
+- Enemies hebben detection cones (visualized in debug mode)
+- Alarm state: als gedetecteerd, nieuwe enemies spawnen continue tot extraction
+- Environmental kills: schiet hanging crates, explode fuel cells, open airlock
+
+### Loot distribution
+
+Elk raid level heeft seed-based loot spawn:
+- 3-5 datapads gegarandeerd (mix van types op basis van faction)
+- 1-2 cargo items (voor smokkel)
+- Optional: 1 memory_pad (10% kans per raid)
+- Optional: 1 cipher_pad (5% kans per raid)
+- Credits in vaults + op dode enemies
+
+### Story raids (niet procedureel)
+
+RaidMissionGenerator heeft override: als revenge_target confrontation → laad handgebouwde scene uit scenes/story_raids/. Deze zijn niet procedureel. 6-10 in total game.
+
+---
+
+## MODULE 4 — INTEGRATIE HOOKS
+
+### UniverseData extensions
+CoordinatePad.apply() → zet StarSystem.discovery_state naar "confirmed" + emit signal voor starmap refresh.
+
+### BountyManager extensions
+IntelPad.apply() → update target_npc.last_known_system + confidence. Starmap toont target marker.
+
+### CargoScan extensions
+ContrabandPad.apply() → speler ziet in cargo UI welke items risky zijn bij elke voorgenomen jump destination.
+
+### RevengeManager extensions
+MemoryPad.apply() → adds fragment naar memory_fragments. Trigger cross-reference. Update revenge_arc progression check.
+
+### MissionGenerator extensions
+Nieuwe mission_type: DATAPAD_RAID. Generated met faction + difficulty + location. Reward: 3-5 datapads gegarandeerd.
+
+### NewsBroadcastSystem
+Nieuwe event types: DATAPAD_CONTRADICTION (Rex ontdekt conflicting intel), SHADOW_LEDGER_LEVERAGE (Rex kan NPC chanteren), INTEL_EXPIRED (oude intel niet meer betrouwbaar).
+
+### Autoload toevoegen
+DatapadRegistry, CrossReferenceEngine als autoloads in project.godot.
+
+---
+
+## BESTANDSSTRUCTUUR (exact)
+
+L:\Nova\godot_modules\dark_ledger_datapad_system\
+├── addon_root\
+│   └── addons\
+│       └── dark_ledger_datapads\
+│           ├── plugin.cfg
+│           ├── plugin.gd
+│           ├── core\
+│           │   ├── datapad.gd
+│           │   ├── datapad_registry.gd
+│           │   ├── datapad_generator.gd
+│           │   ├── cross_reference_engine.gd
+│           │   └── datapad_types\
+│           │       ├── coordinate_pad.gd
+│           │       ├── intel_pad.gd
+│           │       ├── market_pad.gd
+│           │       ├── contraband_pad.gd
+│           │       ├── memory_pad.gd
+│           │       ├── schematic_pad.gd
+│           │       ├── cipher_pad.gd
+│           │       └── shadow_ledger_pad.gd
+│           ├── ledger_book\
+│           │   ├── ledger_book_controller.gd
+│           │   ├── ledger_book.tscn
+│           │   ├── entry_detail_panel.gd
+│           │   ├── player_note_editor.gd
+│           │   ├── search_filter_bar.gd
+│           │   ├── datapad_reader.tscn
+│           │   └── tabs\
+│           │       ├── star_charts_tab.gd
+│           │       ├── people_tab.gd
+│           │       ├── markets_tab.gd
+│           │       ├── targets_tab.gd
+│           │       ├── memories_tab.gd
+│           │       └── rumors_tab.gd
+│           ├── planetside\
+│           │   ├── raid_mission_generator.gd
+│           │   ├── raid_level_composer.gd
+│           │   ├── raid_level.tscn
+│           │   ├── rex_side_scroll.gd
+│           │   ├── rex_animations.tres
+│           │   ├── stealth_system.gd
+│           │   ├── extraction_sequence.gd
+│           │   ├── enemy_guard.gd
+│           │   ├── enemy_types\
+│           │   │   ├── security_bot.gd
+│           │   │   ├── faction_soldier.gd
+│           │   │   ├── heavy_enforcer.gd
+│           │   │   └── tech_specialist.gd
+│           │   └── raid_objectives\
+│           │       ├── terminal_hack.gd
+│           │       ├── crate_search.gd
+│           │       ├── vault_crack.gd
+│           │       └── corpse_loot.gd
+│           ├── scenes\
+│           │   ├── story_raids\             # handgebouwd, 6-10 levels
+│           │   └── raid_templates\          # procedureel base scenes per faction
+│           ├── shaders\
+│           │   ├── datapad_hologram.gdshader
+│           │   └── alarm_red_overlay.gdshader
+│           └── README.md
+├── data\
+│   ├── datapad_content_library.tres    # 200+ pre-written datapad contents
+│   ├── raid_layouts.tres                # Template layouts per faction
+│   ├── npc_roster.tres                  # People tab roster
+│   └── memory_fragments.tres            # Elena/Maya storyline fragments
+└── test_scenes\
+    ├── test_ledger_book.tscn
+    ├── test_datapad_discovery.tscn
+    ├── test_planetside_raid.tscn
+    └── test_cross_reference.tscn
+
+---
+
+## HARD RULES
+
+- Elke datapad content max 300 tekens. Rex's note-style, clipped prose, noir toon.
+- Cross-reference engine MOET real-time draaien (sub-100ms per nieuwe pad discovery)
+- Ledger book UI MUST werken op 1920x1080 en 1280x720
+- Raid missies zijn SKIPBAAR — bij alarm + extract, speler kan zonder objective complete weg, minder loot
+- Max 5 datapads per raid om inflatie te voorkomen
+- Story raids gebruiken NIET de procedurele generator — handgebouwde scenes only
+- Datapad reliability beïnvloedt tactical UI: onbetrouwbare intel wordt met "?" aangegeven op starmap
+- Memory fragments MOETEN soms contradicten — dit is intentional design voor ambigue ending
+- Planetside Rex controller heeft zelfde responsiveness als Blackthorne (geen floaty movement)
+- Detection cones zijn in debug mode zichtbaar, in gameplay alleen via enemy model direction
+- Alle procedurele raid content MOET deterministisch zijn uit (seed, faction, difficulty) tuple
+- README met: install, gameplay loop, hoe datapads te testen, voorbeeld seeds, wijzigbare content in .tres files
