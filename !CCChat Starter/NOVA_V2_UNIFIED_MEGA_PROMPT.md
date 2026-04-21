@@ -117,6 +117,27 @@ L:\Nova\Key's\                        # API key backups
 7. Ik (Alex) bepaal wanneer het gesprek klaar is. Nooit afsluiten met "tot
    straks", "🚂", "succes" enz.
 
+### 1.5 Git toegang
+
+De werkmap `L:\!Nova V2` is een git-repo met remote `origin` op
+`https://github.com/Redeye1973/nova_bus.git` (**private**). Windows Credential
+Manager bewaart de Personal Access Token, dus `git push` en `git pull` werken
+**zonder interactieve prompts**. Huidige branch: **`main`** (trackt
+`origin/main`). Gebruik git vrij voor:
+
+- **Commits** na elke succesvolle fase (A/B/C/D/E/F/G), met duidelijke
+  commitmessages (wat werkte, wat bewust niet is meegenomen).
+- **Tags** op belangrijke milestones (bijv. `phase-c-judge-live`,
+  `backup-YYYY-MM-DD`).
+- **Branches** voor experimentele agents of risicovolle refactors; merge
+  terug naar `main` pas na groene tests.
+- **Herstel:** bij mislukte of gevaarlijke stap terug naar een bekende goede
+  staat met `git reset --hard <tag-of-commit>` (bijv. na een milestone-tag
+  of backup-tag vóór een grote deploy).
+
+Push milestones naar `origin` zodat de private remote dezelfde staat heeft
+als de lokale machine.
+
 ================================================================================
 DEEL 2 — WAT ER AL GEBOUWD IS (SKIP / PRESERVE)
 ================================================================================
@@ -845,6 +866,7 @@ Ga.
 - **4-level error escalation** → Deel 7
 - **Asset Registry + Cost Guard** → Deel 3.9
 - **Geen gespreksafrondende zinnen** → hard-grens 7
+- **Git: private `origin`, PAT via Credential Manager, branch `main`** → Deel 1.5
 
 ## WAT JE NOG ZELF MOET DOEN VOORDAT JE PLAKT
 
