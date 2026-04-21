@@ -18,6 +18,10 @@ from pydantic import BaseModel, Field
 
 from adapters import freecad as fc_adapter
 from adapters import qgis as qgis_adapter
+from adapters import aseprite as aseprite_adapter
+from adapters import krita as krita_adapter
+from adapters import blender as blender_adapter
+from adapters import godot as godot_adapter
 
 logger = logging.getLogger("bridge")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -40,8 +44,12 @@ def _load_config() -> Dict[str, Any]:
 
 CONFIG = _load_config()
 HOST_TOOLS = (CONFIG.get("host_tools") or {}) if isinstance(CONFIG, dict) else {}
-FREECAD_BIN = (HOST_TOOLS.get("freecad") or {}).get("bin") if HOST_TOOLS else None
-QGIS_BIN = (HOST_TOOLS.get("qgis") or {}).get("bin") if HOST_TOOLS else None
+FREECAD_BIN  = (HOST_TOOLS.get("freecad")  or {}).get("bin") if HOST_TOOLS else None
+QGIS_BIN     = (HOST_TOOLS.get("qgis")     or {}).get("bin") if HOST_TOOLS else None
+ASEPRITE_BIN = (HOST_TOOLS.get("aseprite") or {}).get("bin") if HOST_TOOLS else None
+KRITA_BIN    = (HOST_TOOLS.get("krita")    or {}).get("bin") if HOST_TOOLS else None
+BLENDER_BIN  = (HOST_TOOLS.get("blender")  or {}).get("bin") if HOST_TOOLS else None
+GODOT_BIN    = (HOST_TOOLS.get("godot")    or {}).get("bin") if HOST_TOOLS else None
 
 
 def require_token(authorization: Optional[str] = Header(default=None)) -> None:
@@ -53,7 +61,7 @@ def require_token(authorization: Optional[str] = Header(default=None)) -> None:
         raise HTTPException(401, detail="invalid bearer token")
 
 
-app = FastAPI(title="NOVA Host Bridge", version="0.1.0")
+app = FastAPI(title="NOVA Host Bridge", version="0.2.0")
 
 
 @app.get("/health")
@@ -61,7 +69,7 @@ def health() -> Dict[str, Any]:
     return {
         "status": "ok",
         "service": "nova_host_bridge",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "auth_required": bool(BRIDGE_TOKEN),
         "config_loaded": CONFIG_DEFAULT_PATH.is_file(),
         "workdir": str(WORKDIR_ROOT),
@@ -71,8 +79,12 @@ def health() -> Dict[str, Any]:
 @app.get("/tools", dependencies=[Depends(require_token)])
 def tools() -> Dict[str, Any]:
     return {
-        "freecad": fc_adapter.is_available(FREECAD_BIN),
-        "qgis": qgis_adapter.is_available(QGIS_BIN),
+        "freecad":  fc_adapter.is_available(FREECAD_BIN),
+        "qgis":     qgis_adapter.is_available(QGIS_BIN),
+        "aseprite": aseprite_adapter.is_available(ASEPRITE_BIN),
+        "krita":    krita_adapter.is_available(KRITA_BIN),
+        "blender":  blender_adapter.is_available(BLENDER_BIN),
+        "godot":    godot_adapter.is_available(GODOT_BIN),
     }
 
 
@@ -131,6 +143,132 @@ def qgis_algorithms(limit: int = 50) -> Dict[str, Any]:
         return qgis_adapter.list_algorithms(QGIS_BIN, limit=limit)
     except qgis_adapter.QGISUnavailable as e:
         raise HTTPException(503, detail={"reason": "qgis_unavailable", "error": str(e)})
+
+
+# ---- Aseprite ---------------------------------------------------------------
+
+class AsepriteSheetRequest(BaseModel):
+    source: str
+    sheet_type: Optional[str] = "horizontal"
+    timeout_s: Optional[float] = 120.0
+
+
+@app.post("/aseprite/spritesheet", dependencies=[Depends(require_token)])
+def aseprite_spritesheet(req: AsepriteSheetRequest) -> Dict[str, Any]:
+    try:
+        return aseprite_adapter.export_spritesheet(
+            source=req.source,
+            workdir_root=WORKDIR_ROOT,
+            sheet_type=req.sheet_type or "horizontal",
+            aseprite_bin=ASEPRITE_BIN,
+            timeout_s=req.timeout_s or 120.0,
+        )
+    except aseprite_adapter.AsepriteUnavailable as e:
+        raise HTTPException(503, detail={"reason": "aseprite_unavailable", "error": str(e)})
+
+
+# ---- Krita ------------------------------------------------------------------
+
+class KritaExportRequest(BaseModel):
+    source: str
+    timeout_s: Optional[float] = 120.0
+
+
+@app.post("/krita/export", dependencies=[Depends(require_token)])
+def krita_export(req: KritaExportRequest) -> Dict[str, Any]:
+    try:
+        return krita_adapter.export_png(
+            source=req.source,
+            workdir_root=WORKDIR_ROOT,
+            krita_bin=KRITA_BIN,
+            timeout_s=req.timeout_s or 120.0,
+        )
+    except krita_adapter.KritaUnavailable as e:
+        raise HTTPException(503, detail={"reason": "krita_unavailable", "error": str(e)})
+
+
+# ---- Blender ----------------------------------------------------------------
+
+class BlenderRenderRequest(BaseModel):
+    source: str
+    frame: Optional[int] = 1
+    engine: Optional[str] = None
+    timeout_s: Optional[float] = 300.0
+
+
+@app.post("/blender/render", dependencies=[Depends(require_token)])
+def blender_render(req: BlenderRenderRequest) -> Dict[str, Any]:
+    try:
+        return blender_adapter.render_frame(
+            source=req.source,
+            workdir_root=WORKDIR_ROOT,
+            frame=req.frame or 1,
+            engine=req.engine,
+            blender_bin=BLENDER_BIN,
+            timeout_s=req.timeout_s or 300.0,
+        )
+    except blender_adapter.BlenderUnavailable as e:
+        raise HTTPException(503, detail={"reason": "blender_unavailable", "error": str(e)})
+
+
+class BlenderScriptRequest(BaseModel):
+    script: str
+    source: Optional[str] = None
+    timeout_s: Optional[float] = 300.0
+
+
+@app.post("/blender/script", dependencies=[Depends(require_token)])
+def blender_script(req: BlenderScriptRequest) -> Dict[str, Any]:
+    try:
+        return blender_adapter.run_script(
+            script=req.script,
+            workdir_root=WORKDIR_ROOT,
+            source=req.source,
+            blender_bin=BLENDER_BIN,
+            timeout_s=req.timeout_s or 300.0,
+        )
+    except blender_adapter.BlenderUnavailable as e:
+        raise HTTPException(503, detail={"reason": "blender_unavailable", "error": str(e)})
+
+
+# ---- Godot ------------------------------------------------------------------
+
+class GodotValidateRequest(BaseModel):
+    project_dir: str
+    timeout_s: Optional[float] = 60.0
+
+
+@app.post("/godot/validate", dependencies=[Depends(require_token)])
+def godot_validate(req: GodotValidateRequest) -> Dict[str, Any]:
+    try:
+        return godot_adapter.validate_project(
+            project_dir=req.project_dir,
+            workdir_root=WORKDIR_ROOT,
+            godot_bin=GODOT_BIN,
+            timeout_s=req.timeout_s or 60.0,
+        )
+    except godot_adapter.GodotUnavailable as e:
+        raise HTTPException(503, detail={"reason": "godot_unavailable", "error": str(e)})
+
+
+class GodotScriptRequest(BaseModel):
+    script: str
+    project_dir: Optional[str] = None
+    timeout_s: Optional[float] = 120.0
+
+
+@app.post("/godot/script", dependencies=[Depends(require_token)])
+def godot_script(req: GodotScriptRequest) -> Dict[str, Any]:
+    try:
+        return godot_adapter.run_script(
+            script=req.script,
+            workdir_root=WORKDIR_ROOT,
+            project_dir=req.project_dir,
+            godot_bin=GODOT_BIN,
+            timeout_s=req.timeout_s or 120.0,
+        )
+    except godot_adapter.GodotUnavailable as e:
+        raise HTTPException(503, detail={"reason": "godot_unavailable", "error": str(e)})
 
 
 # ---- File retrieval ---------------------------------------------------------
