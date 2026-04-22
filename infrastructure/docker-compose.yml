@@ -624,6 +624,38 @@ services:
       timeout: 15s
       retries: 3
 
+  agent-33-blender-arch-walkthrough:
+    build:
+      context: ./services/agent_33_blender_arch_walkthrough
+    image: nova-v2-agent-33-blender-arch-walkthrough:poc
+    container_name: nova-v2-agent-33-blender-arch-walkthrough
+    restart: unless-stopped
+    expose:
+      - "8133"
+    networks:
+      - nova-v2-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8133/health')"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+
+  agent-34-unreal-import:
+    build:
+      context: ./services/agent_34_unreal_import
+    image: nova-v2-agent-34-unreal-import:poc
+    container_name: nova-v2-agent-34-unreal-import
+    restart: unless-stopped
+    expose:
+      - "8134"
+    networks:
+      - nova-v2-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8134/health')"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+
   agent-35-raster-2d:
     build:
       context: ./services/agent_35_raster_2d

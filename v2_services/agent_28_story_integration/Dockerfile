@@ -3,6 +3,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY main.py .
+COPY data ./data
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8128
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8128"]

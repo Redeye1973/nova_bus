@@ -1,0 +1,6 @@
+name: Example Pilot
+aliases:
+  - pilot
+  - ex-pilot
+bio: >
+  Test profile for NOVA story integration. Used by session 07 automated tests.

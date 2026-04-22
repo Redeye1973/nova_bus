@@ -64,6 +64,8 @@ DEFAULT_TARGETS: List[Dict[str, Any]] = [
     {"name": "agent_30_audio_asset_jury",   "url": "http://agent-30-audio-asset-jury:8130/health"},
     {"name": "agent_31_qgis_analysis",      "url": "http://agent-31-qgis-analysis:8131/health"},
     {"name": "agent_32_grass_gis",          "url": "http://agent-32-grass-gis:8132/health"},
+    {"name": "agent_33_blender_arch_walkthrough", "url": "http://agent-33-blender-arch-walkthrough:8133/health"},
+    {"name": "agent_34_unreal_import",      "url": "http://agent-34-unreal-import:8134/health"},
     {"name": "agent_35_raster_2d",          "url": "http://agent-35-raster-2d:8135/health"},
     {"name": "sprite_jury_v2",              "url": "http://sprite-jury-v2:8101/health"},
 ]
