@@ -16,7 +16,7 @@ if not m:
     sys.exit(2)
 key = m.group(1).strip().strip('"').strip("'")
 req = urllib.request.Request(
-    "http://178.104.207.194:5678/api/v1/workflows?limit=300",
+    "http://178.104.207.194:5678/api/v1/workflows?limit=100",
     headers={"X-N8N-API-KEY": key},
 )
 try:
