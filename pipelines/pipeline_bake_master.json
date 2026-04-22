@@ -1,0 +1,305 @@
+{
+  "name": "pipeline_bake_master",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pipeline-bake-master",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh_bake",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-13-pdok-downloader:8113/download",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ postcode: $json.body.postcode, layers: $json.body.layers || ['buildings','roads'] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_agent13_pdok",
+      "name": "Agent13 PDOK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-15-qgis-processor:8115/process",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ operation: 'buffer', geojson: null }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_agent15_qgis",
+      "name": "Agent15 QGIS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-31-qgis-analysis:8131/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n_agent31_qgis_analysis",
+      "name": "Agent31 QGIS Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-32-grass-gis:8132/analyze",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n_agent32_grass",
+      "name": "Agent32 GRASS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-14-blender-baker:8114/bake",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ region: $json.body.area_name || 'Hoogeveen' }) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "n_agent14_blender_bake",
+      "name": "Agent14 Blender Bake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-04-3d-model-jury:8104/review",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ job_id: 'bake-pipeline', artifact: { mesh_format: 'gltf', vertices: 1200 }, context: {} }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_agent04_3d_jury",
+      "name": "Agent04 3D Jury",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-05-gis-jury:8105/review",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ job_id: 'bake-pipeline', artifact: { crs: 'EPSG:28992', layer_count: 2 }, context: {} }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_agent05_gis_jury",
+      "name": "Agent05 GIS Jury",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2020,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-19-distribution:8119/invoke",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ asset_id: 'bake-gltf-demo', consumer_id: 'nova-pipeline', consumer_key: $json.body.distribution_key || 'pipeline-dev-key', changelog: 'session08' }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n_agent19_distribution",
+      "name": "Agent19 Distribution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2280,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "rsp_bake",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2540,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Agent13 PDOK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent13 PDOK": {
+      "main": [
+        [
+          {
+            "node": "Agent15 QGIS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent15 QGIS": {
+      "main": [
+        [
+          {
+            "node": "Agent31 QGIS Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent31 QGIS Analysis": {
+      "main": [
+        [
+          {
+            "node": "Agent32 GRASS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent32 GRASS": {
+      "main": [
+        [
+          {
+            "node": "Agent14 Blender Bake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent14 Blender Bake": {
+      "main": [
+        [
+          {
+            "node": "Agent04 3D Jury",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent04 3D Jury": {
+      "main": [
+        [
+          {
+            "node": "Agent05 GIS Jury",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent05 GIS Jury": {
+      "main": [
+        [
+          {
+            "node": "Agent19 Distribution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent19 Distribution": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "nova_session": "08",
+    "pipeline": "bake"
+  }
+}
