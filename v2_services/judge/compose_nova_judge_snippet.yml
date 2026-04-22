@@ -1,0 +1,14 @@
+  nova-judge:
+    build: ./services/judge
+    container_name: nova-v2-judge
+    restart: unless-stopped
+    networks:
+      - nova-v2-network
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
