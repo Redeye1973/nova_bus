@@ -1,0 +1,344 @@
+{
+  "generated_at": "2026-04-22T17:28:23.659138+00:00",
+  "v1_workflow_total": 68,
+  "v1_workflow_active": 52,
+  "build_related_workflows": [
+    {
+      "id": "2cjidXQ0qZWgFmKK",
+      "name": "_NOVA FS Test",
+      "active": false,
+      "webhook_paths": []
+    },
+    {
+      "id": "3GcREszDX6Aw3Reg",
+      "name": "NOVA PDOK 3D Viewer Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-pdok-viewer"
+      ]
+    },
+    {
+      "id": "3KEBMZwOrzEoEMwq",
+      "name": "NOVA Job Queue",
+      "active": true,
+      "webhook_paths": [
+        "nova-jobs",
+        "nova-jobs-add",
+        "nova-jobs-complete",
+        "nova-jobs-reset"
+      ]
+    },
+    {
+      "id": "50iHXUsRpvJiFex5",
+      "name": "NOVA Disk Space",
+      "active": true,
+      "webhook_paths": [
+        "nova-disk-monitor"
+      ]
+    },
+    {
+      "id": "6AUaZCNvDoA9Gi5Q",
+      "name": "NOVA Ntfy Wrapper",
+      "active": true,
+      "webhook_paths": [
+        "nova-ntfy"
+      ]
+    },
+    {
+      "id": "6Oa2ioVWFZLDgC8H",
+      "name": "NOVA Creative Director Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-creative-director"
+      ]
+    },
+    {
+      "id": "78GTHI6GXf580HNd",
+      "name": "NOVA Story Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-story"
+      ]
+    },
+    {
+      "id": "8CtdbFlM5YOaCHMb",
+      "name": "NOVA Pipeline Benchmark",
+      "active": true,
+      "webhook_paths": [
+        "nova-benchmark"
+      ]
+    },
+    {
+      "id": "9AE4M9Rs3bpkKezK",
+      "name": "NOVA QGIS Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-qgis"
+      ]
+    },
+    {
+      "id": "9vIqoKFKh85cX54a",
+      "name": "NOVA Godot Rescue Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-godot-rescue",
+        "nova-godot-rescue-report"
+      ]
+    },
+    {
+      "id": "AI9mpUCZdB6mnifm",
+      "name": "NOVA Session Save v2",
+      "active": true,
+      "webhook_paths": [
+        "nova-session-save-v2"
+      ]
+    },
+    {
+      "id": "Bcte3aBYcM7LltkD",
+      "name": "NOVA Graphics Quality Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-quality"
+      ]
+    },
+    {
+      "id": "BsXVQnyKvBUBLzZX",
+      "name": "NOVA Asset Preview",
+      "active": true,
+      "webhook_paths": [
+        "nova-asset-preview"
+      ]
+    },
+    {
+      "id": "Cer7CKJtsU2uqBdY",
+      "name": "NOVA HR Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-hr-dispatch",
+        "nova-hr-learn"
+      ]
+    },
+    {
+      "id": "EZQOlQqbA8E3SIrh",
+      "name": "NOVA Game Health Check",
+      "active": true,
+      "webhook_paths": [
+        "nova-game-health"
+      ]
+    },
+    {
+      "id": "ITZ3OBLzxeqMiCmO",
+      "name": "NOVA Health Dashboard",
+      "active": true,
+      "webhook_paths": [
+        "nova-dashboard"
+      ]
+    },
+    {
+      "id": "IZoEA1XnpusC7qox",
+      "name": "NOVA Technical QA",
+      "active": true,
+      "webhook_paths": [
+        "nova-technical-qa"
+      ]
+    },
+    {
+      "id": "Ipb8GoN773vXx18j",
+      "name": "NOVA Blender PDOK Import",
+      "active": false,
+      "webhook_paths": [
+        "nova-blender-import"
+      ]
+    },
+    {
+      "id": "IxSAaJzoq8tATYht",
+      "name": "NOVA File Writer",
+      "active": true,
+      "webhook_paths": [
+        "nova-write-file"
+      ]
+    },
+    {
+      "id": "JGzzwL2E5irmcndq",
+      "name": "NOVA Session Save",
+      "active": false,
+      "webhook_paths": [
+        "nova-session-save"
+      ]
+    },
+    {
+      "id": "JuJGUb6Io4unM5OW",
+      "name": "NOVA Session Load",
+      "active": false,
+      "webhook_paths": [
+        "nova-session-load"
+      ]
+    },
+    {
+      "id": "N29MgMYSumjx7sIE",
+      "name": "NOVA Rollback Agent v2",
+      "active": true,
+      "webhook_paths": [
+        "nova-rollback-check"
+      ]
+    },
+    {
+      "id": "Q9KJoUSrA9CKzS3e",
+      "name": "NOVA Code Review",
+      "active": true,
+      "webhook_paths": [
+        "nova-code-review"
+      ]
+    },
+    {
+      "id": "SCZYLGN2ZYdXomNJ",
+      "name": "NOVA Debugger Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-debug"
+      ]
+    },
+    {
+      "id": "SPyrXCk3aOQE6cyf",
+      "name": "NOVA Krita Blender Process",
+      "active": true,
+      "webhook_paths": [
+        "nova-asset-process"
+      ]
+    },
+    {
+      "id": "TUlP0stR0oCCQIN0",
+      "name": "NOVA HW Status",
+      "active": true,
+      "webhook_paths": [
+        "nova-hw-get",
+        "nova-hw-status",
+        "nova-jobs-pause"
+      ]
+    },
+    {
+      "id": "UcNihn2GbneivvP9",
+      "name": "NOVA Test Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-test"
+      ]
+    },
+    {
+      "id": "WcobUClF7tAqpivj",
+      "name": "NOVA Cursor Fix Script",
+      "active": false,
+      "webhook_paths": [
+        "cursor-fix-script"
+      ]
+    },
+    {
+      "id": "WeO8AsdJ4KoE1Vtf",
+      "name": "NOVA Error Triage",
+      "active": true,
+      "webhook_paths": [
+        "nova-error-triage"
+      ]
+    },
+    {
+      "id": "XCtV8IqlYlufXQ9O",
+      "name": "NOVA Cursor Bridge",
+      "active": true,
+      "webhook_paths": [
+        "cursor-bridge"
+      ]
+    },
+    {
+      "id": "Z3uYegGvPjBVzL0d",
+      "name": "NOVA Batch Fix Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-batch-fix"
+      ]
+    },
+    {
+      "id": "ZhszXEN5m7ZRCTtn",
+      "name": "NOVA Cursor Write Script",
+      "active": false,
+      "webhook_paths": [
+        "cursor-write-script"
+      ]
+    },
+    {
+      "id": "bAQhLs7p7WDgYaS0",
+      "name": "NOVA APK Test",
+      "active": true,
+      "webhook_paths": [
+        "nova-apk-test"
+      ]
+    },
+    {
+      "id": "cmvz4bbTG1wDPvn0",
+      "name": "NOVA Storyboard Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-storyboard"
+      ]
+    },
+    {
+      "id": "eOcIjewfOgW59NLU",
+      "name": "NOVA PDOK 3D Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-pdok-3d"
+      ]
+    },
+    {
+      "id": "ePO4sYGkjoBFi78P",
+      "name": "NOVA Voice Agent",
+      "active": true,
+      "webhook_paths": [
+        "nova-voice"
+      ]
+    },
+    {
+      "id": "gJtkmRDQbjFrY1Lz",
+      "name": "NOVA Claude Self-Monitor",
+      "active": true,
+      "webhook_paths": [
+        "nova-claude-monitor"
+      ]
+    },
+    {
+      "id": "hfNczQQQwtCyxTQU",
+      "name": "NOVA Asset Registry",
+      "active": true,
+      "webhook_paths": [
+        "nova-assets-register",
+        "nova-assets-search"
+      ]
+    },
+    {
+      "id": "kx846FyLXaQSmpj9",
+      "name": "NOVA Team Audit Report",
+      "active": true,
+      "webhook_paths": [
+        "nova-team-audit-run"
+      ]
+    },
+    {
+      "id": "lsDCD6uhKJDjT2Zs",
+      "name": "NOVA Usage Reporter",
+      "active": true,
+      "webhook_paths": [
+        "nova-usage-reporter"
+      ]
+    }
+  ],
+  "orchestrator_like_paths_found": [],
+  "codegen_probe": {
+    "status": "http_error",
+    "url": "http://178.104.207.194:5678/webhook/nova_v2_build_task",
+    "http_status": 404,
+    "attempt": 2,
+    "body_preview_chars": 362
+  },
+  "notes": "Delegation endpoints in repo docs: /webhook/nova-orchestrator (unified) vs /webhook/nova_v2_build_task (mega_plan). Probe uses both; interpret http_ok as reachable webhook, not necessarily codegen success.",
+  "codegen": "fallback_to_cursor",
+  "codegen_reason": "webhook probe did not complete with success semantics; use V1 UI to confirm orchestrator path and payload contract."
+}
