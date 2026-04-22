@@ -14,10 +14,11 @@
 | 17 | Error Handler | /webhook/error-handler | <100ms | YAML pattern classifier, retry plans, in-mem ledger |
 | 20 | Design Fase | /webhook/design-fase | 78ms | 32-color palette + 3 faction palettes |
 | 21 | FreeCAD Parametric | /webhook/freecad-parametric | ~560ms | Real FreeCAD 1.0.2 via host bridge over Tailscale; STEP+STL+FCStd; trimesh fallback |
+| 03 | Audio Jury | /webhook/audio-review | varies | WAV DSP POC: technical clipping/DC/RMS + spectral bands (numpy); container pytest green; n8n workflow import pending if webhook 404 |
 
 ## Stub agents (containers healthy, logica leeg)
 
-26 agents: 03, 04, 05, 06, 07, 08, 09, 12, 13, 14, 15, 16, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 35
+25 agents: 04, 05, 06, 07, 08, 09, 12, 13, 14, 15, 16, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 35
 
 ## Infrastructure
 

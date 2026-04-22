@@ -6,3 +6,4 @@ def test_health():
     r = c.get("/health")
     assert r.status_code == 200
     assert r.json().get("status") == "ok"
+    assert r.json().get("mode") == "dsp_wav_poc"
