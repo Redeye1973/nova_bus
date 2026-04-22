@@ -4,7 +4,7 @@
 # server after filling secrets paths and MinIO/S3 endpoints.
 #
 # Prerequisites on server:
-# - docker CLI, access to postgres-v2 + minio containers (or host pg_dump + mc)
+# - docker CLI, access to nova-v2-postgres + minio containers (or host pg_dump + mc)
 # - `mc` (MinIO client) configured: `mc alias set local http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"`
 # - Optional: rclone or mc mirror to Hetzner Object Storage / Storage Box S3 API
 #
@@ -14,9 +14,9 @@ set -euo pipefail
 
 echo "=== Reference variables (export in /root/.nova_backup_env or similar) ==="
 cat <<'VARS'
-export POSTGRES_CONTAINER="${POSTGRES_CONTAINER:-postgres-v2}"
-export POSTGRES_DB="${POSTGRES_DB:-nova_v2}"
-export POSTGRES_USER="${POSTGRES_USER:-nova}"
+export POSTGRES_CONTAINER="${POSTGRES_CONTAINER:-nova-v2-postgres}"
+export POSTGRES_DB="${POSTGRES_DB:-n8n_v2}"
+export POSTGRES_USER="${POSTGRES_USER:-postgres}"
 export BACKUP_BUCKET="${BACKUP_BUCKET:-nova-backups}"
 export MINIO_ALIAS="${MINIO_ALIAS:-local}"
 export REMOTE_MIRROR_ALIAS="${REMOTE_MIRROR_ALIAS:-hetzner-s3}"   # mc alias for external bucket
