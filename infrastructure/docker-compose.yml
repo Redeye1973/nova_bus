@@ -338,6 +338,15 @@ services:
     image: nova-v2-agent-07-narrative-jury:poc
     container_name: nova-v2-agent-07-narrative-jury
     restart: unless-stopped
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
+      redis-v2:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
+    environment:
+      - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
       - "8107"
     networks:
@@ -418,6 +427,15 @@ services:
     image: nova-v2-agent-05-gis-jury:poc
     container_name: nova-v2-agent-05-gis-jury
     restart: unless-stopped
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
+      redis-v2:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
+    environment:
+      - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
       - "8105"
     networks:
@@ -466,6 +484,15 @@ services:
     image: nova-v2-agent-03-audio-jury:poc
     container_name: nova-v2-agent-03-audio-jury
     restart: unless-stopped
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
+      redis-v2:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
+    environment:
+      - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
       - "8103"
     networks:
@@ -546,6 +573,15 @@ services:
     image: nova-v2-agent-08-character-art-jury:poc
     container_name: nova-v2-agent-08-character-art-jury
     restart: unless-stopped
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
+      redis-v2:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
+    environment:
+      - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
       - "8108"
     networks:
@@ -610,6 +646,15 @@ services:
     image: nova-v2-agent-09-illustration-jury:poc
     container_name: nova-v2-agent-09-illustration-jury
     restart: unless-stopped
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
+      redis-v2:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
+    environment:
+      - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
       - "8109"
     networks:
@@ -642,6 +687,15 @@ services:
     image: nova-v2-agent-04-3d-model-jury:poc
     container_name: nova-v2-agent-04-3d-model-jury
     restart: unless-stopped
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
+      redis-v2:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
+    environment:
+      - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
       - "8104"
     networks:
@@ -658,6 +712,15 @@ services:
     image: nova-v2-agent-06-cad-jury:poc
     container_name: nova-v2-agent-06-cad-jury
     restart: unless-stopped
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
+      redis-v2:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
+    environment:
+      - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
       - "8106"
     networks:

@@ -1,23 +1,12 @@
 {
-  "agent_number": 3,
+  "agent_number": "03",
   "name": "audio_jury",
-  "status": "active",
-  "built_at": "2026-04-22T16:21:27Z",
-  "deployed_at": "2026-04-22T16:21:27Z",
-  "fallback_mode": false,
-  "webhook_url": "http://178.104.207.194:5680/webhook/audio-review",
-  "webhook_test_payload": {
-    "format": "wav",
-    "audio_base64": "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"
-  },
+  "folder": "agent_03_audio_jury",
+  "status": "built",
+  "built_at": "2026-04-22T17:57:54.933490+00:00",
+  "deployed_at": null,
   "tests_passed": true,
-  "tests_note": "pytest 4/4 in container on Hetzner",
-  "workflow_id": "",
-  "endpoints": [
-    "/health",
-    "/review/audio",
-    "/review/batch",
-    "/invoke"
-  ],
-  "notes": "WAV-only DSP POC: technical_quality + frequency_balance (numpy FFT), no librosa/Ollama yet. If webhook returns 404, import/activate workflow from services/agent_03_audio_jury/workflow.json on V2 n8n :5679."
+  "v1_used": false,
+  "fallback_used": true,
+  "notes": "Session 05: FastAPI /review + pipeline_judge hook; n8n workflow includes nova-judge. Deployed_at set after Hetzner build."
 }

@@ -8,7 +8,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "wb_cad-review",
+      "id": "wb",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -21,18 +21,36 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://agent-06-cad-jury:8106/invoke",
+        "url": "http://agent-06-cad-jury:8106/review",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.body ?? $json) }}",
+        "jsonBody": "={{ JSON.stringify({ job_id: $json.body?.job_id || 'n8n', artifact: $json.body?.artifact ?? $json.body, context: $json.body?.context ?? {} }) }}",
         "options": {}
       },
-      "id": "http_inv",
-      "name": "Call Agent",
+      "id": "rev",
+      "name": "Jury Review",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://nova-judge:8000/evaluate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ task_result: { status: 'success', agent: '06_cad_jury', jury: $json }, logs: ['entrypoint=v1','dispatch=v2','agent=06_cad_jury'] }) }}",
+        "options": {}
+      },
+      "id": "jg",
+      "name": "Pipeline Judge",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
         300
       ]
     },
@@ -47,7 +65,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        800,
+        1000,
         300
       ]
     }
@@ -57,14 +75,25 @@
       "main": [
         [
           {
-            "node": "Call Agent",
+            "node": "Jury Review",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Call Agent": {
+    "Jury Review": {
+      "main": [
+        [
+          {
+            "node": "Pipeline Judge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipeline Judge": {
       "main": [
         [
           {

@@ -1,0 +1,12 @@
+{
+  "agent_number": "06",
+  "name": "cad_jury",
+  "folder": "agent_06_cad_jury",
+  "status": "built",
+  "built_at": "2026-04-22T17:57:54.933490+00:00",
+  "deployed_at": null,
+  "tests_passed": true,
+  "v1_used": false,
+  "fallback_used": true,
+  "notes": "Session 05: FastAPI /review + pipeline_judge hook; n8n workflow includes nova-judge. Deployed_at set after Hetzner build."
+}
