@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-04-21T23:30:00Z",
+  "kind": "night_run_kickoff",
+  "bridge_online": true,
+  "bridge_check": "GET http://localhost:8500/health -> 200",
+  "v1_n8n_healthz": 200,
+  "v2_n8n_main_healthz": 200,
+  "secrets_file_present": true,
+  "ssh_batch_mode": "ok",
+  "hetzner_running_containers": 40,
+  "agent_validator": { "total": 7, "ok": 7, "failed": 0 },
+  "v1_workflow_api": {
+    "status": "skipped",
+    "reason": "N8N_V1_API_KEY not found as active key= line in secrets/nova_v2_passwords.txt"
+  },
+  "notes": "Full night run (Fase A–G) requires Composer with NOVA_V2_NIGHT_RUN_PROMPT pasted; add V1 API key line to secrets for automated N.4."
+}
