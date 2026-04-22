@@ -11,6 +11,6 @@
 
 ## Bestanden in `L:\!Nova V2\secrets`
 
-- `N8n WorkHorse.txt` — bron voor **V1** n8n API key (naam in UI: “N8n WorkHorse”).
+- **`nova_v2_passwords.txt`** — **canoniek** voor Cursor/scripts (`N8N_V1_API_KEY`, `N8N_V2_API_KEY`, URL-regels, overige secrets).
+- **`N8n WorkHorse.txt`** — **alleen backup** van dezelfde V1 key; niet meer als bron voor merges tenzij je bewust herstelt. Sync handmatig als je de key in n8n roteert.
 - `N8n Key.txt` — apart houden voor V2 of andere doeleinden indien nodig.
-- `nova_v2_passwords.txt` — centraal voor Cursor/scripts (`N8N_V1_API_KEY`, `N8N_V2_API_KEY`, URL-regels, overige secrets).
