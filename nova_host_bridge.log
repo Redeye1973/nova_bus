@@ -73,3 +73,47 @@
 [2026-04-21 17:54:24.851] [INFO] retry policy: max=3 delay=60s healthy_after=300s
 [2026-04-21 17:54:24.856] [INFO] attempt 1 of 4: launching uvicorn
 [2026-04-21 17:54:24.891] [INFO] uvicorn pid=19572
+[2026-04-22 17:30:15.730] [INFO] starting nova_host_bridge wrapper pid=5248 user=ALEX-MAIN-1$
+[2026-04-22 17:30:16.017] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-22 17:30:16.101] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-22 17:30:16.101] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-22 17:30:16.106] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-22 17:30:16.106] [INFO] retry policy: max=3 delay=60s healthy_after=300s
+[2026-04-22 17:30:16.127] [INFO] attempt 1 of 4: launching uvicorn
+[2026-04-22 17:30:16.192] [INFO] uvicorn pid=5684
+[2026-04-22 17:30:23.527] [WARN] uvicorn exited code=-1 after 7s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-22 17:30:23.542] [INFO] retrying in 60s (attempt 2 of 4)
+[2026-04-22 17:31:23.550] [INFO] attempt 2 of 4: launching uvicorn
+[2026-04-22 17:31:23.566] [INFO] uvicorn pid=21044
+[2026-04-22 17:31:24.292] [WARN] uvicorn exited code=-1 after 1s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-22 17:31:24.292] [INFO] retrying in 60s (attempt 3 of 4)
+[2026-04-22 17:32:24.306] [INFO] attempt 3 of 4: launching uvicorn
+[2026-04-22 17:32:24.323] [INFO] uvicorn pid=7964
+[2026-04-22 17:32:24.918] [WARN] uvicorn exited code=-1 after 1s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-22 17:32:24.920] [INFO] retrying in 60s (attempt 4 of 4)
+[2026-04-22 17:33:24.931] [INFO] attempt 4 of 4: launching uvicorn
+[2026-04-22 17:33:24.958] [INFO] uvicorn pid=12536
+[2026-04-22 17:33:25.525] [WARN] uvicorn exited code=-1 after 1s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-22 17:33:25.527] [ERROR] max_restarts=3 exceeded; giving up so Task Scheduler can take over
+[2026-04-22 20:22:40.084] [INFO] starting nova_host_bridge wrapper pid=5456 user=ALEX-MAIN-1$
+[2026-04-22 20:22:40.195] [INFO] BridgeRoot=L:\!Nova V2\nova_host_bridge ConfigPath=L:\!Nova V2\nova_config.yaml PythonExe=C:\Python314\python.exe Bind=0.0.0.0:8500
+[2026-04-22 20:22:40.258] [INFO] exec: C:\Python314\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8500 --log-level info --no-access-log
+[2026-04-22 20:22:40.275] [INFO] uvicorn stdout -> L:\!Nova V2\nova_host_bridge.log.uvicorn
+[2026-04-22 20:22:40.275] [INFO] uvicorn stderr -> L:\!Nova V2\nova_host_bridge.log.uvicorn.err
+[2026-04-22 20:22:40.290] [INFO] retry policy: max=3 delay=60s healthy_after=300s
+[2026-04-22 20:22:40.307] [INFO] attempt 1 of 4: launching uvicorn
+[2026-04-22 20:22:40.372] [INFO] uvicorn pid=3936
+[2026-04-22 20:22:49.538] [WARN] uvicorn exited code=-1 after 9s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-22 20:22:49.544] [INFO] retrying in 60s (attempt 2 of 4)
+[2026-04-22 20:23:49.566] [INFO] attempt 2 of 4: launching uvicorn
+[2026-04-22 20:23:49.590] [INFO] uvicorn pid=19672
+[2026-04-22 20:23:50.206] [WARN] uvicorn exited code=-1 after 1s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-22 20:23:50.209] [INFO] retrying in 60s (attempt 3 of 4)
+[2026-04-22 20:24:50.211] [INFO] attempt 3 of 4: launching uvicorn
+[2026-04-22 20:24:50.231] [INFO] uvicorn pid=22296
+[2026-04-22 20:24:50.848] [WARN] uvicorn exited code=-1 after 1s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-22 20:24:50.851] [INFO] retrying in 60s (attempt 4 of 4)
+[2026-04-22 20:25:50.862] [INFO] attempt 4 of 4: launching uvicorn
+[2026-04-22 20:25:50.892] [INFO] uvicorn pid=16840
+[2026-04-22 20:25:51.530] [WARN] uvicorn exited code=-1 after 1s (see L:\!Nova V2\nova_host_bridge.log.uvicorn / L:\!Nova V2\nova_host_bridge.log.uvicorn.err)
+[2026-04-22 20:25:51.532] [ERROR] max_restarts=3 exceeded; giving up so Task Scheduler can take over

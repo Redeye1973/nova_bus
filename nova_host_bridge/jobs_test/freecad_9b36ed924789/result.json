@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "name": "base_fighter",
+  "primitive": "capsule",
+  "dimensions": {
+    "length": 12.0,
+    "radius": 1.5
+  },
+  "mount_points": {},
+  "files": {
+    "fcstd": "L:\\!Nova V2\\nova_host_bridge\\jobs_test\\freecad_9b36ed924789\\base_fighter.FCStd",
+    "step": "L:\\!Nova V2\\nova_host_bridge\\jobs_test\\freecad_9b36ed924789\\base_fighter.step",
+    "stl": "L:\\!Nova V2\\nova_host_bridge\\jobs_test\\freecad_9b36ed924789\\base_fighter.stl"
+  },
+  "metrics": {
+    "vertex_count": 4,
+    "edge_count": 7,
+    "face_count": 3,
+    "solid_count": 1,
+    "bounding_box": {
+      "x": [
+        -1.5,
+        1.5
+      ],
+      "y": [
+        -1.4995337730012248,
+        1.4995337730012244
+      ],
+      "z": [
+        -1.5,
+        10.5
+      ],
+      "extents": [
+        3.0,
+        2.999067546002449,
+        12.0
+      ]
+    },
+    "volume": 77.75441817634737,
+    "surface_area": 113.09733552923254,
+    "is_closed": true
+  },
+  "freecad_version": "1.1.1"
+}
