@@ -1,4 +1,9 @@
-"""SCP jury service folders to Hetzner and rebuild compose services."""
+"""SCP jury service folders to Hetzner and rebuild compose services.
+
+On Windows, paths like ``L:\\!Nova V2\\...`` break bare ``scp`` invocations when
+shells interpret ``!``. We run ``scp`` via ``cmd /d /c`` with the *source* path
+in double quotes (no ``bash -c`` wrapper for remote targets).
+"""
 from __future__ import annotations
 
 import subprocess
@@ -6,8 +11,8 @@ import sys
 from pathlib import Path
 
 HOST = "root@178.104.207.194"
-REMOTE = "/docker/nova-v2/services"
-LOCAL = Path(r"L:/!Nova V2/v2_services")
+REMOTE_SERVICES = "/docker/nova-v2/services"
+LOCAL = Path(r"L:\!Nova V2\v2_services")
 AGENTS = [
     "agent_03_audio_jury",
     "agent_04_3d_model_jury",
@@ -27,35 +32,57 @@ SERVICES = [
     "agent-09-illustration-jury",
 ]
 
+SSH_SCP_OPTS = [
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "StrictHostKeyChecking=no",
+    "-o",
+    "ConnectTimeout=10",
+]
 
-def run(cmd: list[str]) -> None:
-    print("+", " ".join(cmd))
+
+def _scp_upload_dir(src: Path, dest_host: str, remote_parent: str) -> None:
+    """Upload ``src`` (directory) to ``dest_host:remote_parent/`` (sequential, one agent at a time)."""
+    src_abs = src.resolve()
+    if not src_abs.is_dir():
+        raise FileNotFoundError(src_abs)
+
+    remote_target = f"{dest_host}:{remote_parent.rstrip('/')}/"
+
+    if sys.platform == "win32":
+        # Double-quote source for cmd.exe / PowerShell safety when path contains '!'.
+        inner = str(src_abs).replace('"', r"\"")
+        cmdline = (
+            "scp "
+            + " ".join(SSH_SCP_OPTS)
+            + f' -r "{inner}" {remote_target}'
+        )
+        subprocess.run(["cmd.exe", "/d", "/c", cmdline], check=True)
+    else:
+        cmd = ["scp", *SSH_SCP_OPTS, "-r", str(src_abs), remote_target]
+        subprocess.run(cmd, check=True)
+
+
+def _ssh_compose_build_up() -> None:
+    svc = " ".join(SERVICES)
+    remote_cmd = f"cd /docker/nova-v2 && docker compose build {svc} && docker compose up -d {svc}"
+    cmd = ["ssh", *SSH_SCP_OPTS, HOST, remote_cmd]
+    print("+", " ".join(cmd[: len(SSH_SCP_OPTS) + 2]), "<remote compose build/up>", flush=True)
     subprocess.run(cmd, check=True)
 
 
 def main() -> None:
-    for a in AGENTS:
+    n = len(AGENTS)
+    for i, a in enumerate(AGENTS, start=1):
         src = LOCAL / a
-        run(
-            [
-                "scp",
-                "-o",
-                "BatchMode=yes",
-                "-r",
-                str(src),
-                f"{HOST}:{REMOTE}/",
-            ]
-        )
-    svc = " ".join(SERVICES)
-    run(
-        [
-            "ssh",
-            "-o",
-            "BatchMode=yes",
-            HOST,
-            f"cd /docker/nova-v2 && docker compose build {svc} && docker compose up -d {svc}",
-        ]
-    )
+        print(f"[{i}/{n}] scp start: {src} -> {HOST}:{REMOTE_SERVICES}/", flush=True)
+        _scp_upload_dir(src, HOST, REMOTE_SERVICES)
+        print(f"[{i}/{n}] scp done:  {a}", flush=True)
+
+    print(f"[compose] docker compose build + up ({n} services) …", flush=True)
+    _ssh_compose_build_up()
+    print("[compose] done.", flush=True)
 
 
 if __name__ == "__main__":
