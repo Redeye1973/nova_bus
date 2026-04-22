@@ -1,0 +1,51 @@
+[2026-04-22 18:30:46] fase=0 start bridge_fix_prompt
+[2026-04-22 18:31:03] fase=1 step=1.1 root listing (top-level names)
+
+Name                             Mode
+----                             ----
+! Game Concepts                  d----
+! Nova v2  Build Concepts        d----
+!Agents                          d----
+!CCChat Starter                  d----
+!Prompts                         d----
+.cursor                          d----
+agents                           d----
+bridge                           d----
+briefings                        d----
+docs                             d----
+extensions                       d----
+infrastructure                   d----
+integrations                     d----
+logs                             d----
+mega_plan                        d----
+nova_host_bridge                 d----
+pipelines                        d----
+scripts                          d----
+secrets                          d----
+shmup                            d----
+status                           d----
+v2_services                      d----
+_tmp_bridge.err                  -a---
+_tmp_bridge.log                  -a---
+_tmp_qgis_install.log            -a---
+.gitignore                       -a---
+nova_config.yaml                 -a---
+nova_host_bridge.log             -a---
+nova_host_bridge.log.uvicorn     -a---
+nova_host_bridge.log.uvicorn.err -a---
+Novav2.bat                       -a---
+README.md                        -a---
+
+
+[2026-04-22 18:31:04] fase=1 step=1.2 bridge|host dirs depth<=3
+L:\!Nova V2\bridge
+L:\!Nova V2\nova_host_bridge
+L:\!Nova V2\! Game Concepts\nova_bridge_extracted
+L:\!Nova V2\! Game Concepts\nova_bridge_extracted\nova_bridge
+L:\!Nova V2\bridge\bridge_expansion
+L:\!Nova V2\bridge\nova_bridge
+[2026-04-22 18:33:05] fase=1 found bridge_dir=L:\!Nova V2\nova_host_bridge main.py=L:\!Nova V2\nova_host_bridge\main.py entry=main:app
+[2026-04-22 18:33:05] fase=2 pydantic ImportError on py3.14 -> pip upgrade pydantic -> import_ok
+[2026-04-22 18:33:05] fase=3 SUCCESS uvicorn PID background; GET /health 200; GET /tools 200
+[2026-04-22 18:33:05] fase=5 junction L:\!Nova V2\bridge\nova_host_bridge -> nova_host_bridge
+[2026-04-22 18:33:05] fase=5 Register-ScheduledTask NOVA_Bridge -> AccessDenied (needs admin)

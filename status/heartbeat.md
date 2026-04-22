@@ -7,7 +7,7 @@ Agents active (status JSON): **8** files (incl. 03)
 Agents failed: **0**
 Agents skipped (preserve): **5** (01, 02, 10, 20, 21)
 Last git commit: (see `git log -1 --oneline` after push)
-Bridge status: **offline** (`localhost:8500` — tolerated per O.11)
+Bridge status: **online** (`localhost:8500/health` + `/tools` → 200; zie `docs/BRIDGE_FIX_REPORT.md`)
 V1 status: **online** (`:5678/healthz` → 200); **API workflow list not verified** (no `N8N_V1_API_KEY` in secrets file)
 V2 infra: **healthy** (40 containers; `:5679` healthz 200)
 Heartbeat count: 2

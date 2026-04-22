@@ -1,8 +1,8 @@
 {
   "timestamp": "2026-04-23T12:00:00Z",
   "night_run": true,
-  "bridge_online": false,
-  "bridge_note": "localhost:8500 unreachable (O.11 offline tolerance)",
+  "bridge_online": true,
+  "bridge_note": "localhost:8500 /health and /tools return 200; cwd L:\\!Nova V2\\nova_host_bridge; junction L:\\!Nova V2\\bridge\\nova_host_bridge",
   "v1_n8n_healthz": 200,
   "v1_workflow_api_verified": false,
   "v1_workflow_api_note": "N8N_V1_API_KEY not set as active line in secrets/nova_v2_passwords.txt — N.4 workflow count skipped; V1 UI/API not treated as down",

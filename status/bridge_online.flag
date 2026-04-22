@@ -1,0 +1,6 @@
+bridge=online
+timestamp=2026-04-22T18:32:00+02:00
+entry=uvicorn main:app
+cwd=L:\!Nova V2\nova_host_bridge
+junction=L:\!Nova V2\bridge\nova_host_bridge -> nova_host_bridge
+note=pydantic upgraded on Python 3.14 for FastAPI import; process started via Cursor session
