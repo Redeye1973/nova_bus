@@ -1,22 +1,27 @@
 # NOVA v2 Night Run Heartbeat
 
-Last update: 2026-04-21T23:30:00Z (kickoff — automated checks)
-Current phase: **Pre-A / handoff naar Composer**
-Current agent: n/a
-Agents active (built+tested): 7/7 in `status/agent_*_status.json` (validator)
-Agents failed: 0
-Agents skipped (preserve): 5 (01, 02, 10, 20, 21)
-Last git commit: `926df09` docs: night run prompt 1.1 — correct mega path, main/git, PAT note
-Bridge status: **online** (`localhost:8500/health` → 200)
-V1 status: **online** (`:5678/healthz` → 200)
-V2 infra: **healthy** (remote `docker compose`: 40 running containers; n8n `:5679` healthz 200)
-Heartbeat count: 1
-Next action: Plak de volledige blok uit `!CCChat Starter/NOVA_V2_NIGHT_RUN_PROMPT.md` (===NIGHT RUN PROMPT START=== t/m EINDE) in Composer voor Fase A→G; deze sessie deed alleen veilige preflight.
+Last update: 2026-04-23T12:00:00Z
+Current phase: **A done** → **B skipped (bridge offline, O.11)** → **C–D partial doc-only** → **E partial (03 done earlier; 04+ not in this batch)**
+Current agent: n/a (batch reporting)
+Agents active (status JSON): **8** files (incl. 03)
+Agents failed: **0**
+Agents skipped (preserve): **5** (01, 02, 10, 20, 21)
+Last git commit: (see `git log -1 --oneline` after push)
+Bridge status: **offline** (`localhost:8500` — tolerated per O.11)
+V1 status: **online** (`:5678/healthz` → 200); **API workflow list not verified** (no `N8N_V1_API_KEY` in secrets file)
+V2 infra: **healthy** (40 containers; `:5679` healthz 200)
+Heartbeat count: 2
+Next action: Alex adds `N8N_V1_API_KEY=` to secrets; import n8n workflow for `/webhook/audio-review` if 404; start bridge when PC awake; resume Fase B/E in Composer.
 
 ## Last 10 actions
 
-- [2026-04-21T23:30:00Z] curl bridge + V1/V2 healthz → 200/200/200
-- [2026-04-21T23:30:00Z] `Test-Path secrets\\nova_v2_passwords.txt` → True
-- [2026-04-21T23:30:00Z] SSH BatchMode root@178.104.207.194 → OK
-- [2026-04-21T23:30:00Z] `agent_validator.py --all` → 7/7 OK
-- [2026-04-21T23:30:00Z] V1 workflow API count → overgeslagen (geen actieve regel `N8N_V1_API_KEY=` in `secrets/nova_v2_passwords.txt`; voeg toe of gebruik bestaand V1-keybestand volgens jouw conventie)
+- [2026-04-23T12:00:00Z] N.1 secrets file present → True
+- [2026-04-23T12:00:00Z] N.3 SSH BatchMode → OK
+- [2026-04-23T12:00:00Z] Bridge health → offline (000)
+- [2026-04-23T12:00:00Z] V1 healthz → 200
+- [2026-04-23T12:00:00Z] V1 API key scan → v1_active False, v2_active True
+- [2026-04-23T12:00:00Z] Hetzner `df /` → ~56 GiB free (not LEVEL 3)
+- [2026-04-23T12:00:00Z] L: free → ~176 GiB
+- [2026-04-23T12:00:00Z] `mega_plan/NOVA_V2_UNIFIED_MEGA_PROMPT.md` synced from `!CCChat Starter`
+- [2026-04-23T12:00:00Z] Wrote `status/baseline.json` + this heartbeat
+- [2026-04-23T12:00:00Z] Authoring `docs/NIGHT_REPORT_2026-04-23.md`
