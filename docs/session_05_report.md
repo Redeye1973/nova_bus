@@ -2,7 +2,7 @@
 
 - **Timestamp:** 2026-04-22 (UTC)
 - **Scope:** zeven jury-services in `v2_services/` (03, 04, 05, 06, 07, 08, 09) met uniform **`POST /review`** (`JuryRequest` / `JuryVerdict`), optionele aanroep **`nova-judge`** via `NOVA_JUDGE_URL` + `pipeline_judge.py`, **`GET /health`**, behoud **`POST /invoke`** waar zinvol.
-- **Tests:** per agent **3–4** scenarios onder `tests/test_agent_jury.py`; lokaal gedraaid met `cwd` = agentmap → **25 tests geslaagd** (stubs verwijderd; `pytest` lokaal geïnstalleerd, niet in runtime-`requirements.txt`).
+- **Tests:** per agent **3–7** scenarios; lokaal met `cwd` = agentmap → **26 tests** verzameld over de zeven mappen (o.a. `test_agent_jury.py`, agent 03 ook `test_review.py`); stubs verwijderd; `pytest` lokaal, niet in runtime-`requirements.txt`.
 - **n8n `workflow.json`:** voor alle 7: keten **Webhook → HTTP jury-service `/review` → HTTP `http://nova-judge:8000/evaluate` → Respond** (sessie-eis judge-wiring).
 - **Compose (repo):** `infrastructure/docker-compose.yml` — per jury-service **`depends_on`** `postgres-v2`, `redis-v2`, `nova-judge` (healthy) en env **`NOVA_JUDGE_URL=http://nova-judge:8000`**. `docker compose config` OK.
 - **Infra-sync:** `v2_services/agent_0*` → `infrastructure/services/agent_0*` (voor compose `context: ./services/...`).
