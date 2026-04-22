@@ -1,0 +1,46 @@
+patterns:
+  - name: ollama_connection_refused
+    match: "ConnectionError.*1143[24]|ollama.*connection.*refused"
+    severity: high
+    retry_able: true
+    fix: restart_ollama_service
+  - name: pdok_rate_limit
+    match: "429.*PDOK|rate.?limit.*pdok"
+    severity: medium
+    retry_able: true
+    fix: exponential_backoff_5min
+  - name: blender_out_of_memory
+    match: "MemoryError.*bpy|out of memory.*blender"
+    severity: high
+    retry_able: true
+    fix: split_job_into_chunks
+  - name: godot_null_reference
+    match: "Attempt to call.*on.*null|null.?reference.*godot"
+    severity: high
+    retry_able: false
+    fix: cursor_prompt_null_check
+  - name: disk_full
+    match: "No space left on device|ENOSPC"
+    severity: critical
+    retry_able: false
+    fix: cleanup_temp_files
+  - name: python_syntax_error
+    match: "SyntaxError|invalid syntax"
+    severity: medium
+    retry_able: false
+    fix: cursor_prompt_syntax_fix
+  - name: timeout_generic
+    match: "(?i)timeout|timed out"
+    severity: medium
+    retry_able: true
+    fix: exponential_backoff_30s
+  - name: db_connection
+    match: "could not connect to server.*postgres|connection refused.*5432"
+    severity: high
+    retry_able: true
+    fix: wait_for_postgres
+  - name: redis_unavailable
+    match: "Error.*Redis.*6379|connection refused.*6379"
+    severity: high
+    retry_able: true
+    fix: wait_for_redis

@@ -1,0 +1,12 @@
+{
+  "agent_number": "13",
+  "name": "pdok_downloader",
+  "folder": "agent_13_pdok_downloader",
+  "status": "built",
+  "built_at": "2026-04-22T19:11:35.122887+00:00",
+  "deployed_at": null,
+  "tests_passed": true,
+  "v1_used": false,
+  "fallback_used": true,
+  "notes": "Stub PDOK download + cache keys."
+}

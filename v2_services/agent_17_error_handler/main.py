@@ -31,7 +31,8 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger("error_handler")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-PATTERNS_PATH = Path(os.getenv("ERROR_PATTERNS_PATH", "/app/patterns.yaml"))
+_DEFAULT_PATTERNS = Path(__file__).resolve().parent / "patterns.yaml"
+PATTERNS_PATH = Path(os.getenv("ERROR_PATTERNS_PATH", str(_DEFAULT_PATTERNS)))
 HISTORY_LIMIT = int(os.getenv("ERROR_HISTORY_LIMIT", "500"))
 RETRY_BASE_S = float(os.getenv("ERROR_RETRY_BASE_S", "2"))
 RETRY_MAX_S = float(os.getenv("ERROR_RETRY_MAX_S", "300"))

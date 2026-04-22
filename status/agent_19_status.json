@@ -1,0 +1,12 @@
+{
+  "agent_number": "19",
+  "name": "distribution",
+  "folder": "agent_19_distribution",
+  "status": "built",
+  "built_at": "2026-04-22T19:11:35.122887+00:00",
+  "deployed_at": null,
+  "tests_passed": true,
+  "v1_used": false,
+  "fallback_used": true,
+  "notes": "Publish stub + X-Consumer-Key."
+}

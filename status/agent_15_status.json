@@ -1,0 +1,12 @@
+{
+  "agent_number": "15",
+  "name": "qgis_processor",
+  "folder": "agent_15_qgis_processor",
+  "status": "pending_full_bridge",
+  "built_at": "2026-04-22T19:11:35.122887+00:00",
+  "deployed_at": null,
+  "tests_passed": true,
+  "v1_used": false,
+  "fallback_used": true,
+  "notes": "QGIS via bridge \u2014 not wired."
+}

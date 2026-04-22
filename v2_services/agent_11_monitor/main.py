@@ -11,6 +11,9 @@ Endpoints:
 - GET  /status         alias of POST /invoke {"action":"sweep"}
 - GET  /alerts
 - GET  /metrics        plain text Prometheus exposition
+- POST /feedback       user / pipeline feedback (in-memory ledger)
+- GET  /feedback/recent
+- GET  /pdok-weekly-delta   stub (real PDOK delta in later build)
 - POST /invoke         {"action":"sweep|status|alerts|metrics"}
 """
 from __future__ import annotations
@@ -19,12 +22,13 @@ import asyncio
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional
+from collections import deque
+from typing import Any, Deque, Dict, List, Optional
 
 import httpx
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger("monitor")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -82,12 +86,20 @@ class _State:
 
 
 STATE = _State()
-app = FastAPI(title="NOVA v2 Agent 11 - Monitor", version="0.1.0")
+app = FastAPI(title="NOVA v2 Agent 11 - Monitor", version="0.2.0")
+
+FEEDBACK: Deque[Dict[str, Any]] = deque(maxlen=500)
 
 
 class InvokeBody(BaseModel):
     action: Optional[str] = None
     targets: Optional[List[Dict[str, Any]]] = None
+
+
+class FeedbackBody(BaseModel):
+    message: str = Field(..., min_length=1)
+    source: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 async def _probe_one(client: httpx.AsyncClient, target: Dict[str, Any]) -> Dict[str, Any]:
@@ -165,7 +177,7 @@ async def _sweep(targets: Optional[List[Dict[str, Any]]] = None) -> Dict[str, An
 
 @app.get("/health")
 def health() -> Dict[str, str]:
-    return {"status": "ok", "agent": "11_monitor", "version": "0.1.0"}
+    return {"status": "ok", "agent": "11_monitor", "version": "0.2.0"}
 
 
 @app.get("/status")
@@ -180,6 +192,33 @@ async def alerts() -> Dict[str, Any]:
     return {
         "timestamp": STATE.last_sweep["timestamp"],
         "alerts": STATE.last_sweep["alerts"],
+    }
+
+
+@app.post("/feedback")
+def post_feedback(body: FeedbackBody) -> Dict[str, Any]:
+    rec = {
+        "ts": time.time(),
+        "message": body.message,
+        "source": body.source or "anonymous",
+        "metadata": body.metadata or {},
+    }
+    FEEDBACK.append(rec)
+    return {"stored": True, "queue_size": len(FEEDBACK)}
+
+
+@app.get("/feedback/recent")
+def feedback_recent(limit: int = 20) -> Dict[str, Any]:
+    lim = max(1, min(200, limit))
+    items = list(FEEDBACK)[-lim:]
+    return {"count": len(items), "items": items}
+
+
+@app.get("/pdok-weekly-delta")
+def pdok_weekly_delta_stub() -> Dict[str, Any]:
+    return {
+        "status": "stub",
+        "note": "Wire PDOK BAG/BGT delta endpoints + MinIO snapshot compare in a later build.",
     }
 
 

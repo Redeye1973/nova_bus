@@ -1,0 +1,12 @@
+{
+  "agent_number": "14",
+  "name": "blender_baker",
+  "folder": "agent_14_blender_baker",
+  "status": "stub",
+  "built_at": "2026-04-22T19:11:35.122887+00:00",
+  "deployed_at": null,
+  "tests_passed": true,
+  "v1_used": false,
+  "fallback_used": true,
+  "notes": "Headless bake via bridge \u2014 stub only."
+}

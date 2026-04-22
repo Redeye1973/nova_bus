@@ -1,0 +1,12 @@
+{
+  "agent_number": "16",
+  "name": "cost_guard",
+  "folder": "agent_16_cost_guard",
+  "status": "built",
+  "built_at": "2026-04-22T19:11:35.122887+00:00",
+  "deployed_at": null,
+  "tests_passed": true,
+  "v1_used": false,
+  "fallback_used": true,
+  "notes": "In-memory daily cap; cost_log SQL for Postgres."
+}
