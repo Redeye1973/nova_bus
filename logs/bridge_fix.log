@@ -49,3 +49,4 @@ L:\!Nova V2\bridge\nova_bridge
 [2026-04-22 18:33:05] fase=3 SUCCESS uvicorn PID background; GET /health 200; GET /tools 200
 [2026-04-22 18:33:05] fase=5 junction L:\!Nova V2\bridge\nova_host_bridge -> nova_host_bridge
 [2026-04-22 18:33:05] fase=5 Register-ScheduledTask NOVA_Bridge -> AccessDenied (needs admin)
+[2026-04-22 19:26:40] session02 verify health=200 tools=200 task_NOVA_Bridge=missing_admin
