@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS pipeline_budgets (
 
 INSERT INTO pipeline_budgets VALUES
     ('shmup_sprite', 0.50, 600, 30, 100, 80),
+    ('ship_sprite_test', 0.50, 600, 30, 100, 80),
     ('story_chapter', 0.30, 300, 0, 50, 80),
     ('bake_postcode', 1.00, 1200, 0, 200, 80)
 ON CONFLICT (pipeline_type) DO NOTHING;
