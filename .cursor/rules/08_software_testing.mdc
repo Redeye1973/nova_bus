@@ -1,0 +1,32 @@
+---
+description: NOVA Software Test framework (Agent 64)
+globs:
+alwaysApply: true
+---
+
+# NOVA Software Test Pattern
+
+Tier-based software validation on Alex’s workstation plus remote infra checks.
+
+## Triggers
+
+- CLI: `cd` repo root, then `python -m v2_services.agent_64_software_test_runner` (or `.runners`).
+- Env: `SOFTTEST_OUTPUT_ROOT`, `SOFTTEST_DESCRIPTION`, `SOFTTEST_PUBLIC_HOST`, `DATABASE_URL`, MinIO creds, `SOFTTEST_SEQUENTIAL=1` on Windows if parallel native code misbehaves, `SOFTTEST_QUICK=1` for short cooldowns.
+
+## Output
+
+`L:\! 2 Nova v2  OUTPUT !\Z New NOva 1st test\_runs\YYYY-MM-DD_<description>\` with `_RUN_INFO.md`, `_TIMING.csv`, `_OUTPUTS_INVENTORY.md`, and per-tool subfolders.
+
+## Baseline
+
+Copy a successful run to `_baseline/` under the same output root (Windows: copy tree, not symlink). Future `comparators.compare_runs` uses that directory.
+
+## Database
+
+Postgres tables `software_test_runs`, `software_test_results`, `software_test_diffs` — apply `scripts/create_software_test_tables.sql` on `n8n_v2`.
+
+## Policy
+
+- Audiocraft: not in scope (Python 3.13 issues).
+- Krita: Pillow/PyQt-style fallback tests, not Krita CLI.
+- Tier 3 (Blender, GIMP, FreeCAD, QGIS, …): sequential; many will **skip** if binaries are not installed.
