@@ -853,6 +853,27 @@ services:
       timeout: 5s
       retries: 3
 
+  agent-60-memory-curator:
+    build:
+      context: ../v2_services/agent_60_memory_curator
+    image: nova-v2-agent-60-memory-curator:poc
+    container_name: nova-v2-memory-curator
+    restart: unless-stopped
+    ports:
+      - "8060:8060"
+    volumes:
+      - ../docs:/docs:rw
+    networks:
+      - nova-v2-network
+    environment:
+      - DOCS_ROOT=/docs
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-v2:5432/${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8060/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   postgres-data:
     name: nova-v2-postgres-data
