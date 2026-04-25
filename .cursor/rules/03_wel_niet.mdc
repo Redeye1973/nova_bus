@@ -31,6 +31,12 @@ alwaysApply: true
 - Bij elke deploy: health check + rollback klaar
 - Deploy script: scripts/deploy_pull_only.sh
 
+## Container startup
+- ALTIJD via staggered_startup.sh, nooit `docker compose up -d` op productie
+- Tier-based: foundation -> core -> critical -> processors -> juries
+- Tussen tiers: wait for healthy + cooldown
+- Bij reboot: systemd nova-startup.service handelt dit automatisch
+
 ## Test fixtures
 - Synthetic data default
 - Productie data alleen voor specifieke debug, daarna wipen

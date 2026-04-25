@@ -21,6 +21,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
     expose:
     - '5432'
     deploy:
@@ -51,6 +52,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
     expose:
     - '6379'
     deploy:
@@ -153,6 +155,8 @@ services:
     depends_on:
       n8n-v2-main:
         condition: service_started
+      postgres-v2:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -191,6 +195,8 @@ services:
     depends_on:
       n8n-v2-main:
         condition: service_started
+      postgres-v2:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -217,6 +223,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -225,6 +232,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-sprite_jury:latest
   agent-20-design-fase:
     container_name: nova-v2-agent-20
@@ -242,6 +254,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -250,6 +263,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_20_design_fase:latest
   agent-02-code-jury:
     container_name: nova-v2-agent-02
@@ -267,6 +283,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -275,6 +292,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_02_code_jury:latest
   agent-10-game-balance-jury:
     container_name: nova-v2-agent-10-game-balance-jury
@@ -292,6 +314,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -300,6 +323,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_10_game_balance_jury:latest
   agent-21-freecad-parametric:
     container_name: nova-v2-agent-21-freecad-parametric
@@ -317,6 +345,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -325,6 +354,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_21_freecad_parametric:latest
   agent-22-blender-renderer:
     container_name: nova-v2-agent-22-blender-renderer
@@ -342,6 +374,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -350,6 +383,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_22_blender_renderer:latest
   agent-23-aseprite-processor:
     container_name: nova-v2-agent-23-aseprite-processor
@@ -367,6 +403,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -375,6 +412,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_23_aseprite_processor:latest
   agent-25-pyqt-assembly:
     container_name: nova-v2-agent-25-pyqt-assembly
@@ -392,6 +432,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -400,6 +441,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_25_pyqt_assembly:latest
   agent-26-godot-import:
     container_name: nova-v2-agent-26-godot-import
@@ -417,6 +461,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -425,6 +470,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_26_godot_import:latest
   agent-11-monitor:
     container_name: nova-v2-agent-11-monitor
@@ -448,6 +496,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -456,6 +505,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_11_monitor:latest
   agent-17-error-handler:
     container_name: nova-v2-agent-17-error-handler
@@ -473,6 +525,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -481,6 +534,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: &id001
+        condition: service_healthy
+      agent-44-secrets-vault: &id002
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_17_error_handler:latest
   agent-07-narrative-jury:
     container_name: nova-v2-agent-07-narrative-jury
@@ -491,6 +549,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -507,6 +567,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -532,6 +593,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -540,6 +602,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_28_story_integration:latest
   agent-13-pdok-downloader:
     container_name: nova-v2-agent-13-pdok-downloader
@@ -557,6 +622,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -565,6 +631,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_13_pdok_downloader:latest
   agent-15-qgis-processor:
     container_name: nova-v2-agent-15-qgis-processor
@@ -582,6 +651,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -590,6 +660,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_15_qgis_processor:latest
   agent-14-blender-baker:
     container_name: nova-v2-agent-14-blender-baker
@@ -607,6 +680,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -615,6 +689,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_14_blender_baker:latest
   agent-05-gis-jury:
     container_name: nova-v2-agent-05-gis-jury
@@ -625,6 +702,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -641,6 +720,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -666,6 +746,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -674,6 +755,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_24_aseprite_anim_jury:latest
   agent-29-elevenlabs:
     container_name: nova-v2-agent-29-elevenlabs
@@ -691,6 +777,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -699,6 +786,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_29_elevenlabs:latest
   agent-03-audio-jury:
     container_name: nova-v2-agent-03-audio-jury
@@ -709,6 +799,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -725,6 +817,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -750,6 +843,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -758,6 +852,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_30_audio_asset_jury:latest
   agent-18-prompt-director:
     container_name: nova-v2-agent-18-prompt-director
@@ -775,6 +874,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -783,6 +883,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
     image: ghcr.io/redeye1973/nova-agent_18_prompt_director:latest
   agent-16-cost-guard:
     container_name: nova-v2-agent-16-cost-guard
@@ -803,6 +906,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -811,6 +915,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
     image: ghcr.io/redeye1973/nova-agent_16_cost_guard:latest
   agent-27-storyboard:
     container_name: nova-v2-agent-27-storyboard
@@ -828,6 +935,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -836,6 +944,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_27_storyboard:latest
   agent-08-character-art-jury:
     container_name: nova-v2-agent-08-character-art-jury
@@ -846,6 +957,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -862,6 +975,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -887,6 +1001,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -895,6 +1010,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_31_qgis_analysis:latest
   agent-32-grass-gis:
     container_name: nova-v2-agent-32-grass-gis
@@ -912,6 +1030,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -920,6 +1039,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_32_grass_gis:latest
   agent-33-blender-arch-walkthrough:
     container_name: nova-v2-agent-33-blender-arch-walkthrough
@@ -937,6 +1059,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -945,6 +1068,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_33_blender_arch_walkthrough:latest
   agent-34-unreal-import:
     container_name: nova-v2-agent-34-unreal-import
@@ -962,6 +1088,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -970,6 +1097,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_34_unreal_import:latest
   agent-35-raster-2d:
     container_name: nova-v2-agent-35-raster-2d
@@ -987,6 +1117,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -995,6 +1126,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_35_raster_2d:latest
   agent-09-illustration-jury:
     container_name: nova-v2-agent-09-illustration-jury
@@ -1005,6 +1139,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -1021,6 +1157,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1048,6 +1185,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1056,6 +1194,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
     image: ghcr.io/redeye1973/nova-agent_12_bake_orchestrator:latest
   agent-04-3d-model-jury:
     container_name: nova-v2-agent-04-3d-model-jury
@@ -1066,6 +1207,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -1082,6 +1225,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1101,6 +1245,8 @@ services:
         condition: service_healthy
       nova-judge:
         condition: service_healthy
+      agent-44-secrets-vault:
+        condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
@@ -1116,6 +1262,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1141,6 +1288,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1149,6 +1297,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_19_distribution:latest
   minio-v2:
     image: minio/minio:latest
@@ -1174,6 +1325,7 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1220,6 +1372,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1228,6 +1381,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
     image: ghcr.io/redeye1973/nova-judge:latest
   agent-44-secrets-vault:
     container_name: nova-v2-agent-44-secrets-vault
@@ -1250,6 +1406,7 @@ services:
       interval: 60s
       timeout: 5s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1258,6 +1415,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_44_secrets_vault:latest
   agent-60-memory-curator:
     container_name: nova-v2-memory-curator
@@ -1280,6 +1440,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1288,6 +1449,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
     image: ghcr.io/redeye1973/nova-agent_60_memory_curator:latest
   agent-62-service-router:
     container_name: nova-v2-service-router
@@ -1309,6 +1473,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1317,6 +1482,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
     image: ghcr.io/redeye1973/nova-agent_62_service_router:latest
   agent-61-notification-hub:
     container_name: nova-v2-notification-hub
@@ -1337,6 +1505,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1345,6 +1514,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
     image: ghcr.io/redeye1973/nova-agent_61_notification_hub:latest
 volumes:
   postgres-data:

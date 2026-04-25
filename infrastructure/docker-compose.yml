@@ -21,6 +21,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
     expose:
     - '5432'
     deploy:
@@ -51,6 +52,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
     expose:
     - '6379'
     deploy:
@@ -153,6 +155,8 @@ services:
     depends_on:
       n8n-v2-main:
         condition: service_started
+      postgres-v2:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -191,6 +195,8 @@ services:
     depends_on:
       n8n-v2-main:
         condition: service_started
+      postgres-v2:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -220,6 +226,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -228,6 +235,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
   agent-20-design-fase:
     build:
       context: ./services/agent_20_design_fase
@@ -247,6 +259,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -255,6 +268,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-02-code-jury:
     build:
       context: ./services/agent_02_code_jury
@@ -274,6 +290,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -282,6 +299,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
   agent-10-game-balance-jury:
     build:
       context: ./services/agent_10_game_balance_jury
@@ -301,6 +323,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -309,6 +332,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
   agent-21-freecad-parametric:
     build:
       context: ./services/agent_21_freecad_parametric
@@ -328,6 +356,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -336,6 +365,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-22-blender-renderer:
     build:
       context: ./services/agent_22_blender_renderer
@@ -355,6 +387,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -363,6 +396,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-23-aseprite-processor:
     build:
       context: ./services/agent_23_aseprite_processor
@@ -382,6 +418,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -390,6 +427,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-25-pyqt-assembly:
     build:
       context: ./services/agent_25_pyqt_assembly
@@ -409,6 +449,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -417,6 +458,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-26-godot-import:
     build:
       context: ./services/agent_26_godot_import
@@ -436,6 +480,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -444,6 +489,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-11-monitor:
     build:
       context: ./services/agent_11_monitor
@@ -469,6 +517,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -477,6 +526,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
   agent-17-error-handler:
     build:
       context: ./services/agent_17_error_handler
@@ -496,6 +548,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -504,6 +557,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: &id001
+        condition: service_healthy
+      agent-44-secrets-vault: &id002
+        condition: service_healthy
   agent-07-narrative-jury:
     build:
       context: ./services/agent_07_narrative_jury
@@ -516,6 +574,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -532,6 +592,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -559,6 +620,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -567,6 +629,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-13-pdok-downloader:
     build:
       context: ./services/agent_13_pdok_downloader
@@ -586,6 +651,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -594,6 +660,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-15-qgis-processor:
     build:
       context: ./services/agent_15_qgis_processor
@@ -613,6 +682,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -621,6 +691,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-14-blender-baker:
     build:
       context: ./services/agent_14_blender_baker
@@ -640,6 +713,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -648,6 +722,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-05-gis-jury:
     build:
       context: ./services/agent_05_gis_jury
@@ -660,6 +737,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -676,6 +755,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -703,6 +783,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -711,6 +792,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
   agent-29-elevenlabs:
     build:
       context: ./services/agent_29_elevenlabs
@@ -730,6 +816,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -738,6 +825,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-03-audio-jury:
     build:
       context: ./services/agent_03_audio_jury
@@ -750,6 +840,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -766,6 +858,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -793,6 +886,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -801,6 +895,11 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
+      nova-judge:
+        condition: service_healthy
   agent-18-prompt-director:
     build:
       context: ./services/agent_18_prompt_director
@@ -820,6 +919,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -828,6 +928,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
   agent-16-cost-guard:
     build:
       context: ./services/agent_16_cost_guard
@@ -850,6 +953,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -858,6 +962,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
   agent-27-storyboard:
     build:
       context: ./services/agent_27_storyboard
@@ -877,6 +984,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -885,6 +993,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-08-character-art-jury:
     build:
       context: ./services/agent_08_character_art_jury
@@ -897,6 +1008,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -913,6 +1026,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -940,6 +1054,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -948,6 +1063,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-32-grass-gis:
     build:
       context: ./services/agent_32_grass_gis
@@ -967,6 +1085,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -975,6 +1094,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-33-blender-arch-walkthrough:
     build:
       context: ./services/agent_33_blender_arch_walkthrough
@@ -994,6 +1116,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1002,6 +1125,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-34-unreal-import:
     build:
       context: ./services/agent_34_unreal_import
@@ -1021,6 +1147,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1029,6 +1156,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-35-raster-2d:
     build:
       context: ./services/agent_35_raster_2d
@@ -1048,6 +1178,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1056,6 +1187,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   agent-09-illustration-jury:
     build:
       context: ./services/agent_09_illustration_jury
@@ -1068,6 +1202,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -1084,6 +1220,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1113,6 +1250,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1121,6 +1259,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
   agent-04-3d-model-jury:
     build:
       context: ./services/agent_04_3d_model_jury
@@ -1133,6 +1274,8 @@ services:
       redis-v2:
         condition: service_healthy
       nova-judge:
+        condition: service_healthy
+      agent-44-secrets-vault:
         condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
@@ -1149,6 +1292,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1170,6 +1314,8 @@ services:
         condition: service_healthy
       nova-judge:
         condition: service_healthy
+      agent-44-secrets-vault:
+        condition: service_healthy
     environment:
     - NOVA_JUDGE_URL=http://nova-judge:8000
     expose:
@@ -1185,6 +1331,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1212,6 +1359,7 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1220,6 +1368,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      agent-44-secrets-vault:
+        condition: service_healthy
   minio-v2:
     image: minio/minio:latest
     container_name: nova-v2-minio
@@ -1244,6 +1395,7 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1294,6 +1446,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1302,6 +1455,9 @@ services:
         reservations:
           memory: 128M
           cpus: '0.1'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
   agent-44-secrets-vault:
     build:
       context: ./services/agent_44_secrets_vault
@@ -1326,6 +1482,7 @@ services:
       interval: 60s
       timeout: 5s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1334,6 +1491,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
   agent-60-memory-curator:
     build:
       context: ../v2_services/agent_60_memory_curator
@@ -1358,6 +1518,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1366,6 +1527,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.1'
+    depends_on:
+      postgres-v2:
+        condition: service_healthy
   agent-62-service-router:
     build:
       context: ./services/agent_62_service_router
@@ -1388,6 +1552,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1396,6 +1561,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
   agent-61-notification-hub:
     build:
       context: ./services/agent_61_notification_hub
@@ -1417,6 +1585,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -1425,6 +1594,9 @@ services:
         reservations:
           memory: 64M
           cpus: '0.05'
+    depends_on:
+      postgres-v2: *id001
+      agent-44-secrets-vault: *id002
 volumes:
   postgres-data:
     name: nova-v2-postgres-data

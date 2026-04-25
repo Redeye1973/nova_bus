@@ -1,0 +1,16 @@
+[Unit]
+Description=NOVA Staggered Container Startup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/docker/nova-v2
+ExecStart=/bin/bash /docker/nova-v2/scripts/staggered_startup.sh docker-compose.yml
+RemainAfterExit=yes
+StandardOutput=append:/var/log/nova-startup.log
+StandardError=append:/var/log/nova-startup.log
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,67 @@
+tiers:
+  0_foundation:
+    wait_after_seconds: 30
+    services:
+      - postgres-v2
+      - qdrant-v2
+      - minio-v2
+      - redis-v2
+
+  1_core:
+    wait_after_seconds: 20
+    services:
+      - agent-44-secrets-vault
+      - n8n-v2-main
+      - n8n-v2-worker-1
+      - n8n-v2-webhook
+      - agent-11-monitor
+      - agent-60-memory-curator
+
+  2_critical:
+    wait_after_seconds: 15
+    services:
+      - nova-judge
+      - agent-16-cost-guard
+      - agent-17-error-handler
+      - agent-18-prompt-director
+      - agent-12-bake-orchestrator
+      - agent-61-notification-hub
+      - agent-62-service-router
+
+  3_processors:
+    wait_after_seconds: 10
+    services:
+      - agent-20-design-fase
+      - agent-22-blender-renderer
+      - agent-23-aseprite-processor
+      - agent-25-pyqt-assembly
+      - agent-26-godot-import
+      - agent-21-freecad-parametric
+      - agent-14-blender-baker
+      - agent-13-pdok-downloader
+      - agent-15-qgis-processor
+      - agent-27-storyboard
+      - agent-28-story-integration
+      - agent-29-elevenlabs
+      - agent-31-qgis-analysis
+      - agent-32-grass-gis
+      - agent-33-blender-arch-walkthrough
+      - agent-34-unreal-import
+      - agent-35-raster-2d
+      - agent-19-distribution
+
+  4_juries:
+    wait_after_seconds: 5
+    services:
+      - sprite-jury-v2
+      - agent-02-code-jury
+      - agent-03-audio-jury
+      - agent-04-3d-model-jury
+      - agent-05-gis-jury
+      - agent-06-cad-jury
+      - agent-07-narrative-jury
+      - agent-08-character-art-jury
+      - agent-09-illustration-jury
+      - agent-10-game-balance-jury
+      - agent-24-aseprite-anim-jury
+      - agent-30-audio-asset-jury
