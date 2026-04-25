@@ -1,0 +1,54 @@
+gates:
+  sprite_generation:
+    jury_agent: "agent-01-sprite-jury-v2"
+    jury_url: "http://sprite-jury-v2:8101/invoke"
+    threshold: 0.7
+    max_retries: 2
+    bypass_allowed: true
+
+  audio_generation:
+    jury_agent: "agent-03-audio-jury"
+    jury_url: "http://agent-03-audio-jury:8103/invoke"
+    threshold: 0.7
+    max_retries: 2
+    bypass_allowed: true
+
+  model_3d:
+    jury_agent: "agent-04-3d-model-jury"
+    jury_url: "http://agent-04-3d-model-jury:8104/invoke"
+    threshold: 0.7
+    max_retries: 2
+    bypass_allowed: true
+
+  narrative:
+    jury_agent: "agent-07-narrative-jury"
+    jury_url: "http://agent-07-narrative-jury:8107/invoke"
+    threshold: 0.7
+    max_retries: 2
+    bypass_allowed: true
+
+  code:
+    jury_agent: "agent-02-code-jury"
+    jury_url: "http://agent-02-code-jury:8102/invoke"
+    threshold: 0.7
+    max_retries: 2
+    bypass_allowed: true
+
+  character_art:
+    jury_agent: "agent-08-character-art-jury"
+    jury_url: "http://agent-08-character-art-jury:8108/invoke"
+    threshold: 0.7
+    max_retries: 2
+    bypass_allowed: true
+
+profiles:
+  development:
+    threshold_modifier: -0.2
+    bypass_allowed: true
+
+  release:
+    threshold_modifier: 0.1
+    bypass_allowed: false
+
+  experiment:
+    bypass_all: true

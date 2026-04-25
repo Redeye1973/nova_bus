@@ -308,11 +308,14 @@ services:
     restart: unless-stopped
     expose:
       - "8111"
+    volumes:
+      - ../config:/config:ro
     networks:
       - nova-v2-network
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-v2:5432/${POSTGRES_DB}
       - NOTIFICATION_HUB_URL=http://nova-v2-notification-hub:8061
+      - GATES_CONFIG=/config/quality_gates.yaml
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8111/health')"]
       interval: 60s

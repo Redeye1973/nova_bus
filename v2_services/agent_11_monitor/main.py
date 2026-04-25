@@ -22,9 +22,12 @@ import time
 from collections import deque
 from typing import Any, Deque, Dict, List, Optional
 
+import json as _json
+
 import httpx
 import psycopg2
 import psycopg2.extras
+import yaml
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
@@ -74,6 +77,14 @@ NOTIFICATION_HUB_URL = os.getenv("NOTIFICATION_HUB_URL", "http://nova-v2-notific
 
 RETRY_DELAYS = [10, 30, 90]
 MAX_RETRIES = 3
+
+GATES_CONFIG_PATH = os.getenv("GATES_CONFIG", "/config/quality_gates.yaml")
+GATES: Dict[str, Any] = {}
+try:
+    with open(GATES_CONFIG_PATH) as f:
+        GATES = yaml.safe_load(f) or {}
+except FileNotFoundError:
+    logger.warning("quality_gates.yaml not found, gates disabled")
 
 LATENCY_WARN_MS = float(os.getenv("MONITOR_LATENCY_WARN_MS", "750"))
 LATENCY_CRIT_MS = float(os.getenv("MONITOR_LATENCY_CRIT_MS", "2000"))
@@ -466,6 +477,87 @@ async def _notify_failure(pipeline_id: str, stage: str, error: str, attempt: int
             }, timeout=5)
     except Exception:
         pass
+
+
+class GateCheckBody(BaseModel):
+    stage_type: str
+    asset_ref: Optional[str] = None
+    pipeline_id: Optional[str] = None
+    profile: str = "development"
+    bypass: bool = False
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@app.get("/gates")
+def list_gates() -> Dict[str, Any]:
+    gates_cfg = GATES.get("gates", {})
+    profiles = GATES.get("profiles", {})
+    return {"gates": list(gates_cfg.keys()), "profiles": list(profiles.keys()), "loaded": bool(gates_cfg)}
+
+
+@app.post("/gates/check")
+async def gate_check(body: GateCheckBody) -> Dict[str, Any]:
+    gates_cfg = GATES.get("gates", {})
+    profiles = GATES.get("profiles", {})
+
+    gate = gates_cfg.get(body.stage_type)
+    if not gate:
+        return {"verdict": "pass", "reason": "no_gate_configured", "stage_type": body.stage_type}
+
+    profile = profiles.get(body.profile, {})
+    if profile.get("bypass_all") or body.bypass:
+        return {"verdict": "pass", "reason": "bypass", "stage_type": body.stage_type, "profile": body.profile}
+
+    base_threshold = gate.get("threshold", 0.7)
+    modifier = profile.get("threshold_modifier", 0)
+    threshold = max(0.0, min(1.0, base_threshold + modifier))
+
+    jury_url = gate.get("jury_url", "")
+    if not jury_url:
+        return {"verdict": "pass", "reason": "no_jury_url", "stage_type": body.stage_type}
+
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.post(jury_url, json={
+                "action": "evaluate",
+                "asset_ref": body.asset_ref,
+                "pipeline_id": body.pipeline_id,
+                "metadata": body.metadata or {},
+            }, timeout=30)
+
+            if r.status_code != 200:
+                return {"verdict": "pass", "reason": f"jury_http_{r.status_code}", "stage_type": body.stage_type,
+                        "fallback": True}
+
+            result = r.json()
+            score = float(result.get("score", result.get("quality_score", 0)))
+            accepted = score >= threshold
+
+            verdict_result = {
+                "verdict": "accept" if accepted else "reject",
+                "score": score,
+                "threshold": threshold,
+                "profile": body.profile,
+                "stage_type": body.stage_type,
+                "jury_agent": gate.get("jury_agent"),
+                "jury_response": result,
+            }
+
+            if not accepted and body.pipeline_id:
+                await _notify_failure(body.pipeline_id, body.stage_type,
+                                      f"Quality gate rejected (score={score:.2f}, threshold={threshold:.2f})", 1)
+
+            return verdict_result
+
+    except Exception as e:
+        logger.error(f"Gate check failed for {body.stage_type}: {e}")
+        bypass_on_error = gate.get("bypass_allowed", True) and profile.get("bypass_allowed", True)
+        return {
+            "verdict": "pass" if bypass_on_error else "reject",
+            "reason": f"jury_error: {type(e).__name__}",
+            "stage_type": body.stage_type,
+            "fallback": bypass_on_error,
+        }
 
 
 @app.get("/metrics", response_class=PlainTextResponse)
