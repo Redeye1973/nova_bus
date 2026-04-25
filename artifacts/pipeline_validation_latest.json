@@ -1,0 +1,322 @@
+{
+  "generated_at": 1776889203.3681717,
+  "pipelines": {
+    "shmup": {
+      "run_id": "9e3bb20b-e68e-475c-bea7-e1da24197867",
+      "pipeline_name": "shmup",
+      "dry_run": true,
+      "steps": [
+        {
+          "step": 1,
+          "agent": "agent_20",
+          "url": "http://agent-20-design-fase:8120/palette/create",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 2,
+          "agent": "agent_21",
+          "url": "http://agent-21-freecad-parametric:8121/model/build-base",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 3,
+          "agent": "agent_22",
+          "url": "http://agent-22-blender-renderer:8122/render",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 4,
+          "agent": "agent_23",
+          "url": "http://agent-23-aseprite-processor:8123/process",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 5,
+          "agent": "agent_24",
+          "url": "http://agent-24-aseprite-anim-jury:8124/animate/review",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 6,
+          "agent": "agent_25",
+          "url": "http://agent-25-pyqt-assembly:8125/assemble",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 7,
+          "agent": "agent_01_sprite",
+          "url": "http://sprite-jury-v2:8101/v1/verdict",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 8,
+          "agent": "agent_26",
+          "url": "http://agent-26-godot-import:8126/import",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        }
+      ],
+      "totals": {
+        "pending_bridge": 0,
+        "failed": 0,
+        "ok": 0,
+        "latency_ms": 0
+      },
+      "final_verdict": "DRY_RUN"
+    },
+    "bake": {
+      "run_id": "2f0342a2-dd19-43b4-8e53-c9a3a581afb8",
+      "pipeline_name": "bake",
+      "dry_run": true,
+      "steps": [
+        {
+          "step": 1,
+          "agent": "agent_13",
+          "url": "http://agent-13-pdok-downloader:8113/download",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 2,
+          "agent": "agent_15",
+          "url": "http://agent-15-qgis-processor:8115/process",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 3,
+          "agent": "agent_31",
+          "url": "http://agent-31-qgis-analysis:8131/analyze",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 4,
+          "agent": "agent_32",
+          "url": "http://agent-32-grass-gis:8132/analyze",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 5,
+          "agent": "agent_14",
+          "url": "http://agent-14-blender-baker:8114/bake",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 6,
+          "agent": "agent_04",
+          "url": "http://agent-04-3d-model-jury:8104/review",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 7,
+          "agent": "agent_05",
+          "url": "http://agent-05-gis-jury:8105/review",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 8,
+          "agent": "agent_19",
+          "url": "http://agent-19-distribution:8119/invoke",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        }
+      ],
+      "totals": {
+        "pending_bridge": 0,
+        "failed": 0,
+        "ok": 0,
+        "latency_ms": 0
+      },
+      "final_verdict": "DRY_RUN"
+    },
+    "story": {
+      "run_id": "bcb97453-4c77-4dbb-a3e6-ea3642567eb0",
+      "pipeline_name": "story",
+      "dry_run": true,
+      "steps": [
+        {
+          "step": 1,
+          "agent": "agent_28",
+          "url": "http://agent-28-story-integration:8128/canon/search",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 2,
+          "agent": "agent_07",
+          "url": "http://agent-07-narrative-jury:8107/invoke",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 3,
+          "agent": "agent_27",
+          "url": "http://agent-27-storyboard:8127/storyboard/generate",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 4,
+          "agent": "agent_08",
+          "url": "http://agent-08-character-art-jury:8108/review",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 5,
+          "agent": "agent_09",
+          "url": "http://agent-09-illustration-jury:8109/review",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 6,
+          "agent": "agent_29_reg",
+          "url": "http://agent-29-elevenlabs:8129/voices/register",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 7,
+          "agent": "agent_29_tts",
+          "url": "http://agent-29-elevenlabs:8129/invoke",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 8,
+          "agent": "agent_30",
+          "url": "http://agent-30-audio-asset-jury:8130/health",
+          "method": "GET",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        },
+        {
+          "step": 9,
+          "agent": "agent_11",
+          "url": "http://agent-11-monitor:8111/feedback",
+          "method": "POST",
+          "skipped": true,
+          "latency_ms": 0,
+          "code": 0,
+          "verdict": "dry_run",
+          "pending_bridge": false
+        }
+      ],
+      "totals": {
+        "pending_bridge": 0,
+        "failed": 0,
+        "ok": 0,
+        "latency_ms": 0
+      },
+      "final_verdict": "DRY_RUN"
+    }
+  }
+}

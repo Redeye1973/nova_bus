@@ -1,17 +1,13 @@
-"""NOVA v2 Agent 17 — Error Handler.
+"""NOVA v2 Agent 17 — Error Handler + H11 Auto-Learning.
 
-Pragmatic POC scope (no Postgres, no Telegram dependency):
+Features:
 - Pattern-library classification (regex) loaded from patterns.yaml
 - In-memory ledger of errors and repair attempts
 - Exponential-backoff retry advisor
 - Auto "resolve" action that writes a repair record
-
-Endpoints:
-- GET  /health
-- POST /error/report      {service, severity?, message, stack_trace?, context?, correlation_id?}
-- POST /error/resolve     {error_id, action, success?, notes?}
-- GET  /repair/history    [?service=..&since_minutes=..]
-- POST /invoke            {action: report|resolve|history|patterns, ...}
+- H11: auto-learning of error patterns from repeat occurrences
+- H11: trend detection (spike alerts, repeat clustering)
+- H11: auto-escalation when same error occurs N times in M minutes
 """
 from __future__ import annotations
 
@@ -63,6 +59,12 @@ PATTERNS = _load_patterns()
 ERRORS: Dict[str, Dict[str, Any]] = {}
 HISTORY: Deque[Dict[str, Any]] = deque(maxlen=HISTORY_LIMIT)
 
+ESCALATION_THRESHOLD = int(os.getenv("ERROR_ESCALATION_THRESHOLD", "5"))
+ESCALATION_WINDOW_MIN = float(os.getenv("ERROR_ESCALATION_WINDOW_MIN", "30"))
+LEARNED_PATTERNS: Dict[str, Dict[str, Any]] = {}
+RECENT_MESSAGES: Deque[Dict[str, Any]] = deque(maxlen=2000)
+ESCALATIONS: Deque[Dict[str, Any]] = deque(maxlen=200)
+
 
 class ErrorReport(BaseModel):
     service: str = Field(..., min_length=1)
@@ -106,6 +108,53 @@ def _retry_plan(category: str, attempt: int) -> Dict[str, Any]:
     return {"attempt": attempt, "delay_seconds": round(delay, 2), "strategy": "exponential_backoff"}
 
 
+def _normalize_message(msg: str) -> str:
+    """Reduce message to a fingerprint for clustering."""
+    norm = re.sub(r'[0-9a-f]{8,}', '<ID>', msg)
+    norm = re.sub(r'\b\d+\b', '<N>', norm)
+    norm = re.sub(r'https?://\S+', '<URL>', norm)
+    norm = re.sub(r'\s+', ' ', norm).strip()
+    return norm[:200]
+
+
+def _check_auto_learn(msg: str, service: str) -> Optional[Dict[str, Any]]:
+    fp = _normalize_message(msg)
+    if fp not in LEARNED_PATTERNS:
+        LEARNED_PATTERNS[fp] = {"count": 0, "first_seen": time.time(), "services": set(), "sample": msg}
+    lp = LEARNED_PATTERNS[fp]
+    lp["count"] += 1
+    lp["services"].add(service)
+    lp["last_seen"] = time.time()
+
+    if lp["count"] >= 3 and lp["count"] == 3:
+        logger.info("auto-learned pattern (3 occurrences): %s", fp[:80])
+        return {"fingerprint": fp, "occurrences": lp["count"], "sample": lp["sample"]}
+    return None
+
+
+def _check_escalation(service: str, category: str) -> Optional[Dict[str, Any]]:
+    now = time.time()
+    cutoff = now - ESCALATION_WINDOW_MIN * 60
+    key = f"{service}:{category}"
+    recent_count = sum(
+        1 for r in RECENT_MESSAGES
+        if r.get("key") == key and r.get("ts", 0) >= cutoff
+    )
+    if recent_count >= ESCALATION_THRESHOLD:
+        esc = {
+            "service": service,
+            "category": category,
+            "count_in_window": recent_count,
+            "window_minutes": ESCALATION_WINDOW_MIN,
+            "threshold": ESCALATION_THRESHOLD,
+            "escalated_at": now,
+        }
+        ESCALATIONS.append(esc)
+        logger.warning("ESCALATION: %s errors for %s in %s minutes", recent_count, key, ESCALATION_WINDOW_MIN)
+        return esc
+    return None
+
+
 app = FastAPI(title="NOVA v2 Agent 17 - Error Handler", version="0.1.0")
 
 
@@ -146,6 +195,8 @@ def error_report(report: ErrorReport) -> Dict[str, Any]:
         "severity": classification["severity_calibrated"],
         "timestamp": now,
     })
+    RECENT_MESSAGES.append({"key": f"{report.service}:{classification['category']}", "ts": now})
+
     response: Dict[str, Any] = {
         "error_id": error_id,
         "classification": classification,
@@ -155,6 +206,15 @@ def error_report(report: ErrorReport) -> Dict[str, Any]:
         response["retry"] = _retry_plan(classification["category"], record["attempts"])
     if classification["fix"] and not classification["retry_able"]:
         response["suggested_fix"] = classification["fix"]
+
+    learned = _check_auto_learn(report.message, report.service)
+    if learned:
+        response["auto_learned_pattern"] = learned
+
+    escalation = _check_escalation(report.service, classification["category"])
+    if escalation:
+        response["escalation"] = escalation
+
     return response
 
 
@@ -207,6 +267,48 @@ def repair_history(service: Optional[str] = None, since_minutes: Optional[float]
     }
 
 
+@app.get("/errors/trends")
+def error_trends(minutes: int = 60) -> Dict[str, Any]:
+    cutoff = time.time() - minutes * 60
+    by_service: Dict[str, int] = {}
+    by_category: Dict[str, int] = {}
+    total = 0
+    for r in RECENT_MESSAGES:
+        if r.get("ts", 0) < cutoff:
+            continue
+        total += 1
+        key = r.get("key", "unknown:unknown")
+        svc, cat = key.split(":", 1) if ":" in key else (key, "unknown")
+        by_service[svc] = by_service.get(svc, 0) + 1
+        by_category[cat] = by_category.get(cat, 0) + 1
+    return {
+        "window_minutes": minutes,
+        "total_errors": total,
+        "by_service": dict(sorted(by_service.items(), key=lambda x: -x[1])),
+        "by_category": dict(sorted(by_category.items(), key=lambda x: -x[1])),
+    }
+
+
+@app.get("/errors/learned")
+def learned_patterns_list() -> Dict[str, Any]:
+    items = []
+    for fp, data in sorted(LEARNED_PATTERNS.items(), key=lambda x: -x[1].get("count", 0)):
+        items.append({
+            "fingerprint": fp,
+            "count": data["count"],
+            "services": list(data.get("services", set())),
+            "first_seen": data.get("first_seen"),
+            "last_seen": data.get("last_seen"),
+            "sample": data.get("sample", "")[:200],
+        })
+    return {"count": len(items), "learned_patterns": items[:50]}
+
+
+@app.get("/errors/escalations")
+def escalation_history() -> Dict[str, Any]:
+    return {"count": len(ESCALATIONS), "escalations": list(ESCALATIONS)}
+
+
 class InvokeBody(BaseModel):
     action: Optional[str] = None
     payload: Optional[Dict[str, Any]] = None
@@ -251,7 +353,16 @@ def invoke(body: InvokeBody) -> Dict[str, Any]:
             ],
         }
 
+    if action == "trends":
+        return error_trends(int(body.since_minutes or 60))
+
+    if action == "learned":
+        return learned_patterns_list()
+
+    if action == "escalations":
+        return escalation_history()
+
     return {
         "error": f"unknown_action:{action}",
-        "valid_actions": ["report", "resolve", "history", "patterns"],
+        "valid_actions": ["report", "resolve", "history", "patterns", "trends", "learned", "escalations"],
     }

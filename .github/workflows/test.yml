@@ -1,0 +1,81 @@
+name: Test
+
+on:
+  push:
+    branches: [main, 'cursor/*']
+  pull_request:
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      agents: ${{ steps.find.outputs.agents }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: find
+        run: |
+          agents=$(ls -d v2_services/agent_*/ v2_services/judge/ 2>/dev/null | \
+            xargs -I{} basename {} | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "agents=$agents" >> "$GITHUB_OUTPUT"
+          echo "Found agents: $agents"
+
+  test:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: ${{ fromJson(needs.discover.outputs.agents) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: v2_services/${{ matrix.agent }}
+        run: |
+          pip install -r requirements.txt
+          pip install pytest httpx
+
+      - name: Run tests
+        working-directory: v2_services/${{ matrix.agent }}
+        run: |
+          if [ -d tests ] && [ -n "$(ls tests/test_*.py 2>/dev/null)" ]; then
+            pytest tests/ -v --tb=short
+          else
+            echo "No tests found, running import check"
+            python -c "import main; print(f'Import OK: {main.app.title}')"
+          fi
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install ruff
+      - run: ruff check v2_services/ --select E,W,F --ignore E501
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for secrets
+        run: |
+          FOUND=0
+          for pattern in 'sk-[a-zA-Z0-9]{20,}' 'AKIA[A-Z0-9]{16}' 'ghp_[a-zA-Z0-9]{36}' 'PRIVATE KEY-----'; do
+            matches=$(grep -rn "$pattern" v2_services/ infrastructure/ scripts/ --include='*.py' --include='*.yml' --include='*.yaml' --include='*.sh' 2>/dev/null | grep -v 'pre-commit-secret-scan' | grep -v '.gitignore' || true)
+            if [ -n "$matches" ]; then
+              echo "FOUND pattern: $pattern"
+              echo "$matches"
+              FOUND=$((FOUND + 1))
+            fi
+          done
+          if [ $FOUND -gt 0 ]; then
+            echo "::error::Potential secrets found in code"
+            exit 1
+          fi
+          echo "No secrets found"

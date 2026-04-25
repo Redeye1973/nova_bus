@@ -832,6 +832,27 @@ services:
       timeout: 5s
       retries: 3
 
+  agent-44-secrets-vault:
+    build:
+      context: ./services/agent_44_secrets_vault
+    image: nova-v2-agent-44-secrets-vault:poc
+    container_name: nova-v2-agent-44-secrets-vault
+    restart: unless-stopped
+    networks:
+      - nova-v2-network
+    expose:
+      - "8144"
+    volumes:
+      - vault-data:/data
+    environment:
+      - NOVA_VAULT_TOKEN=${NOVA_VAULT_TOKEN}
+      - VAULT_ENCRYPTION_KEY=${VAULT_ENCRYPTION_KEY:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8144/health')"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+
 volumes:
   postgres-data:
     name: nova-v2-postgres-data
@@ -843,6 +864,8 @@ volumes:
     name: nova-v2-minio-data
   qdrant-data:
     name: nova-v2-qdrant-data
+  vault-data:
+    name: nova-v2-vault-data
 
 networks:
   nova-v2-network:

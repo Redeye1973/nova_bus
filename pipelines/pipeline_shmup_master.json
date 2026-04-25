@@ -1,0 +1,305 @@
+{
+  "name": "pipeline_shmup_master",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pipeline-shmup-master",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh_shmup",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-20-design-fase:8120/palette/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ theme: $json.body.style || 'retro pulp', faction_count: 4, restrictions: { ship_concept: $json.body.ship_concept, faction: $json.body.faction } }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_agent20_design",
+      "name": "Agent20 Design",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-21-freecad-parametric:8121/model/build-base",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ category: 'fighter', dimensions: { length: 10, radius: 1.2 } }) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "n_agent21_freecad",
+      "name": "Agent21 FreeCAD",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-22-blender-renderer:8122/render",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n_agent22_blender",
+      "name": "Agent22 Blender",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-23-aseprite-processor:8123/process",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n_agent23_aseprite",
+      "name": "Agent23 Aseprite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-24-aseprite-anim-jury:8124/animate/review",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"frames_b64\": [\"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\", \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\"], \"fps_hint\": 12.0}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_agent24_anim_jury",
+      "name": "Agent24 Anim Jury",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-25-pyqt-assembly:8125/assemble",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n_agent25_pyqt",
+      "name": "Agent25 PyQt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://sprite-jury-v2:8101/v1/verdict",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ pixel_integrity: 8.0, jury_scores: [7.5, 8.0] }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n_agent01_sprite_jury",
+      "name": "Agent01 Sprite Jury",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2020,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-26-godot-import:8126/import",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ assets: [], type: 'sprite' }) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "n_agent26_godot",
+      "name": "Agent26 Godot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2280,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "rsp_shmup",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2540,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Agent20 Design",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent20 Design": {
+      "main": [
+        [
+          {
+            "node": "Agent21 FreeCAD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent21 FreeCAD": {
+      "main": [
+        [
+          {
+            "node": "Agent22 Blender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent22 Blender": {
+      "main": [
+        [
+          {
+            "node": "Agent23 Aseprite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent23 Aseprite": {
+      "main": [
+        [
+          {
+            "node": "Agent24 Anim Jury",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent24 Anim Jury": {
+      "main": [
+        [
+          {
+            "node": "Agent25 PyQt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent25 PyQt": {
+      "main": [
+        [
+          {
+            "node": "Agent01 Sprite Jury",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent01 Sprite Jury": {
+      "main": [
+        [
+          {
+            "node": "Agent26 Godot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent26 Godot": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "nova_session": "08",
+    "pipeline": "shmup"
+  }
+}

@@ -1,0 +1,334 @@
+{
+  "name": "pipeline_story_master",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pipeline-story-master",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh_story",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-28-story-integration:8128/canon/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: ($json.body.scene_outline || '') + ' ' + ($json.body.canon || '') }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n_1",
+      "name": "Agent28 Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-07-narrative-jury:8107/invoke",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ job_id: 'story-pipeline', text: $json.body.scene_outline, canon_hits: 2, voice_profile_matched: true }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_2",
+      "name": "Agent07 Narrative",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-27-storyboard:8127/storyboard/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ scene_description: $json.body.scene_outline, style_bible: $json.body.mood, panel_count: 2 }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_3",
+      "name": "Agent27 Storyboard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        920,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-08-character-art-jury:8108/review",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ job_id: 'story-pipeline', artifact: { image_base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' }, context: { characters: $json.body.characters } }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_4",
+      "name": "Agent08 Character Jury",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1160,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-09-illustration-jury:8109/review",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ job_id: 'story-pipeline', artifact: { image_base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' }, context: {} }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_5",
+      "name": "Agent09 Illustration",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-29-elevenlabs:8129/voices/register",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ voice_id: 'v_story', label: 'Story pipeline', character_id: 'pipeline' }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "n_6",
+      "name": "Agent29 Register Voice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1640,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-29-elevenlabs:8129/invoke",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'tts', voice_id: 'v_story', text: 'Line read for pipeline validation.' }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "n_7",
+      "name": "Agent29 ElevenLabs TTS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1880,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://agent-30-audio-asset-jury:8130/health",
+        "sendBody": false,
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "n_8",
+      "name": "Agent30 Audio Jury",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2120,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agent-11-monitor:8111/feedback",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: 'pipeline_story_master completed', source: 'n8n', metadata: { pipeline: 'story' } }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "n_9",
+      "name": "Agent11 Monitor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2360,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "rsp_story",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2600,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Agent28 Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent28 Story": {
+      "main": [
+        [
+          {
+            "node": "Agent07 Narrative",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent07 Narrative": {
+      "main": [
+        [
+          {
+            "node": "Agent27 Storyboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent27 Storyboard": {
+      "main": [
+        [
+          {
+            "node": "Agent08 Character Jury",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent08 Character Jury": {
+      "main": [
+        [
+          {
+            "node": "Agent09 Illustration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent09 Illustration": {
+      "main": [
+        [
+          {
+            "node": "Agent29 Register Voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent29 Register Voice": {
+      "main": [
+        [
+          {
+            "node": "Agent29 ElevenLabs TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent29 ElevenLabs TTS": {
+      "main": [
+        [
+          {
+            "node": "Agent30 Audio Jury",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent30 Audio Jury": {
+      "main": [
+        [
+          {
+            "node": "Agent11 Monitor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent11 Monitor": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "nova_session": "08",
+    "pipeline": "story"
+  }
+}

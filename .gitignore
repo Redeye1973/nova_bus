@@ -1,20 +1,41 @@
-# Local bridge runtime logs (keep bridge_fix.log tracked intentionally via force-add when needed)
-logs/bridge_stdout.log
-logs/bridge_stderr.log
+# Local bridge runtime logs
+logs/
 nova_host_bridge.log
 nova_host_bridge.log.*
 # Junction to real bridge tree — do not commit duplicate tree
 bridge/nova_host_bridge/
 
+# Secrets — NEVER commit
 secrets/
+!secrets/vault_mapping.yaml
+*passwords*.txt
+*credentials*.json
+*.pem
+*.key
+
+# Python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+.pytest_cache/
+
+# Environment
 .env
-.env.local
+.env.*
+!.env.template
+
+# IDE
 .idea/
 .vscode/
+*.swp
+*~
+
+# OS / media
 Thumbs.db
+.DS_Store
 Renders/
 *.mp4
+
+# DR staging artifacts
+dr-staging/

@@ -93,15 +93,42 @@ app = FastAPI(title="NOVA v2 Agent 11 - Monitor", version="0.2.0")
 FEEDBACK: Deque[Dict[str, Any]] = deque(maxlen=500)
 
 
+PIPELINE_RUNS: Dict[str, Dict[str, Any]] = {}
+PIPELINE_HISTORY: Deque[Dict[str, Any]] = deque(maxlen=500)
+PIPELINE_STAGE_LOG: Deque[Dict[str, Any]] = deque(maxlen=2000)
+
+
 class InvokeBody(BaseModel):
     action: Optional[str] = None
     targets: Optional[List[Dict[str, Any]]] = None
+    payload: Optional[Dict[str, Any]] = None
 
 
 class FeedbackBody(BaseModel):
     message: str = Field(..., min_length=1)
     source: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+
+
+class PipelineStart(BaseModel):
+    pipeline_id: Optional[str] = None
+    name: str = Field(..., min_length=1)
+    triggered_by: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class PipelineStage(BaseModel):
+    pipeline_id: str
+    stage: str = Field(..., min_length=1)
+    status: str = "running"
+    agent_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class PipelineFinish(BaseModel):
+    pipeline_id: str
+    status: str = "success"
+    result: Optional[Dict[str, Any]] = None
 
 
 async def _probe_one(client: httpx.AsyncClient, target: Dict[str, Any]) -> Dict[str, Any]:
@@ -224,6 +251,81 @@ def pdok_weekly_delta_stub() -> Dict[str, Any]:
     }
 
 
+@app.post("/pipeline/start")
+def pipeline_start(body: PipelineStart) -> Dict[str, Any]:
+    import uuid as _uuid
+    pid = body.pipeline_id or str(_uuid.uuid4())
+    now = time.time()
+    run = {
+        "pipeline_id": pid,
+        "name": body.name,
+        "triggered_by": body.triggered_by,
+        "started_at": now,
+        "status": "running",
+        "stages": [],
+        "metadata": body.metadata or {},
+    }
+    PIPELINE_RUNS[pid] = run
+    PIPELINE_HISTORY.append({"event": "start", "pipeline_id": pid, "name": body.name, "ts": now})
+    return {"pipeline_id": pid, "status": "running"}
+
+
+@app.post("/pipeline/stage")
+def pipeline_stage(body: PipelineStage) -> Dict[str, Any]:
+    run = PIPELINE_RUNS.get(body.pipeline_id)
+    if not run:
+        return {"error": "unknown_pipeline_id"}
+    now = time.time()
+    stage_rec = {
+        "stage": body.stage,
+        "status": body.status,
+        "agent_id": body.agent_id,
+        "ts": now,
+        "metadata": body.metadata or {},
+    }
+    run["stages"].append(stage_rec)
+    PIPELINE_STAGE_LOG.append({"pipeline_id": body.pipeline_id, **stage_rec})
+    return {"recorded": True, "pipeline_id": body.pipeline_id, "stage": body.stage}
+
+
+@app.post("/pipeline/finish")
+def pipeline_finish(body: PipelineFinish) -> Dict[str, Any]:
+    run = PIPELINE_RUNS.get(body.pipeline_id)
+    if not run:
+        return {"error": "unknown_pipeline_id"}
+    now = time.time()
+    run["status"] = body.status
+    run["finished_at"] = now
+    run["duration_s"] = round(now - run["started_at"], 2)
+    run["result"] = body.result
+    PIPELINE_HISTORY.append({
+        "event": "finish", "pipeline_id": body.pipeline_id,
+        "name": run["name"], "status": body.status,
+        "duration_s": run["duration_s"], "ts": now,
+    })
+    return {"pipeline_id": body.pipeline_id, "status": body.status, "duration_s": run["duration_s"]}
+
+
+@app.get("/pipeline/active")
+def pipeline_active() -> Dict[str, Any]:
+    active = [r for r in PIPELINE_RUNS.values() if r.get("status") == "running"]
+    return {"count": len(active), "pipelines": active}
+
+
+@app.get("/pipeline/{pipeline_id}")
+def pipeline_detail(pipeline_id: str) -> Dict[str, Any]:
+    run = PIPELINE_RUNS.get(pipeline_id)
+    if not run:
+        return {"error": "unknown_pipeline_id"}
+    return run
+
+
+@app.get("/pipeline/history")
+def pipeline_history_list(limit: int = 20) -> Dict[str, Any]:
+    items = list(PIPELINE_HISTORY)[-min(limit, 200):]
+    return {"count": len(items), "events": items}
+
+
 @app.get("/metrics", response_class=PlainTextResponse)
 async def metrics() -> str:
     if STATE.last_sweep is None:
@@ -257,4 +359,9 @@ async def invoke(body: InvokeBody) -> Dict[str, Any]:
         return await alerts()
     if action == "metrics":
         return {"metrics": STATE.metrics, "last_sweep": STATE.last_sweep}
-    return {"error": f"unknown_action: {action}", "valid": ["sweep", "status", "alerts", "metrics"]}
+    if action == "pipeline_active":
+        return pipeline_active()
+    if action == "pipeline_history":
+        return pipeline_history_list(int((body.payload or {}).get("limit", 20)))
+    return {"error": f"unknown_action: {action}",
+            "valid": ["sweep", "status", "alerts", "metrics", "pipeline_active", "pipeline_history"]}

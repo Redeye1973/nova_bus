@@ -2,6 +2,32 @@
 
 Alle architecturele en strategische beslissingen, met reasoning.
 
+## 2026-04-22: V2 production baseline + backup cron als repo-templates
+
+**Decision**: Sessie 09 levert **documentatie + shell-sjablonen** voor Hetzner backups (`scripts/hetzner_backup_cron_templates.sh`); géén automatische remote-installatie vanuit Cursor.
+
+**Context**: Productie “klaar” betekent reproduceerbare stappen voor operator, niet blind servers muteren.
+
+**Reasoning**:
+- Cron vereist server-secrets, `mc` aliases en paden die per omgeving verschillen.
+- In-repo templates + `V2_BUILD_COMPLETE_REPORT.md` geven audit trail zonder credentials in git.
+
+**Consequence**: Operator voert cron-blokken handmatig in na review. Tag `v2.0-production` markeert deze baseline.
+
+**Revisit trigger**: Eerste geplande restore-test faalt → herzien retention en mirror-frequentie.
+
+---
+
+## 2026-04-22: Fase H scope — DAZ ja, Ren’Py nee
+
+**Decision**: Roadmap Fase H focust op **DAZ-pipeline**; **Ren’Py export / VN jury (36–37)** vallen buiten scope.
+
+**Context**: Productprioriteit en onderhoudslast.
+
+**Consequence**: `to_build.md` en `V2_BUILD_COMPLETE_REPORT.md` vermelden DAZ-only Fase H.
+
+---
+
 ## 2026-04-19: Bridge system tussen claude.ai en Cursor
 
 **Decision**: Handoff folder system (`handoff/to_cursor/`, `handoff/from_cursor/`, `handoff/shared_state/`) voor async communicatie.
