@@ -29,3 +29,9 @@ alwaysApply: true
 - Repo: github.com/Redeye1973/nova_bus
 - Main branch productie
 - Cursor branches: cursor/* prefix
+
+## Container Registry
+- ghcr.io/redeye1973/nova-* (alle agent images)
+- Token: GITHUB_GHCR_TOKEN in Vault
+- Build: GitHub Actions (.github/workflows/build-images.yml)
+- Deploy: scripts/deploy_pull_only.sh (pull only, geen build op server)

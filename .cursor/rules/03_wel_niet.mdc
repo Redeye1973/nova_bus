@@ -19,6 +19,17 @@ alwaysApply: true
 - Geen interactieve commando's voor Alex
 - Geen passwords in logs of commits
 - Geen secrets buiten Vault
+- NOOIT docker compose build op productie server (overbelast Hetzner)
+- NOOIT docker compose build --parallel anywhere (cascading load)
+
+## Deploy regels
+- Builds gebeuren op PC of GitHub Actions, NOOIT op productie
+- Productie server doet alleen `docker compose pull` + rolling restart
+- Pre-built images via ghcr.io/redeye1973/nova-*
+- Resource limits in docker-compose verplicht (memory + cpus)
+- SSH naar prod altijd met retry logic en timeout
+- Bij elke deploy: health check + rollback klaar
+- Deploy script: scripts/deploy_pull_only.sh
 
 ## Test fixtures
 - Synthetic data default
