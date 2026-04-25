@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import asyncio
-import shutil
+import os
 from pathlib import Path
 import time
 
 from .._base import TestResult, ToolTest
+from .._paths import qgis_install_root, resolve_any
 
 
 class QgisTest(ToolTest):
@@ -16,30 +17,44 @@ class QgisTest(ToolTest):
     TIMEOUT_SECONDS = 120
     EXPECTED_OUTPUT_FILENAME = "qgis_version.txt"
 
-    def _qgis(self) -> Path | None:
-        w = shutil.which("qgis_process")
-        if w:
-            return Path(w)
-        for p in (
-            Path(r"C:\Program Files\QGIS 3.38.0\bin\qgis_process.exe"),
-            Path(r"C:\Program Files\QGIS 3.34.0\bin\qgis_process.exe"),
-        ):
-            if p.is_file():
-                return p
-        return None
-
     async def run(self, output_dir: Path) -> TestResult:
         t0 = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
-        exe = self._qgis()
+        exe = resolve_any(
+            "qgis",
+            ["cli_executable", "executable"],
+            env_override="QGIS_PROCESS_PATH",
+        )
         out = output_dir / self.EXPECTED_OUTPUT_FILENAME
         if not exe:
             return TestResult(
                 self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
-                category=self.CATEGORY, error_message="qgis_process not found",
+                category=self.CATEGORY,
+                error_message="qgis_process niet in tool_paths.yaml of PATH",
             )
+        exe_path = Path(exe)
+        env = os.environ.copy()
+        path_bits: list[str] = [str(exe_path.parent)]
+        root = qgis_install_root()
+        if root:
+            for sub in (
+                "bin",
+                r"apps\qgis-ltr\bin",
+                r"apps\qgis\bin",
+                r"apps\Qt5\bin",
+            ):
+                p = root / sub
+                if p.is_dir():
+                    path_bits.append(str(p))
+            for py_dlls in root.glob(r"apps\Python*\DLLs"):
+                if py_dlls.is_dir():
+                    path_bits.append(str(py_dlls))
+                    break
+        env["PATH"] = os.pathsep.join(path_bits) + os.pathsep + env.get("PATH", "")
         proc = await asyncio.create_subprocess_exec(
-            str(exe), "--version",
+            exe, "--version",
+            cwd=str(exe_path.parent),
+            env=env,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )

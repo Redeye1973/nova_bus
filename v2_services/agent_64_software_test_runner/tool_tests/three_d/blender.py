@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import asyncio
-import shutil
 from pathlib import Path
 import time
 
 from .._base import TestResult, ToolTest
+from .._paths import resolve
 
 
 class BlenderTest(ToolTest):
@@ -17,25 +17,15 @@ class BlenderTest(ToolTest):
     EXPECTED_OUTPUT_FILENAME = "test_cube.png"
     MIN_OUTPUT_SIZE_BYTES = 500
 
-    def _blender(self) -> Path | None:
-        for p in (
-            Path(r"C:\Program Files\Blender Foundation\Blender 4.2\blender.exe"),
-            Path(r"C:\Program Files\Blender Foundation\Blender 4.1\blender.exe"),
-            Path(r"L:\ZZZ Software\Blender\blender.exe"),
-        ):
-            if p.is_file():
-                return p
-        w = shutil.which("blender")
-        return Path(w) if w else None
-
     async def run(self, output_dir: Path) -> TestResult:
         t0 = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
-        exe = self._blender()
+        exe = resolve("blender", env_override="BLENDER_PATH")
         if not exe:
             return TestResult(
                 self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
-                category=self.CATEGORY, error_message="blender.exe not found",
+                category=self.CATEGORY,
+                error_message="Executable niet in tool_paths.yaml of PATH",
             )
         out = output_dir / self.EXPECTED_OUTPUT_FILENAME
         script = output_dir / "render_cube.py"
@@ -67,7 +57,7 @@ bpy.ops.render.render(write_still=True)
             encoding="utf-8",
         )
         proc = await asyncio.create_subprocess_exec(
-            str(exe), "-b", "--python", str(script),
+            exe, "-b", "--python", str(script),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )

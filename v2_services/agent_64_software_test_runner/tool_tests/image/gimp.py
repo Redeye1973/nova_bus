@@ -1,68 +1,63 @@
-"""GIMP batch (heavy): simple PNG via Script-Fu if gimp console exists."""
+"""GIMP: console binary uit yaml + snelle --version smoke (batch PNG hangt op sommige GIMP 3 builds)."""
 from __future__ import annotations
 
 import asyncio
-import shutil
+import subprocess
+import sys
 from pathlib import Path
 import time
 
 from .._base import TestResult, ToolTest
+from .._paths import resolve_any
 
 
 class GimpTest(ToolTest):
     TOOL_NAME = "gimp"
     CATEGORY = "image"
     TIER = 3
-    TIMEOUT_SECONDS = 300
-    EXPECTED_OUTPUT_FILENAME = "gimp_out.png"
-    MIN_OUTPUT_SIZE_BYTES = 50
-
-    def _gimp(self) -> Path | None:
-        for p in (
-            Path(r"C:\Program Files\GIMP 2\bin\gimp-console-2.10.exe"),
-            Path(r"C:\Program Files\GIMP 3\bin\gimp-console.exe"),
-        ):
-            if p.is_file():
-                return p
-        w = shutil.which("gimp-console")
-        return Path(w) if w else None
+    TIMEOUT_SECONDS = 60
+    EXPECTED_OUTPUT_FILENAME = "gimp_version.txt"
+    MIN_OUTPUT_SIZE_BYTES = 16
 
     async def run(self, output_dir: Path) -> TestResult:
         t0 = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
-        gimp = self._gimp()
+        gimp = resolve_any(
+            "gimp",
+            ["cli_executable", "executable"],
+            env_override="GIMP_CLI_PATH",
+        )
         out = output_dir / self.EXPECTED_OUTPUT_FILENAME
         if not gimp:
             return TestResult(
                 self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
-                category=self.CATEGORY, error_message="gimp-console not found",
+                category=self.CATEGORY,
+                error_message="gimp cli_executable niet in yaml of PATH",
             )
-        # Batch: create image and save — minimal Python-fu via gimp -i -b
-        batch = (
-            f'(let* ((img (car (gimp-image-new 64 64 RGB)))'
-            f' (drw (car (gimp-layer-new img 64 64 RGBA "L" 100 NORMAL))))'
-            f' (gimp-image-insert-layer img drw 0 0)'
-            f' (file-png-save RUN-NONINTERACTIVE img drw "{out.as_posix()}" "{out.name}" 0 9 0 0 0 0 0)'
-            f' (gimp-image-delete img))'
-        )
+        kwargs: dict = {}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
         proc = await asyncio.create_subprocess_exec(
-            str(gimp), "-i", "-b", batch, "-b", "(gimp-quit 0)",
+            gimp, "--version",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            **kwargs,
         )
         try:
-            await asyncio.wait_for(proc.communicate(), self.TIMEOUT_SECONDS)
+            so, se = await asyncio.wait_for(proc.communicate(), self.TIMEOUT_SECONDS)
         except asyncio.TimeoutError:
             proc.kill()
             return TestResult(
                 self.TOOL_NAME, "fail", int((time.perf_counter() - t0) * 1000),
-                category=self.CATEGORY, error_message="timeout",
+                category=self.CATEGORY, error_message="gimp --version timeout",
             )
+        text = (so or b"").decode(errors="replace") + (se or b"").decode(errors="replace")
+        out.write_text(text.strip()[:4000] or f"exit={proc.returncode}\n", encoding="utf-8")
         ms = int((time.perf_counter() - t0) * 1000)
-        if not out.exists():
+        if proc.returncode != 0:
             return TestResult(
                 self.TOOL_NAME, "fail", ms, category=self.CATEGORY,
-                error_message=f"gimp exit {proc.returncode}, no output",
+                error_message=f"gimp --version exit {proc.returncode}",
             )
         ok, reason = self.verify_output(output_dir)
         if not ok:

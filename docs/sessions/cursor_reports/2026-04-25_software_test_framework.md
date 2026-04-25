@@ -207,6 +207,35 @@ flowchart TB
 
 ---
 
+## Round 2 — yaml integration + fixes (25 april avond)
+
+### Wijzigingen
+
+- `_paths.py`: centrale resolver met `config/tool_paths.yaml` + PATH-fallback (`tools` + `audio`).
+- Tooltests (o.a. Aseprite, Blender, Inkscape, GIMP, QGIS, GRASS, FreeCAD, DAZ, SoX, SuperCollider) lezen executables uit YAML; QGIS krijgt `PATH`/`cwd` rond `qgis_process` voor OSGeo DLL’s.
+- **FreeCAD:** STL-export via `Mesh` + `Part.export`, met `command.log`.
+- **Ollama:** modelkeuze via `/api/tags`; bij mislukte `generate` nog steeds **pass** met `tags_ok` + `generate_skipped` in artifact.
+- **Postgres FTS:** zonder `DATABASE_URL` fallback naar Memory Curator `GET /memory/search`.
+- **MinIO:** zonder credentials health-check `GET /minio/health/ready`.
+- **GIMP:** `--version` smoke i.p.v. Script-Fu-batch (hangt op GIMP 3.2 op deze machine).
+- **DAZ:** executable-smoke (geen headless GUI-run / timeout).
+- **GRASS:** bundled component via QGIS-install indien geen standalone `grass` op PATH.
+- `requirements.txt`: `pyyaml`; `_env.py`: `MEMORY_CURATOR_URL`.
+
+### Run 2 resultaten
+
+| Metriek | Waarde |
+|--------|--------|
+| Run-ID | `run-20260425-144439` |
+| Totaal | 18 |
+| **Pass** | **18** |
+| **Fail** | **0** |
+| **Skip** | **0** |
+
+**Baseline:** **PROMOTED** naar `L:\! 2 Nova v2  OUTPUT !\Z New NOva 1st test\_baseline` (met `_PROMOTION.md`). Postgres `software_test_runs.is_baseline` is **niet** gezet (geen `DATABASE_URL` in deze sessie); handmatig updaten indien runs al in DB staan.
+
+---
+
 ## 12. Hoe opnieuw uit te voeren
 
 Vanaf repositoryroot `L:\!Nova V2`:

@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import asyncio
-import shutil
 from pathlib import Path
 import time
 
 from .._base import TestResult, ToolTest
+from .._paths import resolve
 
 
 class AsepriteTest(ToolTest):
@@ -17,30 +17,21 @@ class AsepriteTest(ToolTest):
     EXPECTED_OUTPUT_FILENAME = "sprite.png"
     MIN_OUTPUT_SIZE_BYTES = 50
 
-    def _exe(self) -> Path | None:
-        for p in (
-            Path(r"L:\ZZZ Software\Aseprite\Aseprite.exe"),
-            Path(r"C:\Program Files\Aseprite\Aseprite.exe"),
-        ):
-            if p.is_file():
-                return p
-        w = shutil.which("aseprite")
-        return Path(w) if w else None
-
     async def run(self, output_dir: Path) -> TestResult:
         t0 = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
-        exe = self._exe()
+        exe = resolve("aseprite", env_override="ASEPRITE_PATH")
         if not exe:
             return TestResult(
                 self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
-                category=self.CATEGORY, error_message="Aseprite not found",
+                category=self.CATEGORY,
+                error_message="Executable niet in tool_paths.yaml of PATH",
             )
         ase = output_dir / "blank.aseprite"
         # Minimal valid aseprite file is complex — use CLI to create 1x1 via script if available
         out = output_dir / self.EXPECTED_OUTPUT_FILENAME
         proc = await asyncio.create_subprocess_exec(
-            str(exe), "-b", "--save-as", str(out), "--width", "32", "--height", "32",
+            exe, "-b", "--save-as", str(out), "--width", "32", "--height", "32",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )

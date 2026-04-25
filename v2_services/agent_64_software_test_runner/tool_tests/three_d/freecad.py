@@ -1,12 +1,12 @@
-"""FreeCAD: parametric box → STL via Part export."""
+"""FreeCAD: parametric box → STL via Mesh / Part.export."""
 from __future__ import annotations
 
 import asyncio
-import shutil
 from pathlib import Path
 import time
 
 from .._base import TestResult, ToolTest
+from .._paths import resolve_any
 
 
 class FreecadTest(ToolTest):
@@ -16,45 +16,56 @@ class FreecadTest(ToolTest):
     TIMEOUT_SECONDS = 300
     EXPECTED_OUTPUT_FILENAME = "box.stl"
 
-    def _cmd(self) -> Path | None:
-        for p in (
-            Path(r"C:\Program Files\FreeCAD 1.0\bin\FreeCADCmd.exe"),
-            Path(r"C:\Program Files\FreeCAD 0.21\bin\FreeCADCmd.exe"),
-        ):
-            if p.is_file():
-                return p
-        w = shutil.which("FreeCADCmd")
-        return Path(w) if w else None
-
     async def run(self, output_dir: Path) -> TestResult:
         t0 = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
-        exe = self._cmd()
+        exe = resolve_any(
+            "freecad",
+            ["cli_executable", "executable"],
+            env_override="FREECAD_CMD_PATH",
+        )
         if not exe:
             return TestResult(
                 self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
-                category=self.CATEGORY, error_message="FreeCADCmd not found",
+                category=self.CATEGORY,
+                error_message="FreeCADCmd niet in tool_paths.yaml of PATH",
             )
-        out = output_dir / self.EXPECTED_OUTPUT_FILENAME
-        outp = str(out.resolve()).replace("\\", "/")
-        script = output_dir / "box.py"
-        script.write_text(
-            f"""
+        stl_path = output_dir / self.EXPECTED_OUTPUT_FILENAME
+        fcstd_path = output_dir / "box.FCStd"
+        script_path = output_dir / "box_export.py"
+        script = f"""
+import FreeCAD
 import Part
-shape = Part.makeBox(10, 10, 10)
+import Mesh
+
+doc = FreeCAD.newDocument("test")
+box = doc.addObject("Part::Box", "Box")
+box.Length = 10
+box.Width = 10
+box.Height = 10
+doc.recompute()
+shape = box.Shape
+
 try:
-    shape.exportStl("{outp}")
-except Exception:
-    # Older builds
-    import Mesh
     mesh = Mesh.Mesh()
-    mesh.addMesh(Mesh.MeshPart.meshFromShape(Shape=shape, LinearDeflection=0.5))
-    mesh.write("{outp}")
-""",
-            encoding="utf-8",
-        )
+    mesh.addFacets(shape.tessellate(0.1)[1])
+    mesh.write(r"{stl_path.as_posix()}")
+    print("STL written via Mesh")
+except Exception as e:
+    print("Mesh method failed:", e)
+    try:
+        Part.export([box], r"{stl_path.as_posix()}")
+        print("STL written via Part.export")
+    except Exception as e2:
+        print("Part.export failed:", e2)
+
+doc.saveAs(r"{fcstd_path.as_posix()}")
+print("FCStd saved")
+"""
+        script_path.write_text(script, encoding="utf-8")
         proc = await asyncio.create_subprocess_exec(
-            str(exe), str(script),
+            exe,
+            str(script_path),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -67,16 +78,22 @@ except Exception:
                 category=self.CATEGORY, error_message="timeout",
             )
         ms = int((time.perf_counter() - t0) * 1000)
-        if not out.exists():
-            err = (se or b"").decode(errors="replace")[-800:]
+        log = (output_dir / "command.log")
+        log.write_text(
+            f"STDOUT:\n{(so or b'').decode(errors='replace')}\n\n"
+            f"STDERR:\n{(se or b'').decode(errors='replace')}\n",
+            encoding="utf-8",
+        )
+        if not stl_path.exists():
+            head = (so or b"").decode(errors="replace")[:200]
             return TestResult(
                 self.TOOL_NAME, "fail", ms, category=self.CATEGORY,
-                error_message=f"no stl, exit {proc.returncode}: {err}",
+                error_message=f"STL not produced. exit={proc.returncode} stdout[:200]={head!r}",
             )
         ok, reason = self.verify_output(output_dir)
         if not ok:
             return TestResult(self.TOOL_NAME, "fail", ms, category=self.CATEGORY, error_message=reason)
         return TestResult(
             self.TOOL_NAME, "pass", ms, category=self.CATEGORY,
-            output_path=out, output_size_bytes=out.stat().st_size,
+            output_path=stl_path, output_size_bytes=stl_path.stat().st_size,
         )

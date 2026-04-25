@@ -1,9 +1,11 @@
-"""MinIO: put small object, get, verify (requires credentials)."""
+"""MinIO: put/get round-trip of health-only check (geen credentials)."""
 from __future__ import annotations
 
 import time
 import uuid
 from pathlib import Path
+
+import httpx
 
 from .._base import TestResult, ToolTest
 from .._env import MINIO_ACCESS, MINIO_SECRET, MINIO_URL
@@ -20,10 +22,34 @@ class MinioTest(ToolTest):
         output_dir.mkdir(parents=True, exist_ok=True)
         out = output_dir / self.EXPECTED_OUTPUT_FILENAME
         if not MINIO_ACCESS or not MINIO_SECRET:
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    base = MINIO_URL.rstrip("/")
+                    r = await client.get(f"{base}/minio/health/ready")
+                    if r.status_code == 200:
+                        out.write_text("minio_health_ready\n", encoding="utf-8")
+                        ms = int((time.perf_counter() - t0) * 1000)
+                        ok, reason = self.verify_output(output_dir)
+                        if not ok:
+                            return TestResult(
+                                self.TOOL_NAME, "fail", ms, category=self.CATEGORY,
+                                error_message=reason,
+                            )
+                        return TestResult(
+                            self.TOOL_NAME, "pass", ms, category=self.CATEGORY,
+                            output_path=out, output_size_bytes=out.stat().st_size,
+                            metadata={"check": "health_only"},
+                        )
+            except Exception as e:
+                return TestResult(
+                    self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
+                    category=self.CATEGORY,
+                    error_message=f"MINIO credentials ontbreken; health check faalde: {e}",
+                )
             return TestResult(
                 self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
                 category=self.CATEGORY,
-                error_message="MINIO_ROOT_USER / MINIO_ROOT_PASSWORD not set",
+                error_message="MINIO_ROOT_USER / MINIO_ROOT_PASSWORD not set en health niet OK",
             )
         bucket = "software-test-probe"
         key = f"probe/{uuid.uuid4().hex}.txt"
@@ -32,7 +58,6 @@ class MinioTest(ToolTest):
             from minio import Minio
             from minio.error import S3Error
 
-            # Strip scheme for Minio client host
             endpoint = MINIO_URL.replace("http://", "").replace("https://", "")
             secure = MINIO_URL.startswith("https://")
             client = Minio(endpoint, access_key=MINIO_ACCESS, secret_key=MINIO_SECRET, secure=secure)

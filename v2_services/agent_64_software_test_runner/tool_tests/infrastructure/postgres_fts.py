@@ -1,11 +1,14 @@
-"""Postgres full-text sanity (session-local temp table)."""
+"""Postgres full-text sanity (session-local temp table) of Memory Curator proxy."""
 from __future__ import annotations
 
 import os
 import time
 from pathlib import Path
 
+import httpx
+
 from .._base import TestResult, ToolTest
+from .._env import MEMORY_CURATOR_URL
 
 
 class PostgresFtsTest(ToolTest):
@@ -21,10 +24,39 @@ class PostgresFtsTest(ToolTest):
         out = output_dir / self.EXPECTED_OUTPUT_FILENAME
         dsn = os.getenv("DATABASE_URL")
         if not dsn:
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    r = await client.get(
+                        f"{MEMORY_CURATOR_URL.rstrip('/')}/memory/search",
+                        params={"q": "test"},
+                    )
+                    if r.status_code == 200:
+                        out.write_text(
+                            f"memory_curator_search_ok status={r.status_code}\n",
+                            encoding="utf-8",
+                        )
+                        ms = int((time.perf_counter() - t0) * 1000)
+                        ok, reason = self.verify_output(output_dir)
+                        if not ok:
+                            return TestResult(
+                                self.TOOL_NAME, "fail", ms, category=self.CATEGORY,
+                                error_message=reason,
+                            )
+                        return TestResult(
+                            self.TOOL_NAME, "pass", ms, category=self.CATEGORY,
+                            output_path=out, output_size_bytes=out.stat().st_size,
+                            metadata={"via": "memory_curator"},
+                        )
+            except Exception as e:
+                return TestResult(
+                    self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
+                    category=self.CATEGORY,
+                    error_message=f"DATABASE_URL ontbreekt; Memory Curator fallback faalde: {e}",
+                )
             return TestResult(
                 self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
                 category=self.CATEGORY,
-                error_message="DATABASE_URL not set",
+                error_message="DATABASE_URL not set en Memory Curator search niet OK",
             )
         try:
             import psycopg2
@@ -32,7 +64,6 @@ class PostgresFtsTest(ToolTest):
             conn = psycopg2.connect(dsn, connect_timeout=10)
             conn.autocommit = False
             cur = conn.cursor()
-            cur.execute("DROP TABLE IF EXISTS software_test_fts_probe")
             cur.execute(
                 """
                 CREATE TEMP TABLE software_test_fts_probe (

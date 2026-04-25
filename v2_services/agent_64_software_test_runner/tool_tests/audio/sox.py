@@ -2,17 +2,12 @@
 from __future__ import annotations
 
 import asyncio
-import shutil
 import wave
 from pathlib import Path
 import time
 
 from .._base import TestResult, ToolTest
-
-SOX_CANDIDATES = [
-    Path(r"L:\ZZZ Software\SoX\sox-14.4.2\sox.exe"),
-    Path(r"L:\ZZZ Software\SoX\sox.exe"),
-]
+from .._paths import resolve
 
 
 class SoxTest(ToolTest):
@@ -22,21 +17,15 @@ class SoxTest(ToolTest):
     TIMEOUT_SECONDS = 60
     EXPECTED_OUTPUT_FILENAME = "converted.ogg"
 
-    def _sox(self) -> Path | None:
-        for c in SOX_CANDIDATES:
-            if c.is_file():
-                return c
-        w = shutil.which("sox")
-        return Path(w) if w else None
-
     async def run(self, output_dir: Path) -> TestResult:
         t0 = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
-        sox = self._sox()
+        sox = resolve("sox", env_override="SOX_PATH")
         if not sox:
             return TestResult(
                 self.TOOL_NAME, "skip", int((time.perf_counter() - t0) * 1000),
-                category=self.CATEGORY, error_message="sox.exe not found",
+                category=self.CATEGORY,
+                error_message="sox.exe niet in tool_paths.yaml of PATH",
             )
         wav = output_dir / "source.wav"
         with wave.open(str(wav), "w") as wf:
@@ -46,7 +35,7 @@ class SoxTest(ToolTest):
             wf.writeframes(b"\x00\x00" * 1600)
         out = output_dir / self.EXPECTED_OUTPUT_FILENAME
         proc = await asyncio.create_subprocess_exec(
-            str(sox), str(wav), str(out),
+            sox, str(wav), str(out),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
