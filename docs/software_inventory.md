@@ -144,3 +144,12 @@
 | DAZ | DazScript | Ja | Bestaat | ACTIEF |
 | Audiocraft | Python | Partial | N.v.t. | PARTIAL |
 | Unreal | Ja | Stub | N.v.t. | GEPLAND |
+
+---
+
+## Consolidatie 2026-04-25
+
+- Volledige inventarisatie + plan: `docs/software_consolidation_plan.md`
+- Machine-leesbare discovery: `docs/software_discovery_full.json`
+- Definitieve paden: `config/tool_paths.yaml` (v1.1)
+- Sessierapport: `docs/sessions/cursor_reports/2026-04-25_software_consolidation.md`

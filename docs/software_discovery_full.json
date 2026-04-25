@@ -1,0 +1,164 @@
+{
+    "scan_timestamp":  "2026-04-25T14:11:20.5681252+02:00",
+    "roots_scanned":  [
+                          "C:\\Program Files",
+                          "C:\\Program Files (x86)",
+                          "G:\\SteamLibrary",
+                          "G:\\Program Files",
+                          "L:\\ZZZ Software",
+                          "L:\\SteamLibrary",
+                          "L:\\UE_5.7",
+                          "C:\\Users\\awsme\\Downloads",
+                          "C:\\Users\\awsme\\AppData\\Local\\Programs"
+                      ],
+    "tools":  {
+                  "Aseprite":  [
+                                   {
+                                       "Path":  "L:\\SteamLibrary\\steamapps\\common\\Aseprite\\Aseprite.exe",
+                                       "Size":  21840984,
+                                       "Modified":  "2026-04-22T00:16:38.6444019+02:00"
+                                   }
+                               ],
+                  "Blender":  [
+                                  {
+                                      "Path":  "C:\\Program Files\\Blender Foundation\\Blender 4.3\\blender.exe",
+                                      "Size":  87418496,
+                                      "Modified":  "2024-12-17T04:45:20.0000000+01:00"
+                                  }
+                              ],
+                  "Krita":  [
+                                {
+                                    "Path":  "C:\\Program Files\\Krita (x64)\\bin\\krita.exe",
+                                    "Size":  271192,
+                                    "Modified":  "2022-09-13T12:41:14.0000000+02:00"
+                                }
+                            ],
+                  "GIMP":  [
+                               {
+                                   "Path":  "L:\\ZZZ Software\\GIMP 3\\bin\\gimp-3.2.exe",
+                                   "Size":  7225856,
+                                   "Modified":  "2026-04-17T02:49:14.0000000+02:00"
+                               },
+                               {
+                                   "Path":  "L:\\ZZZ Software\\GIMP 3\\bin\\gimp-console-3.2.exe",
+                                   "Size":  3482624,
+                                   "Modified":  "2026-04-17T02:48:58.0000000+02:00"
+                               }
+                           ],
+                  "Inkscape":  [
+                                   {
+                                       "Path":  "L:\\ZZZ Software\\InkScape\\bin\\inkscape.exe",
+                                       "Size":  461713,
+                                       "Modified":  "2025-05-13T22:11:28.0000000+02:00"
+                                   }
+                               ],
+                  "DAZ_Studio":  [
+                                     {
+                                         "Path":  "C:\\Program Files\\DAZ 3D\\DAZStudio4\\DAZStudio.exe",
+                                         "Size":  796160,
+                                         "Modified":  "2025-12-22T11:33:46.0000000+01:00"
+                                     },
+                                     {
+                                         "Path":  "L:\\ZZZ Software\\Dazz Downloads\\Applications\\64-bit\\DAZ 3D\\DAZStudio4\\DAZStudio.exe",
+                                         "Size":  796160,
+                                         "Modified":  "2025-12-22T11:33:46.0000000+01:00"
+                                     }
+                                 ],
+                  "FreeCAD":  [
+                                  {
+                                      "Path":  "C:\\Program Files\\FreeCAD 1.0\\bin\\freecad.exe",
+                                      "Size":  235360,
+                                      "Modified":  "2025-08-06T03:51:20.0000000+02:00"
+                                  },
+                                  {
+                                      "Path":  "C:\\Program Files\\FreeCAD 1.0\\bin\\freecadcmd.exe",
+                                      "Size":  220512,
+                                      "Modified":  "2025-08-06T03:51:18.0000000+02:00"
+                                  },
+                                  {
+                                      "Path":  "L:\\ZZZ Software\\FreeCad\\bin\\freecad.exe",
+                                      "Size":  265912,
+                                      "Modified":  "2026-04-15T06:10:22.0000000+02:00"
+                                  },
+                                  {
+                                      "Path":  "L:\\ZZZ Software\\FreeCad\\bin\\freecadcmd.exe",
+                                      "Size":  233144,
+                                      "Modified":  "2026-04-15T06:10:26.0000000+02:00"
+                                  }
+                              ],
+                  "Godot":  [
+
+                            ],
+                  "QGIS":  [
+                               {
+                                   "Path":  "C:\\Program Files\\QGIS 3.40.13\\apps\\qgis-ltr\\bin\\qgis_process.exe",
+                                   "Size":  167936,
+                                   "Modified":  "2025-11-21T15:30:00.0000000+01:00"
+                               },
+                               {
+                                   "Path":  "C:\\Program Files\\QGIS 3.40.13\\bin\\qgis-ltr-bin.exe",
+                                   "Size":  176640,
+                                   "Modified":  "2025-11-21T14:51:38.0000000+01:00"
+                               }
+                           ],
+                  "GRASS_GIS":  [
+                                    {
+                                        "Path":  "C:\\Program Files\\QGIS 3.40.13\\bin\\grass84.bat",
+                                        "Size":  511,
+                                        "Modified":  "2025-12-11T22:55:48.5544142+01:00"
+                                    }
+                                ],
+                  "SuperCollider":  [
+                                        {
+                                            "Path":  "L:\\ZZZ Software\\Super Collider\\sclang.exe",
+                                            "Size":  3528704,
+                                            "Modified":  "2025-11-24T06:35:30.0000000+01:00"
+                                        },
+                                        {
+                                            "Path":  "L:\\ZZZ Software\\Super Collider\\scsynth.exe",
+                                            "Size":  753664,
+                                            "Modified":  "2025-11-24T06:35:32.0000000+01:00"
+                                        }
+                                    ],
+                  "SoX":  [
+                              {
+                                  "Path":  "L:\\ZZZ Software\\SoX\\sox-14.4.2\\sox.exe",
+                                  "Size":  213624,
+                                  "Modified":  "2015-02-22T15:05:12.0000000+01:00"
+                              }
+                          ],
+                  "LDtk":  [
+                               {
+                                   "Path":  "L:\\ZZZ Software\\ldtk\\LDtk.exe",
+                                   "Size":  162145632,
+                                   "Modified":  "2024-01-15T16:16:32.0000000+01:00"
+                               }
+                           ],
+                  "Audacity":  [
+                                   {
+                                       "Path":  "C:\\Program Files\\Audacity\\Audacity.exe",
+                                       "Size":  13636656,
+                                       "Modified":  "2025-12-11T16:30:44.0000000+01:00"
+                                   }
+                               ],
+                  "OBS_Studio":  [
+
+                                 ],
+                  "MakeHuman":  [
+
+                                ],
+                  "Unreal_Engine":  [
+                                        {
+                                            "Path":  "L:\\UE_5.7\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
+                                            "Size":  514488,
+                                            "Modified":  "2026-04-15T19:47:50.9853017+02:00"
+                                        }
+                                    ],
+                  "Poser":  [
+
+                            ],
+                  "Tiled":  [
+
+                            ]
+              }
+}

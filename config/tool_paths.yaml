@@ -1,57 +1,123 @@
+# NOVA v2 — tool paden (single source of truth)
+# Laatst bijgewerkt: 2026-04-25 (software consolidation / discovery)
+# Zie: docs/software_consolidation_plan.md, docs/software_discovery_full.json
+
+version: "1.1"
+last_inventory: "2026-04-25"
+
 tools:
   aseprite:
     executable: "L:\\SteamLibrary\\steamapps\\common\\Aseprite\\Aseprite.exe"
     status: active
+    location: steam_library
+    move_to_zzz: false
+    reason_no_move: "Steam-managed install"
 
   blender:
     executable: "C:\\Program Files\\Blender Foundation\\Blender 4.3\\blender.exe"
     status: active
+    location: program_files
+    move_to_zzz: false
+    reason_no_move: "Registry-based install"
 
   krita:
     executable: "C:\\Program Files\\Krita (x64)\\bin\\krita.exe"
     cli_working: false
     status: active_fallback
+    location: program_files
+    move_to_zzz: false
+    reason_no_move: "Registry-based install"
+    fallback: pyqt5
 
   daz_studio:
     executable: "C:\\Program Files\\DAZ 3D\\DAZStudio4\\DAZStudio.exe"
     status: active
+    location: program_files
+    move_to_zzz: false
+    reason_no_move: "DAZ Studio + content runtime"
+    notes: "L:\\ZZZ Software\\Dazz\\ bevat DAZ Install Manager / support, niet de hoofdstudio-binary."
 
   freecad:
     executable: "L:\\ZZZ Software\\FreeCad\\bin\\FreeCAD.exe"
+    cli_executable: "L:\\ZZZ Software\\FreeCad\\bin\\FreeCADCmd.exe"
     status: active
+    location: zzz_software
+    move_to_zzz: false
 
   gimp:
     executable: "L:\\ZZZ Software\\GIMP 3\\bin\\gimp-3.2.exe"
     cli_executable: "L:\\ZZZ Software\\GIMP 3\\bin\\gimp-console-3.2.exe"
     version: "3.2.4"
     status: active
+    location: zzz_software
+    move_to_zzz: false
 
   godot:
     executable: "L:\\ZZZ Software\\Godot\\Godot_v4.6.2-stable_win64_console.exe"
+    gui_executable: "L:\\ZZZ Software\\Godot\\Godot_v4.6.2-stable_win64.exe"
+    version: "4.6.2"
     status: active
+    location: zzz_software
+    move_to_zzz: false
 
   inkscape:
     executable: "L:\\ZZZ Software\\InkScape\\bin\\inkscape.exe"
     version: "1.4.2"
     status: active
+    location: zzz_software
+    move_to_zzz: false
 
   ldtk:
     executable: "L:\\ZZZ Software\\ldtk\\LDtk.exe"
     cli_supported: false
     status: gui_only
+    location: zzz_software
+    move_to_zzz: false
 
   pyxel_edit:
     executable: "L:\\ZZZ Software\\PyxelEdit\\PyxelEdit.exe"
     cli_supported: false
     status: gui_only_afgewezen
+    location: zzz_software
+    move_to_zzz: false
 
   qgis:
-    executable: auto_discover
+    executable: "C:\\Program Files\\QGIS 3.40.13\\bin\\qgis-ltr-bin.exe"
+    cli_executable: "C:\\Program Files\\QGIS 3.40.13\\apps\\qgis-ltr\\bin\\qgis_process.exe"
+    install_root: "C:\\Program Files\\QGIS 3.40.13"
+    version: "3.40.13 LTR"
     status: active
+    location: program_files
+    move_to_zzz: false
+    reason_no_move: "OSGeo/QGIS registry layout"
+    notes: "GRASS-modules gebundeld onder apps\\qgis-ltr\\grass\\"
+
+  grass_gis:
+    status: not_installed
+    install_priority: low
+    notes: "Standalone GRASS op PATH ontbreekt; QGIS 3.40.13 bundelt GRASS 8 (zie qgis.install_root)."
 
   unreal_engine:
-    executable: "L:\\UE_5.7"
+    executable: "L:\\UE_5.7\\Engine\\Binaries\\Win64\\UnrealEditor.exe"
+    engine_root: "L:\\UE_5.7"
     status: active
+    location: epic_style_engine_root
+    move_to_zzz: false
+    reason_no_move: "Engine tree + launcher updates"
+
+  tiled:
+    status: not_installed
+    install_priority: low
+
+  poser:
+    status: not_installed
+    install_priority: low
+    notes: "Alternatief: DAZ Studio"
+
+  chiptone:
+    status: browser_tool
+    install_priority: n_a
+    notes: "Geen lokale executable; browser/Web."
 
 audio:
   supercollider:
@@ -59,14 +125,34 @@ audio:
     sclang: "L:\\ZZZ Software\\Super Collider\\sclang.exe"
     version: "3.14.1"
     status: active
+    location: zzz_software
+    move_to_zzz: false
 
   sox:
     executable: "L:\\ZZZ Software\\SoX\\sox-14.4.2\\sox.exe"
     version: "14.4.2"
     status: active
+    location: zzz_software
+    move_to_zzz: false
+
+  audacity:
+    executable: "C:\\Program Files\\Audacity\\Audacity.exe"
+    status: active
+    location: program_files
+    move_to_zzz: false
+    reason_no_move: "Standard installer under Program Files"
 
   audiocraft:
     venv_python: "L:\\ZZZ Software\\Audiocraft\\venv\\Scripts\\python.exe"
     models_cache: "~/.cache/huggingface/hub/"
     status: partial_install
-    note: "PyTorch version conflicts, needs Python 3.11 + torch 2.1.0"
+    fix_required: rebuild_venv_python_3_11
+    note: "PyTorch / Python 3.13 conflicten — venv op 3.11 + compat torch"
+
+  obs_studio:
+    status: not_installed
+    install_priority: medium
+
+  makehuman:
+    status: not_installed
+    install_priority: medium
