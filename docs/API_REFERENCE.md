@@ -305,26 +305,33 @@ Version: 0.2.0
 **Models:** `BuildBaseRequest`, `VariantGenRequest`, `ComponentRef`, `AssembleRequest`, `InvokeBody`
 
 ## NOVA v2 Agent 22 - Blender Game Renderer (`agent_22_blender_renderer`)
-Version: 0.1.0-stub
+Version: 0.2.0
 
-> NOVA v2 Agent 22 — Blender Game Renderer (stub until bridge).
+> NOVA v2 Agent 22 — Blender Game Renderer.
 
 | Method | Path | Function |
 |--------|------|----------|
 | GET | `/health` | `health` |
+| GET | `/availability` | `availability` |
 | POST | `/render` | `render` |
+| POST | `/script` | `script` |
 | POST | `/invoke` | `invoke` |
+
+**Models:** `RenderRequest`, `ScriptRequest`
 
 ## NOVA v2 Agent 23 - Aseprite Processor (`agent_23_aseprite_processor`)
-Version: 0.1.0-stub
+Version: 0.2.0
 
-> NOVA v2 Agent 23 — Aseprite Processor (stub until bridge).
+> NOVA v2 Agent 23 — Aseprite Processor.
 
 | Method | Path | Function |
 |--------|------|----------|
 | GET | `/health` | `health` |
+| GET | `/availability` | `availability` |
 | POST | `/process` | `process` |
 | POST | `/invoke` | `invoke` |
+
+**Models:** `SpritesheetRequest`, `ProcessRequest`
 
 ## NOVA v2 Agent 24 - Aseprite Animation Jury (`agent_24_aseprite_anim_jury`)
 Version: 0.1.0
@@ -340,26 +347,34 @@ Version: 0.1.0
 **Models:** `AnimateReviewBody`
 
 ## NOVA v2 Agent 25 - PyQt Assembly (`agent_25_pyqt_assembly`)
-Version: 0.1.0-stub
+Version: 0.2.0
 
-> NOVA v2 Agent 25 — PyQt Assembly (stub until bridge).
+> NOVA v2 Agent 25 — PyQt Assembly.
 
 | Method | Path | Function |
 |--------|------|----------|
 | GET | `/health` | `health` |
+| GET | `/availability` | `availability` |
 | POST | `/assemble` | `assemble` |
 | POST | `/invoke` | `invoke` |
 
-## NOVA v2 Agent 26 - Godot Import (`agent_26_godot_import`)
-Version: 0.1.0-stub
+**Models:** `AssembleRequest`
 
-> NOVA v2 Agent 26 — Godot Import (stub until bridge).
+## NOVA v2 Agent 26 - Godot Import (`agent_26_godot_import`)
+Version: 0.2.0
+
+> NOVA v2 Agent 26 — Godot Import.
 
 | Method | Path | Function |
 |--------|------|----------|
 | GET | `/health` | `health` |
+| GET | `/availability` | `availability` |
+| POST | `/validate` | `validate` |
 | POST | `/import` | `import_assets` |
+| POST | `/script` | `run_script` |
 | POST | `/invoke` | `invoke` |
+
+**Models:** `ValidateRequest`, `ImportRequest`, `ScriptRequest`
 
 ## NOVA v2 Agent 27 - Storyboard Visual (`agent_27_storyboard`)
 Version: 0.1.0
@@ -416,37 +431,46 @@ Version: 0.1.0
 | POST | `/invoke` | `invoke` |
 
 ## NOVA v2 Agent 31 - QGIS Analysis (`agent_31_qgis_analysis`)
-Version: 0.1.0-stub
+Version: 0.2.0
 
-> NOVA v2 Agent 31 — QGIS Analysis (stub until bridge).
+> NOVA v2 Agent 31 — QGIS Analysis.
 
 | Method | Path | Function |
 |--------|------|----------|
 | GET | `/health` | `health` |
+| GET | `/availability` | `availability` |
 | POST | `/analyze` | `analyze` |
 | POST | `/invoke` | `invoke` |
+
+**Models:** `AnalyzeRequest`
 
 ## NOVA v2 Agent 32 - GRASS GIS (`agent_32_grass_gis`)
-Version: 0.1.0-stub
+Version: 0.2.0
 
-> NOVA v2 Agent 32 — GRASS GIS Analysis (stub until bridge).
+> NOVA v2 Agent 32 — GRASS GIS.
 
 | Method | Path | Function |
 |--------|------|----------|
 | GET | `/health` | `health` |
+| GET | `/availability` | `availability` |
 | POST | `/analyze` | `analyze` |
 | POST | `/invoke` | `invoke` |
 
-## NOVA v2 Agent 33 - Blender Arch Walkthrough (`agent_33_blender_arch_walkthrough`)
-Version: 0.1.0-stub
+**Models:** `GrassRequest`
 
-> NOVA v2 Agent 33 — Blender architecture walkthrough (stub until bridge adapters).
+## NOVA v2 Agent 33 - Blender Arch Walkthrough (`agent_33_blender_arch_walkthrough`)
+Version: 0.2.0
+
+> NOVA v2 Agent 33 — Blender Architecture Walkthrough.
 
 | Method | Path | Function |
 |--------|------|----------|
 | GET | `/health` | `health` |
+| GET | `/availability` | `availability` |
 | POST | `/walkthrough` | `walkthrough` |
 | POST | `/invoke` | `invoke` |
+
+**Models:** `WalkthroughRequest`
 
 ## NOVA v2 Agent 34 - Unreal Import Prep (`agent_34_unreal_import`)
 Version: 0.1.0
@@ -462,15 +486,18 @@ Version: 0.1.0
 **Models:** `PrepBody`
 
 ## NOVA v2 Agent 35 - Raster 2D Processor (`agent_35_raster_2d`)
-Version: 0.1.0-stub
+Version: 0.2.0
 
-> NOVA v2 Agent 35 — Raster 2D Processor (stub until bridge).
+> NOVA v2 Agent 35 — Raster 2D Processor.
 
 | Method | Path | Function |
 |--------|------|----------|
 | GET | `/health` | `health` |
+| GET | `/availability` | `availability` |
 | POST | `/process` | `process` |
 | POST | `/invoke` | `invoke` |
+
+**Models:** `ProcessRequest`
 
 ## NOVA v2 Agent 44 - Secrets Vault (`agent_44_secrets_vault`)
 Version: 0.1.0

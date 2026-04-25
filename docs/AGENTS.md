@@ -24,20 +24,20 @@
 | 18 | `agent_19_distribution` | 0.1.0 | 3 | yes | NOVA v2 Agent 19 — Distribution (MinIO-oriented stub). |
 | 19 | `agent_20_design_fase` | 0.1.0 | 5 | yes | NOVA v2 Agent 20 — Design Fase (palette, silhouette, consist |
 | 20 | `agent_21_freecad_parametric` | 0.2.0 | 5 | yes | NOVA v2 Agent 21 — FreeCAD Parametric. |
-| 21 | `agent_22_blender_renderer` | 0.1.0-stub | 3 | yes | NOVA v2 Agent 22 — Blender Game Renderer (stub until bridge) |
-| 22 | `agent_23_aseprite_processor` | 0.1.0-stub | 3 | yes | NOVA v2 Agent 23 — Aseprite Processor (stub until bridge). |
+| 21 | `agent_22_blender_renderer` | 0.2.0 | 5 | yes | NOVA v2 Agent 22 — Blender Game Renderer. |
+| 22 | `agent_23_aseprite_processor` | 0.2.0 | 4 | yes | NOVA v2 Agent 23 — Aseprite Processor. |
 | 23 | `agent_24_aseprite_anim_jury` | 0.1.0 | 3 | yes | NOVA v2 Agent 24 — Aseprite Animation Jury (PIL frame cohere |
-| 24 | `agent_25_pyqt_assembly` | 0.1.0-stub | 3 | yes | NOVA v2 Agent 25 — PyQt Assembly (stub until bridge). |
-| 25 | `agent_26_godot_import` | 0.1.0-stub | 3 | yes | NOVA v2 Agent 26 — Godot Import (stub until bridge). |
+| 24 | `agent_25_pyqt_assembly` | 0.2.0 | 4 | yes | NOVA v2 Agent 25 — PyQt Assembly. |
+| 25 | `agent_26_godot_import` | 0.2.0 | 6 | yes | NOVA v2 Agent 26 — Godot Import. |
 | 26 | `agent_27_storyboard` | 0.1.0 | 3 | yes | NOVA v2 Agent 27 — Storyboard Visual Agent (Cost Guard prech |
 | 27 | `agent_28_story_integration` | 0.1.0 | 5 | yes | NOVA v2 Agent 28 — Story Text Integration (in-memory canon + |
 | 28 | `agent_29_elevenlabs` | 0.1.0 | 5 | yes | NOVA v2 Agent 29 — ElevenLabs Audio (Cost Guard precheck; dr |
 | 29 | `agent_30_audio_asset_jury` | 0.1.0 | 3 | yes | NOVA v2 Agent 30 — Audio Asset Jury (librosa technical QA; o |
-| 30 | `agent_31_qgis_analysis` | 0.1.0-stub | 3 | yes | NOVA v2 Agent 31 — QGIS Analysis (stub until bridge). |
-| 31 | `agent_32_grass_gis` | 0.1.0-stub | 3 | yes | NOVA v2 Agent 32 — GRASS GIS Analysis (stub until bridge). |
-| 32 | `agent_33_blender_arch_walkthrough` | 0.1.0-stub | 3 | yes | NOVA v2 Agent 33 — Blender architecture walkthrough (stub un |
+| 30 | `agent_31_qgis_analysis` | 0.2.0 | 4 | yes | NOVA v2 Agent 31 — QGIS Analysis. |
+| 31 | `agent_32_grass_gis` | 0.2.0 | 4 | yes | NOVA v2 Agent 32 — GRASS GIS. |
+| 32 | `agent_33_blender_arch_walkthrough` | 0.2.0 | 4 | yes | NOVA v2 Agent 33 — Blender Architecture Walkthrough. |
 | 33 | `agent_34_unreal_import` | 0.1.0 | 3 | yes | NOVA v2 Agent 34 — Unreal import prep (FBX/USD validation, p |
-| 34 | `agent_35_raster_2d` | 0.1.0-stub | 3 | yes | NOVA v2 Agent 35 — Raster 2D Processor (stub until bridge). |
+| 34 | `agent_35_raster_2d` | 0.2.0 | 4 | yes | NOVA v2 Agent 35 — Raster 2D Processor. |
 | 35 | `agent_44_secrets_vault` | 0.1.0 | 8 | yes | NOVA v2 Agent 44 — Secrets Vault. |
 | 36 | `judge` | 1.0.0 | 2 | yes |  |
 
