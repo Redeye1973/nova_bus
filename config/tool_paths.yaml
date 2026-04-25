@@ -1,3 +1,58 @@
+tools:
+  aseprite:
+    executable: "L:\\SteamLibrary\\steamapps\\common\\Aseprite\\Aseprite.exe"
+    status: active
+
+  blender:
+    executable: "C:\\Program Files\\Blender Foundation\\Blender 4.3\\blender.exe"
+    status: active
+
+  krita:
+    executable: "C:\\Program Files\\Krita (x64)\\bin\\krita.exe"
+    cli_working: false
+    status: active_fallback
+
+  daz_studio:
+    executable: "C:\\Program Files\\DAZ 3D\\DAZStudio4\\DAZStudio.exe"
+    status: active
+
+  freecad:
+    executable: "L:\\ZZZ Software\\FreeCad\\bin\\FreeCAD.exe"
+    status: active
+
+  gimp:
+    executable: "L:\\ZZZ Software\\GIMP 3\\bin\\gimp-3.2.exe"
+    cli_executable: "L:\\ZZZ Software\\GIMP 3\\bin\\gimp-console-3.2.exe"
+    version: "3.2.4"
+    status: active
+
+  godot:
+    executable: "L:\\ZZZ Software\\Godot\\Godot_v4.6.2-stable_win64_console.exe"
+    status: active
+
+  inkscape:
+    executable: "L:\\ZZZ Software\\InkScape\\bin\\inkscape.exe"
+    version: "1.4.2"
+    status: active
+
+  ldtk:
+    executable: "L:\\ZZZ Software\\ldtk\\LDtk.exe"
+    cli_supported: false
+    status: gui_only
+
+  pyxel_edit:
+    executable: "L:\\ZZZ Software\\PyxelEdit\\PyxelEdit.exe"
+    cli_supported: false
+    status: gui_only_afgewezen
+
+  qgis:
+    executable: auto_discover
+    status: active
+
+  unreal_engine:
+    executable: "L:\\UE_5.7"
+    status: active
+
 audio:
   supercollider:
     scsynth: "L:\\ZZZ Software\\Super Collider\\scsynth.exe"
@@ -14,4 +69,4 @@ audio:
     venv_python: "L:\\ZZZ Software\\Audiocraft\\venv\\Scripts\\python.exe"
     models_cache: "~/.cache/huggingface/hub/"
     status: partial_install
-    note: "PyTorch version conflicts, needs manual fix (pin torch==2.6.0+cu124)"
+    note: "PyTorch version conflicts, needs Python 3.11 + torch 2.1.0"
