@@ -222,7 +222,59 @@ async def _sweep(targets: Optional[List[Dict[str, Any]]] = None) -> Dict[str, An
 
 @app.get("/health")
 def health() -> Dict[str, str]:
-    return {"status": "ok", "agent": "11_monitor", "version": "0.2.0"}
+    return {"status": "ok", "agent": "11_monitor", "version": "0.3.0"}
+
+
+@app.get("/health/deep")
+async def health_deep() -> Dict[str, Any]:
+    import shutil
+
+    checks: Dict[str, Any] = {
+        "service": "ok",
+        "agent": "11_monitor",
+        "version": "0.3.0",
+        "database": "not_configured",
+        "downstream": {},
+        "disk_space": "unknown",
+        "gates_loaded": bool(GATES.get("gates")),
+    }
+
+    if DATABASE_URL:
+        try:
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=3)
+            conn.close()
+            checks["database"] = "ok"
+        except Exception as e:
+            checks["database"] = f"fail: {type(e).__name__}"
+
+    dep_urls = [
+        ("notification_hub", f"{NOTIFICATION_HUB_URL}/health"),
+    ]
+    async with httpx.AsyncClient() as client:
+        for name, url in dep_urls:
+            try:
+                r = await client.get(url, timeout=3)
+                checks["downstream"][name] = "ok" if r.status_code == 200 else f"http_{r.status_code}"
+            except Exception as e:
+                checks["downstream"][name] = f"unreachable: {type(e).__name__}"
+
+    try:
+        usage = shutil.disk_usage("/")
+        free_gb = usage.free / 1e9
+        checks["disk_space"] = f"{free_gb:.1f}GB free"
+        if free_gb < 1:
+            checks["disk_space_warn"] = True
+    except Exception:
+        pass
+
+    failed = [k for k, v in checks["downstream"].items() if "ok" not in str(v)]
+    if "fail" in str(checks.get("database", "")):
+        failed.append("database")
+    checks["overall"] = "degraded" if failed else "healthy"
+    if failed:
+        checks["failed_checks"] = failed
+
+    return checks
 
 
 @app.get("/status")

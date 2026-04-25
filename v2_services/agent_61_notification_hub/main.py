@@ -107,6 +107,25 @@ async def health() -> Dict[str, Any]:
     return {"status": "ok", "channels": ["telegram", "discord"], "sent_total": len(_sent_log)}
 
 
+@app.get("/health/deep")
+async def health_deep() -> Dict[str, Any]:
+    import shutil
+    telegram_ok = bool(await _get_secret("TELEGRAM_BOT_TOKEN"))
+    discord_ok = bool(await _get_secret("DISCORD_WEBHOOK_URL"))
+    try:
+        usage = shutil.disk_usage("/")
+        disk = f"{usage.free / 1e9:.1f}GB free"
+    except Exception:
+        disk = "unknown"
+    checks = {
+        "overall": "healthy" if (telegram_ok or discord_ok) else "degraded",
+        "service": "ok", "agent": "61_notification_hub", "version": "1.0",
+        "channels": {"telegram": telegram_ok, "discord": discord_ok},
+        "sent_total": len(_sent_log), "disk_space": disk,
+    }
+    return checks
+
+
 @app.post("/notify")
 async def notify(body: NotifyRequest) -> Dict[str, Any]:
     if _is_duplicate(body):

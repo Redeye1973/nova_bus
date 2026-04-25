@@ -28,6 +28,34 @@ async def health() -> Dict[str, Any]:
     return {"status": "ok", "docs_accessible": DOCS_ROOT.exists()}
 
 
+@app.get("/health/deep")
+async def health_deep() -> Dict[str, Any]:
+    import shutil
+    docs_ok = DOCS_ROOT.exists()
+    doc_count = sum(1 for _ in DOCS_ROOT.rglob("*.md")) if docs_ok else 0
+    try:
+        usage = shutil.disk_usage("/")
+        disk = f"{usage.free / 1e9:.1f}GB free"
+    except Exception:
+        disk = "unknown"
+    db_ok = "not_checked"
+    db_url = os.getenv("DATABASE_URL", "")
+    if db_url:
+        try:
+            import psycopg2
+            conn = psycopg2.connect(db_url, connect_timeout=3)
+            conn.close()
+            db_ok = "ok"
+        except Exception as e:
+            db_ok = f"fail: {type(e).__name__}"
+    return {
+        "overall": "healthy" if docs_ok else "degraded",
+        "service": "ok", "agent": "60_memory_curator", "version": "1.0",
+        "docs_accessible": docs_ok, "doc_count": doc_count,
+        "database": db_ok, "disk_space": disk,
+    }
+
+
 @app.get("/memory/list")
 async def list_memory(path: str = Query(default="")) -> Dict[str, Any]:
     target = DOCS_ROOT / path
