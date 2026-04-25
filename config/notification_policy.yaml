@@ -1,0 +1,26 @@
+escalation:
+  thresholds:
+    info_after_seconds: 60
+    warning_after_seconds: 180
+    critical_after_seconds: 300
+    sustained_after_seconds: 1800
+
+  critical_monitors:
+    - "NOVA Postgres v2"
+    - "NOVA Judge"
+    - "NOVA V2 N8n"
+    - "NOVA Bridge Heartbeat"
+
+  quiet_hours:
+    enabled: true
+    start: "23:00"
+    end: "07:00"
+    timezone: "Europe/Amsterdam"
+    exception_for_critical: true
+
+  log_to_audit: true
+  log_to_memory: true
+
+deduplication:
+  same_alert_cooldown_minutes: 15
+  flapping_threshold: 5
