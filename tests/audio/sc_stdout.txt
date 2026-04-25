@@ -1,0 +1,21 @@
+compiling class library...
+	Found 873 primitives.
+	Compiling directory 'L:\ZZZ Software\Super Collider\SCClassLibrary'
+	numentries = 847497 / 12574458 = 0.067
+	5559 method selectors, 2262 classes
+	method table size 13449384 bytes, big table size 100595664
+	Number of Symbols 12491
+	Byte Code Size 384706
+	compiled 331 files in 0.78 seconds
+
+Info: 2 methods are currently overwritten by extensions. To see which, execute:
+MethodOverride.printAll
+
+compile done
+localhost : setting clientID to 0.
+internal : setting clientID to 0.
+Class tree inited in 0.48 seconds
+
+
+*** Welcome to SuperCollider 3.14.1. *** For help press F1.
+file "L:\!Nova" does not exist.

@@ -1,0 +1,17 @@
+audio:
+  supercollider:
+    scsynth: "L:\\ZZZ Software\\Super Collider\\scsynth.exe"
+    sclang: "L:\\ZZZ Software\\Super Collider\\sclang.exe"
+    version: "3.14.1"
+    status: active
+
+  sox:
+    executable: "L:\\ZZZ Software\\SoX\\sox-14.4.2\\sox.exe"
+    version: "14.4.2"
+    status: active
+
+  audiocraft:
+    venv_python: "L:\\ZZZ Software\\Audiocraft\\venv\\Scripts\\python.exe"
+    models_cache: "~/.cache/huggingface/hub/"
+    status: partial_install
+    note: "PyTorch version conflicts, needs manual fix (pin torch==2.6.0+cu124)"
