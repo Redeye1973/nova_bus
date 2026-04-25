@@ -1,0 +1,29 @@
+---
+description: Wat speelt nu in projecten
+globs:
+alwaysApply: true
+---
+
+# Huidige Focus (april-mei 2026)
+
+## Black Ledger v4 (vakantie sprint)
+- 4e build van shmup, eerste 3 hadden gekochte assets
+- Nu: NOVA pipeline maakt alles
+- Modulair ship systeem: 10 hulls × 10 wings × 10 weapons × 10 engines × 10 afterburners
+- Damage states modulair per component
+- DAZ characters voor portraits (Rex Varn + cast)
+- Top-down shmup met LDtk levels
+- Story: Rex Varn, Helios Fringe, 4 acts, 3 endings (Clean Slate / New Ledger / Ghosted)
+- Target release: einde week 2 mei
+
+## NOVA v2.1-hardened
+- 15/16 hardening items DONE
+- H16 Lokale V3 Staging: SKIPPED (later)
+- Audiocraft venv rebuild: TODO (Python 3.11)
+- HETZNER_SSH_KEY in GitHub Secrets: TODO (handmatig Alex)
+
+## Roadmap na vakantie
+- Surilians manuscript afmaken
+- TyrianKloon (Hoogeveen environment)
+- TESS thinking partner (later)
+- Hollema pitch (geparkeerd)

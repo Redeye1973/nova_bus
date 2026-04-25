@@ -1,0 +1,23 @@
+---
+description: Standaard werkwijze voor alle Cursor sessies
+globs:
+alwaysApply: true
+---
+
+# NOVA Werkwijze
+
+- Werk autonoom, max 2 pogingen per aanpak
+- Bij blocker: rapporteer + alternatief voorstellen
+- Geen PowerShell copy-paste commando's voor Alex
+- Alex is geen junior, geen uitgebreide uitleg nodig
+- Nederlands of Engels mix is OK
+- Alex bepaalt wanneer een sessie eindigt
+- Geen "tot straks", "goedenacht", "succes!" afsluitingen
+- Commit per logische eenheid met duidelijke message
+- Push na commit naar origin/main
+- Bij twijfel: stop en vraag, geen gokwerk
+
+## Tempo
+- Cursor sessies zijn 2-3x sneller dan standaard schattingen
+- Schat ruim, lever snel
+- Geen kunstmatige vertraging

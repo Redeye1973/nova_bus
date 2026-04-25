@@ -1,0 +1,36 @@
+---
+description: Backup + Storage Box conventies
+globs:
+alwaysApply: true
+---
+
+# Backup & Storage
+
+## Borg
+- Repo: nova-v2-backup op Storage Box
+- Encryption: repokey-blake2
+- Compression: lz4
+- BORG_PASSPHRASE in /root/.nova_secrets (alleen op prod server)
+
+## Cron
+- 02:00 UTC daily op productie
+- Script: /root/nova-backup.sh
+- Logs: /var/log/nova-backup/
+
+## Includes
+- Postgres v1 + v2 dumps
+- MinIO mirrors (alle buckets)
+- N8n workflow exports
+- Docker compose configs
+- Docs directory (na agent 60)
+
+## Retention
+- 7 daily
+- 4 weekly  
+- 6 monthly
+
+## DR Procedure
+- Documented in docs/DR_PROCEDURE.md
+- Target RTO: 4 uur
+- Target RPO: 24 uur
+- Drill tested: 193 tabellen restored in ~3 min

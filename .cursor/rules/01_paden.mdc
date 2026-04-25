@@ -1,0 +1,31 @@
+---
+description: Alle relevante paden in NOVA ecosysteem
+globs:
+alwaysApply: true
+---
+
+# NOVA Paden
+
+## Lokaal (Alex's PC)
+- NOVA repo: `L:\!Nova V2\`
+- Bridge: `L:\!Nova V2\nova_host_bridge\`
+- Tool config: `L:\!Nova V2\config\tool_paths.yaml` (single source of truth)
+- Software: `L:\ZZZ Software\`
+- Rapport archief: `L:\! 2 Nova v2  OUTPUT !\Z RAPORT\`
+- Game projecten: `L:\Nova\SpaceShooter\`, `C:\GODOT_PROJECTS\TyrianKloon\`
+- Keys: `L:\Nova\Key's\` (legacy), nu in Vault Agent 44
+
+## Productie
+- Hetzner: 178.104.207.194
+- Path: /docker/nova-v2/
+- Containers: nova-v2-* prefix
+
+## Storage
+- Storage Box: u583230@u583230.your-storagebox.de port 23
+- Borg repo: nova-v2-backup
+- Backup cron: 02:00 UTC daily
+
+## GitHub
+- Repo: github.com/Redeye1973/nova_bus
+- Main branch productie
+- Cursor branches: cursor/* prefix

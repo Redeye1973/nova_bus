@@ -1,0 +1,28 @@
+---
+description: NOVA kostenoverzicht
+globs:
+alwaysApply: true
+---
+
+# NOVA Kosten (per 25 april 2026)
+
+## Maandelijks vast
+- Cursor Pro: €60 (werkpaard, upgraded)
+- Claude Max 5x: ~€95 (loopt af 19 mei)
+- Hetzner Cloud: €8
+- Hetzner Storage Box BX11: €3.87
+- Sudowrite: €30 GEPAUZEERD (1.2M credits over)
+
+## Totaal actief tot 19 mei
+~€167/maand
+
+## Na 19 mei beslissing
+- Claude Max verlengen
+- API pay-per-use (waarschijnlijk goedkoper)
+- Lokaal Qwen 14B stack (gratis maar minder kwaliteit)
+- Hybride
+
+## Cost Guard agent (16)
+- Daily/monthly aggregaties
+- 80% budget = warning
+- 100% = block (402 Payment Required)

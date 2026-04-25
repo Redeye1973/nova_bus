@@ -1,0 +1,33 @@
+---
+description: Toolkeuzes en richtlijnen
+globs:
+alwaysApply: true
+---
+
+# Wel / Niet
+
+## Toolkeuzes WEL
+- Open source first
+- Headless tooling (CLI/API alleen)
+- GPL gebruik OK voor lokaal/server, niet distribueren
+- Permissive licenses (MIT, BSD, Apache 2.0) bij voorkeur
+
+## Toolkeuzes NIET
+- Geen PyxelEdit (geen CLI, GUI-only)
+- Geen REAPER ($60 + Sudowrite vermeden)
+- Geen Cloudflare tunnel (pull model alleen)
+- Geen interactieve commando's voor Alex
+- Geen passwords in logs of commits
+- Geen secrets buiten Vault
+
+## Test fixtures
+- Synthetic data default
+- Productie data alleen voor specifieke debug, daarna wipen
+- H15 fixtures library voor reusable test inputs
+
+## Code style
+- Python 3.11+ voor alle agents
+- Type hints verplicht
+- Pydantic v2 voor schemas
+- pytest voor tests, pytest-asyncio voor async
+- ruff voor linting (configured in pyproject.toml)

@@ -1,0 +1,38 @@
+---
+description: NOVA v2 architectuur principes
+globs:
+alwaysApply: true
+---
+
+# NOVA Architectuur
+
+## Stack
+- 36+ FastAPI agents in `v2_services/`
+- N8n als workflow orchestrator (poort 5679 = V2)
+- Postgres = source of truth voor pipeline state
+- Qdrant per project per agent voor memory (H08)
+- MinIO voor object storage
+- Bridge adapters voor lokale tools
+
+## Patterns
+- Jury-judge: meerdere specialist juries → judge consolideert verdict
+- Pull model: lokale PC belt Hetzner, niet andersom
+- Agents communiceren via HTTP, niet shared state
+- Bridge calls altijd via host.docker.internal:8500
+
+## Standaard agent structuur
+v2_services/agent_NN_naam/
+├── main.py (FastAPI)
+├── requirements.txt
+├── Dockerfile
+├── tests/
+└── README.md
+
+## Critical agents
+- 11 Monitor (heartbeats, pipeline tracking)
+- 12 Asset Lineage Tracker
+- 16 Cost Guard
+- 17 Error Handler (auto-learning)
+- 18 Prompt Director
+- 44 Secrets Vault (poort 8144)
+- 60 Memory Curator (poort 8060)

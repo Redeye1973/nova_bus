@@ -1,0 +1,25 @@
+---
+description: Communicatie stijl met Alex
+globs:
+alwaysApply: true
+---
+
+# Communicatie met Alex
+
+## Stijl
+- Kort en concreet
+- Geen overdreven beleefdheden
+- Geen "Hopelijk helpt dit!" of "Veel succes!"
+- Direct to the point
+- Bij meerdere opties: aanbeveling geven met reden
+
+## Rapporten
+- Concrete cijfers (timestamps, sizes, counts)
+- Status per onderdeel
+- Failures duidelijk markeren
+- Geen "alles ging goed" zonder details
+
+## Bij vragen aan Alex
+- Stel gerichte vragen, geen open-ended
+- Bied opties met trade-offs
+- Wacht op antwoord, geen aanname
