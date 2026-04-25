@@ -1,20 +1,17 @@
-"""NOVA v2 Agent 11 — Monitor (health/status/metrics/alerts).
-
-Scope (pragmatic POC, no Postgres/Telegram):
-- Periodic and on-demand health sweep across sister agents on the
-  internal Compose network.
-- Prometheus-style metrics (counters + per-target latency).
-- In-memory alert ledger derived from the latest sweep.
+"""NOVA v2 Agent 11 — Monitor (health/status/metrics/alerts/checkpoints).
 
 Endpoints:
 - GET  /health
-- GET  /status         alias of POST /invoke {"action":"sweep"}
+- GET  /status
 - GET  /alerts
-- GET  /metrics        plain text Prometheus exposition
-- POST /feedback       user / pipeline feedback (in-memory ledger)
+- GET  /metrics
+- POST /feedback
 - GET  /feedback/recent
-- GET  /pdok-weekly-delta   stub (real PDOK delta in later build)
-- POST /invoke         {"action":"sweep|status|alerts|metrics"}
+- POST /pipeline/start | /pipeline/stage | /pipeline/finish
+- POST /pipeline/{id}/checkpoint
+- GET  /pipeline/{id}/last_checkpoint
+- POST /pipeline/{id}/resume
+- POST /invoke
 """
 from __future__ import annotations
 
@@ -26,6 +23,8 @@ from collections import deque
 from typing import Any, Deque, Dict, List, Optional
 
 import httpx
+import psycopg2
+import psycopg2.extras
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
@@ -69,6 +68,12 @@ DEFAULT_TARGETS: List[Dict[str, Any]] = [
     {"name": "agent_35_raster_2d",          "url": "http://agent-35-raster-2d:8135/health"},
     {"name": "sprite_jury_v2",              "url": "http://sprite-jury-v2:8101/health"},
 ]
+
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+NOTIFICATION_HUB_URL = os.getenv("NOTIFICATION_HUB_URL", "http://nova-v2-notification-hub:8061")
+
+RETRY_DELAYS = [10, 30, 90]
+MAX_RETRIES = 3
 
 LATENCY_WARN_MS = float(os.getenv("MONITOR_LATENCY_WARN_MS", "750"))
 LATENCY_CRIT_MS = float(os.getenv("MONITOR_LATENCY_CRIT_MS", "2000"))
@@ -324,6 +329,143 @@ def pipeline_detail(pipeline_id: str) -> Dict[str, Any]:
 def pipeline_history_list(limit: int = 20) -> Dict[str, Any]:
     items = list(PIPELINE_HISTORY)[-min(limit, 200):]
     return {"count": len(items), "events": items}
+
+
+def _get_db():
+    if not DATABASE_URL:
+        return None
+    try:
+        return psycopg2.connect(DATABASE_URL)
+    except Exception:
+        return None
+
+
+class CheckpointBody(BaseModel):
+    stage_name: str
+    stage_index: int = 0
+    stage_state: Optional[Dict[str, Any]] = None
+    output_refs: Optional[Dict[str, Any]] = None
+
+
+class ResumeBody(BaseModel):
+    triggered_by: Optional[str] = None
+
+
+@app.post("/pipeline/{pipeline_id}/checkpoint")
+def save_checkpoint(pipeline_id: str, body: CheckpointBody) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """INSERT INTO pipeline_checkpoints
+                   (pipeline_run_id, stage_name, stage_index, stage_state, output_refs)
+                   VALUES (%s, %s, %s, %s, %s)
+                   RETURNING id, completed_at""",
+                (pipeline_id, body.stage_name, body.stage_index,
+                 psycopg2.extras.Json(body.stage_state or {}),
+                 psycopg2.extras.Json(body.output_refs or {})),
+            )
+            row = cur.fetchone()
+            conn.commit()
+            return {"checkpoint_id": str(row["id"]), "pipeline_id": pipeline_id,
+                    "stage": body.stage_name, "index": body.stage_index,
+                    "saved_at": str(row["completed_at"])}
+    finally:
+        conn.close()
+
+
+@app.get("/pipeline/{pipeline_id}/last_checkpoint")
+def last_checkpoint(pipeline_id: str) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT * FROM pipeline_checkpoints
+                   WHERE pipeline_run_id = %s AND can_resume = TRUE
+                   ORDER BY stage_index DESC LIMIT 1""",
+                (pipeline_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return {"pipeline_id": pipeline_id, "checkpoint": None}
+            return {"pipeline_id": pipeline_id, "checkpoint": {
+                "id": str(row["id"]),
+                "stage_name": row["stage_name"],
+                "stage_index": row["stage_index"],
+                "stage_state": row["stage_state"],
+                "output_refs": row["output_refs"],
+                "completed_at": str(row["completed_at"]),
+            }}
+    finally:
+        conn.close()
+
+
+@app.get("/pipeline/{pipeline_id}/checkpoints")
+def list_checkpoints(pipeline_id: str) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT * FROM pipeline_checkpoints
+                   WHERE pipeline_run_id = %s ORDER BY stage_index""",
+                (pipeline_id,),
+            )
+            rows = cur.fetchall()
+            return {"pipeline_id": pipeline_id, "checkpoints": [
+                {"id": str(r["id"]), "stage_name": r["stage_name"],
+                 "stage_index": r["stage_index"], "completed_at": str(r["completed_at"]),
+                 "can_resume": r["can_resume"]}
+                for r in rows
+            ]}
+    finally:
+        conn.close()
+
+
+@app.post("/pipeline/{pipeline_id}/resume")
+async def resume_pipeline(pipeline_id: str, body: ResumeBody) -> Dict[str, Any]:
+    cp = last_checkpoint(pipeline_id)
+    if cp.get("error"):
+        return cp
+    if not cp.get("checkpoint"):
+        return {"error": "no_checkpoint_found", "pipeline_id": pipeline_id}
+
+    run = PIPELINE_RUNS.get(pipeline_id)
+    if run:
+        run["status"] = "resuming"
+        run["resume_from"] = cp["checkpoint"]["stage_name"]
+        run["resume_index"] = cp["checkpoint"]["stage_index"]
+
+    PIPELINE_HISTORY.append({
+        "event": "resume", "pipeline_id": pipeline_id,
+        "from_stage": cp["checkpoint"]["stage_name"],
+        "from_index": cp["checkpoint"]["stage_index"],
+        "ts": time.time(),
+    })
+
+    return {
+        "pipeline_id": pipeline_id,
+        "status": "resuming",
+        "from_checkpoint": cp["checkpoint"],
+    }
+
+
+async def _notify_failure(pipeline_id: str, stage: str, error: str, attempt: int):
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(f"{NOTIFICATION_HUB_URL}/notify", json={
+                "severity": "error" if attempt < MAX_RETRIES else "critical",
+                "title": f"Pipeline {stage} failed (attempt {attempt}/{MAX_RETRIES})",
+                "detail": f"Pipeline: {pipeline_id}\nError: {error}",
+                "source": "agent_11_monitor",
+            }, timeout=5)
+    except Exception:
+        pass
 
 
 @app.get("/metrics", response_class=PlainTextResponse)

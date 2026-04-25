@@ -310,6 +310,9 @@ services:
       - "8111"
     networks:
       - nova-v2-network
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-v2:5432/${POSTGRES_DB}
+      - NOTIFICATION_HUB_URL=http://nova-v2-notification-hub:8061
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8111/health')"]
       interval: 60s
