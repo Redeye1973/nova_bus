@@ -110,6 +110,62 @@ def cost_log(limit: int = 50) -> Dict[str, Any]:
     return {"count": len(items), "items": items}
 
 
+@app.get("/cost/daily/{date}")
+def cost_daily(date: str) -> Dict[str, Any]:
+    entries = [e for e in LOG if e.get("day") == date]
+    by_service: Dict[str, float] = {}
+    for e in entries:
+        svc = e.get("service", "unknown")
+        by_service[svc] = by_service.get(svc, 0.0) + float(e.get("actual_cost_eur", 0))
+    return {
+        "date": date,
+        "total_eur": round(sum(by_service.values()), 4),
+        "entries": len(entries),
+        "by_service": {k: round(v, 4) for k, v in sorted(by_service.items())},
+    }
+
+
+@app.get("/cost/summary")
+def cost_summary(days: int = 7) -> Dict[str, Any]:
+    day_totals: Dict[str, float] = {}
+    day_counts: Dict[str, int] = {}
+    for e in LOG:
+        d = e.get("day", "")
+        day_totals[d] = day_totals.get(d, 0.0) + float(e.get("actual_cost_eur", 0))
+        day_counts[d] = day_counts.get(d, 0) + 1
+    sorted_days = sorted(day_totals.keys(), reverse=True)[:days]
+    total = sum(day_totals.get(d, 0) for d in sorted_days)
+    avg = total / max(len(sorted_days), 1)
+    return {
+        "period_days": len(sorted_days),
+        "total_eur": round(total, 4),
+        "daily_average_eur": round(avg, 4),
+        "forecast_30d_eur": round(avg * 30, 2),
+        "daily_cap_eur": DAILY_CAP_EUR,
+        "days": [
+            {"date": d, "total_eur": round(day_totals[d], 4), "entries": day_counts.get(d, 0)}
+            for d in sorted_days
+        ],
+    }
+
+
+@app.get("/cost/by_agent")
+def cost_by_agent() -> Dict[str, Any]:
+    by_agent: Dict[str, float] = {}
+    by_agent_count: Dict[str, int] = {}
+    for e in LOG:
+        aid = e.get("agent_id") or "unknown"
+        by_agent[aid] = by_agent.get(aid, 0.0) + float(e.get("actual_cost_eur", 0))
+        by_agent_count[aid] = by_agent_count.get(aid, 0) + 1
+    ranked = sorted(by_agent.items(), key=lambda x: x[1], reverse=True)
+    return {
+        "agents": [
+            {"agent_id": k, "total_eur": round(v, 4), "calls": by_agent_count.get(k, 0)}
+            for k, v in ranked
+        ]
+    }
+
+
 @app.post("/invoke")
 def invoke(body: Dict[str, Any]) -> Dict[str, Any]:
     action = str((body or {}).get("action", "budget")).lower()
@@ -117,4 +173,8 @@ def invoke(body: Dict[str, Any]) -> Dict[str, Any]:
         return budget()
     if action == "log":
         return cost_log(int((body or {}).get("limit", 50)))
-    return {"error": "unknown_action", "valid": ["budget", "log"]}
+    if action == "summary":
+        return cost_summary(int((body or {}).get("days", 7)))
+    if action == "by_agent":
+        return cost_by_agent()
+    return {"error": "unknown_action", "valid": ["budget", "log", "summary", "by_agent"]}
