@@ -17,6 +17,10 @@ Tier-based software validation on Alex’s workstation plus remote infra checks.
 
 `L:\! 2 Nova v2  OUTPUT !\Z New NOva 1st test\_runs\YYYY-MM-DD_<description>\` with `_RUN_INFO.md`, `_TIMING.csv`, `_OUTPUTS_INVENTORY.md`, and per-tool subfolders.
 
+## Human-readable reports (vast pad)
+
+Schrijf en verwijs gebruikers naar **`L:\!Nova V2\! 2 Nova v2  OUTPUT !\Z RAPORT\`** — o.a. `software_test_framework.md`. Niet alleen onder `docs/sessions/cursor_reports/` laten staan.
+
 ## Baseline
 
 Copy a successful run to `_baseline/` under the same output root (Windows: copy tree, not symlink). Future `comparators.compare_runs` uses that directory.

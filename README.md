@@ -15,6 +15,10 @@ Werkmap voor de nieuwe NOVA-generatie (gescheiden van `L:\Nova` legacy).
 
 Zie **`infrastructure/README.md`** voor deploy en **`infrastructure/CURSOR_DEPLOY_PROMPT.md`** voor autonome uitrol.
 
+## Rapporten (snel openen)
+
+**`L:\!Nova V2\! 2 Nova v2  OUTPUT !\Z RAPORT\`** — o.a. `software_test_framework.md` (Agent 64). Zie `Z RAPORT\README.md` voor de index.
+
 ## Access URLs (Hetzner v2)
 
 | Service | URL |
