@@ -1,26 +1,96 @@
-"""NOVA v2 Agent 23 — Aseprite Processor (stub until bridge)."""
+"""NOVA v2 Agent 23 — Aseprite Processor.
+
+H07a: upgraded from stub to working bridge integration.
+Calls the local bridge at BRIDGE_URL/aseprite/* for sprite processing.
+"""
 from __future__ import annotations
 
-from typing import Any, Dict
+import logging
+import os
+from typing import Any, Dict, List, Optional
 
+import httpx
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
-app = FastAPI(title="NOVA v2 Agent 23 - Aseprite Processor", version="0.1.0-stub")
+logger = logging.getLogger("agent_23")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
+BRIDGE_URL = os.getenv("BRIDGE_URL", "http://host.docker.internal:8500")
+BRIDGE_TOKEN = os.getenv("BRIDGE_TOKEN", "")
+BRIDGE_TIMEOUT = float(os.getenv("BRIDGE_TIMEOUT_S", "180"))
+
+app = FastAPI(title="NOVA v2 Agent 23 - Aseprite Processor", version="0.2.0")
+
+
+def _bridge_headers() -> Dict[str, str]:
+    h: Dict[str, str] = {"Content-Type": "application/json"}
+    if BRIDGE_TOKEN:
+        h["Authorization"] = f"Bearer {BRIDGE_TOKEN}"
+    return h
+
+
+class SpritesheetRequest(BaseModel):
+    source: str = Field(..., description="Path to .aseprite/.ase file on bridge host")
+    sheet_type: str = "horizontal"
+    timeout_s: float = 120.0
+
+
+class ProcessRequest(BaseModel):
+    action: str = Field("spritesheet", description="spritesheet | availability")
+    source: Optional[str] = None
+    sheet_type: str = "horizontal"
+    timeout_s: float = 120.0
 
 
 @app.get("/health")
-def health() -> Dict[str, str]:
-    return {"status": "pending_full_bridge", "mode": "stub", "agent": "23_aseprite_processor"}
+def health() -> Dict[str, Any]:
+    return {"status": "ok", "agent": "23_aseprite_processor", "version": "0.2.0",
+            "bridge_url": BRIDGE_URL}
+
+
+@app.get("/availability")
+async def availability() -> Dict[str, Any]:
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.get(f"{BRIDGE_URL}/health", headers=_bridge_headers(), timeout=10)
+            data = r.json()
+            tools = data.get("tools", {})
+            return {"bridge_reachable": True, "aseprite": tools.get("aseprite", {})}
+    except Exception as e:
+        return {"bridge_reachable": False, "error": str(e)}
 
 
 @app.post("/process")
-def process() -> None:
-    raise HTTPException(
-        status_code=503,
-        detail="Bridge not fully wired. See session 08+.",
-    )
+async def process(req: SpritesheetRequest) -> Dict[str, Any]:
+    payload = {"source": req.source, "sheet_type": req.sheet_type, "timeout_s": req.timeout_s}
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
+                f"{BRIDGE_URL}/aseprite/spritesheet",
+                json=payload,
+                headers=_bridge_headers(),
+                timeout=BRIDGE_TIMEOUT,
+            )
+            if r.status_code >= 500:
+                raise HTTPException(502, detail=f"bridge returned {r.status_code}")
+            return r.json()
+    except httpx.TimeoutException:
+        raise HTTPException(504, detail="bridge timeout")
+    except httpx.ConnectError:
+        raise HTTPException(503, detail="bridge unreachable")
 
 
 @app.post("/invoke")
-def invoke(body: Dict[str, Any]) -> Dict[str, Any]:
-    return {"status": "pending_full_bridge", "agent": "23"}
+async def invoke(body: Dict[str, Any]) -> Dict[str, Any]:
+    action = str(body.get("action", "spritesheet")).lower()
+    if action == "availability":
+        return await availability()
+    if action == "spritesheet":
+        req = SpritesheetRequest(
+            source=body.get("source", ""),
+            sheet_type=body.get("sheet_type", "horizontal"),
+            timeout_s=float(body.get("timeout_s", 120)),
+        )
+        return await process(req)
+    return {"error": f"unknown_action: {action}", "valid": ["spritesheet", "availability"]}
