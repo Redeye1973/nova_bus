@@ -1,18 +1,29 @@
-"""NOVA v2 Agent 12 — Bake Orchestrator + H09 Asset Lineage.
-
-In-memory job state + asset lineage tracking.
-"""
+"""NOVA v2 Agent 12 — Bake Orchestrator + H09 Asset Lineage + Versioning."""
 from __future__ import annotations
 
+import os
 import time
 import uuid
 from collections import deque
 from typing import Any, Deque, Dict, List, Literal, Optional
 
+import psycopg2
+import psycopg2.extras
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="NOVA v2 Agent 12 - Bake Orchestrator", version="0.2.0")
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+
+app = FastAPI(title="NOVA v2 Agent 12 - Bake Orchestrator", version="0.3.0")
+
+
+def _get_db():
+    if not DATABASE_URL:
+        return None
+    try:
+        return psycopg2.connect(DATABASE_URL)
+    except Exception:
+        return None
 
 JobState = Literal["queued", "pdok", "qgis", "blender", "done", "failed"]
 
@@ -153,6 +164,100 @@ def list_assets(limit: int = 50, job_id: Optional[str] = None) -> Dict[str, Any]
         items = [a for a in items if a.get("job_id") == job_id]
     items.sort(key=lambda x: x.get("created_at", 0), reverse=True)
     return {"count": len(items), "assets": items[:limit]}
+
+
+class VersionCreateBody(BaseModel):
+    asset_logical_id: str
+    minio_path: str
+    content_hash: Optional[str] = None
+    created_by: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@app.post("/assets/{logical_id}/version")
+def create_version(logical_id: str, body: VersionCreateBody) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT MAX(version_number) as max_v FROM asset_versions WHERE asset_logical_id = %s",
+                (logical_id,),
+            )
+            row = cur.fetchone()
+            next_v = (row["max_v"] or 0) + 1
+
+            cur.execute("UPDATE asset_versions SET is_active = FALSE WHERE asset_logical_id = %s", (logical_id,))
+
+            cur.execute(
+                """INSERT INTO asset_versions
+                   (asset_logical_id, version_number, minio_path, content_hash, created_by, is_active, metadata)
+                   VALUES (%s, %s, %s, %s, %s, TRUE, %s)
+                   RETURNING id, created_at""",
+                (logical_id, next_v, body.minio_path, body.content_hash,
+                 body.created_by, psycopg2.extras.Json(body.metadata or {})),
+            )
+            new = cur.fetchone()
+
+            cur.execute("SELECT COUNT(*) as cnt FROM asset_versions WHERE asset_logical_id = %s", (logical_id,))
+            total = cur.fetchone()["cnt"]
+            if total > 10:
+                cur.execute(
+                    """DELETE FROM asset_versions WHERE id IN (
+                        SELECT id FROM asset_versions WHERE asset_logical_id = %s
+                        ORDER BY version_number ASC LIMIT %s
+                    )""",
+                    (logical_id, total - 10),
+                )
+
+            conn.commit()
+            return {"version_id": str(new["id"]), "logical_id": logical_id,
+                    "version": next_v, "created_at": str(new["created_at"])}
+    finally:
+        conn.close()
+
+
+@app.get("/assets/{logical_id}/versions")
+def list_versions(logical_id: str) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM asset_versions WHERE asset_logical_id = %s ORDER BY version_number DESC",
+                (logical_id,),
+            )
+            rows = cur.fetchall()
+            return {"logical_id": logical_id, "versions": [
+                {"id": str(r["id"]), "version": r["version_number"], "minio_path": r["minio_path"],
+                 "is_active": r["is_active"], "created_at": str(r["created_at"]),
+                 "created_by": r["created_by"]}
+                for r in rows
+            ]}
+    finally:
+        conn.close()
+
+
+@app.post("/assets/{logical_id}/promote/{version}")
+def promote_version(logical_id: str, version: int) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE asset_versions SET is_active = FALSE WHERE asset_logical_id = %s", (logical_id,))
+            cur.execute(
+                "UPDATE asset_versions SET is_active = TRUE WHERE asset_logical_id = %s AND version_number = %s",
+                (logical_id, version),
+            )
+            if cur.rowcount == 0:
+                return {"error": "version_not_found"}
+            conn.commit()
+            return {"promoted": True, "logical_id": logical_id, "active_version": version}
+    finally:
+        conn.close()
 
 
 @app.post("/invoke")

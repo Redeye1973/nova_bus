@@ -716,6 +716,8 @@ services:
       - "8112"
     networks:
       - nova-v2-network
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-v2:5432/${POSTGRES_DB}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8112/health')"]
       interval: 60s
@@ -879,6 +881,25 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-v2:5432/${POSTGRES_DB}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8060/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  agent-62-service-router:
+    build:
+      context: ./services/agent_62_service_router
+    container_name: nova-v2-service-router
+    restart: unless-stopped
+    ports:
+      - "8062:8062"
+    networks:
+      - nova-v2-network
+    environment:
+      - VAULT_URL=http://nova-v2-agent-44-secrets-vault:8144
+      - NOVA_VAULT_TOKEN=${NOVA_VAULT_TOKEN}
+      - NOTIFICATION_HUB_URL=http://nova-v2-notification-hub:8061
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8062/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
