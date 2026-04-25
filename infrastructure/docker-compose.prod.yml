@@ -481,6 +481,7 @@ services:
     - '8111'
     volumes:
     - ../config:/config:ro
+    - ../scripts/bugtest_runner.py:/app/bugtest_runner.py:ro
     networks:
     - nova-v2-network
     environment:
