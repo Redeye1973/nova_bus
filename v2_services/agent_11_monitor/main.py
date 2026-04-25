@@ -531,6 +531,74 @@ async def _notify_failure(pipeline_id: str, stage: str, error: str, attempt: int
         pass
 
 
+class AuditBody(BaseModel):
+    actor: str
+    action: str
+    resource_type: Optional[str] = None
+    resource_id: Optional[str] = None
+    project: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@app.post("/audit")
+def post_audit(body: AuditBody) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """INSERT INTO audit_log (actor, action, resource_type, resource_id, project, metadata)
+                   VALUES (%s, %s, %s, %s, %s, %s) RETURNING id, timestamp""",
+                (body.actor, body.action, body.resource_type, body.resource_id,
+                 body.project, psycopg2.extras.Json(body.metadata or {})),
+            )
+            row = cur.fetchone()
+            conn.commit()
+            return {"audit_id": str(row["id"]), "timestamp": str(row["timestamp"])}
+    finally:
+        conn.close()
+
+
+@app.get("/audit")
+def query_audit(actor: Optional[str] = None, resource_type: Optional[str] = None,
+                since: Optional[str] = None, limit: int = 50) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            conditions = []
+            params: list = []
+            if actor:
+                conditions.append("actor = %s")
+                params.append(actor)
+            if resource_type:
+                conditions.append("resource_type = %s")
+                params.append(resource_type)
+            if since:
+                conditions.append("timestamp >= %s")
+                params.append(since)
+            where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+            cur.execute(
+                f"SELECT * FROM audit_log {where} ORDER BY timestamp DESC LIMIT %s",
+                params + [min(limit, 200)],
+            )
+            rows = cur.fetchall()
+            return {"count": len(rows), "events": [
+                {**r, "id": str(r["id"]), "timestamp": str(r["timestamp"]),
+                 "metadata": r.get("metadata", {})}
+                for r in rows
+            ]}
+    finally:
+        conn.close()
+
+
+@app.get("/audit/recent")
+def audit_recent(limit: int = 50) -> Dict[str, Any]:
+    return query_audit(limit=limit)
+
+
 class GateCheckBody(BaseModel):
     stage_type: str
     asset_ref: Optional[str] = None

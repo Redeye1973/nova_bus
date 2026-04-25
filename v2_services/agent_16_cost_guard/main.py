@@ -1,4 +1,4 @@
-"""NOVA v2 Agent 16 — Cost Guard (in-memory daily cap; Postgres DDL in scripts/)."""
+"""NOVA v2 Agent 16 — Cost Guard (daily cap + pipeline budgets)."""
 from __future__ import annotations
 
 import os
@@ -8,12 +8,26 @@ from collections import deque
 from datetime import datetime, timezone
 from typing import Any, Deque, Dict, List, Optional
 
+import httpx
+import psycopg2
+import psycopg2.extras
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 DAILY_CAP_EUR = float(os.getenv("COST_GUARD_DAILY_CAP_EUR", "5.0"))
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+NOTIFICATION_HUB_URL = os.getenv("NOTIFICATION_HUB_URL", "http://nova-v2-notification-hub:8061")
 
-app = FastAPI(title="NOVA v2 Agent 16 - Cost Guard", version="0.1.0")
+app = FastAPI(title="NOVA v2 Agent 16 - Cost Guard", version="0.2.0")
+
+
+def _get_db():
+    if not DATABASE_URL:
+        return None
+    try:
+        return psycopg2.connect(DATABASE_URL)
+    except Exception:
+        return None
 
 LOG: Deque[Dict[str, Any]] = deque(maxlen=10_000)
 
@@ -164,6 +178,140 @@ def cost_by_agent() -> Dict[str, Any]:
             for k, v in ranked
         ]
     }
+
+
+class BudgetCheckBody(BaseModel):
+    pipeline_id: str
+    pipeline_type: str
+
+
+class BudgetConsumeBody(BaseModel):
+    pipeline_id: str
+    pipeline_type: str
+    cost: float = 0.0
+    api_calls: int = 0
+    gpu_seconds: int = 0
+
+
+@app.post("/budget/check")
+def budget_check(body: BudgetCheckBody) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"ok": True, "reason": "no_db_fallback_allow"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT * FROM pipeline_budgets WHERE pipeline_type = %s", (body.pipeline_type,))
+            budget_row = cur.fetchone()
+            if not budget_row:
+                return {"ok": True, "reason": "no_budget_defined", "pipeline_type": body.pipeline_type}
+
+            cur.execute("SELECT * FROM pipeline_usage WHERE pipeline_id = %s", (body.pipeline_id,))
+            usage = cur.fetchone()
+
+            remaining = {
+                "cost_usd": float(budget_row["max_cost_usd"]) - float(usage["cost_usd"] if usage else 0),
+                "api_calls": int(budget_row["max_api_calls"]) - int(usage["api_calls"] if usage else 0),
+            }
+            pct = (float(usage["cost_usd"]) / float(budget_row["max_cost_usd"]) * 100) if usage and float(budget_row["max_cost_usd"]) > 0 else 0
+
+            return {
+                "ok": remaining["cost_usd"] > 0,
+                "pipeline_id": body.pipeline_id,
+                "pipeline_type": body.pipeline_type,
+                "used_pct": round(pct, 1),
+                "remaining": remaining,
+                "budget": {k: str(v) for k, v in budget_row.items()},
+            }
+    finally:
+        conn.close()
+
+
+@app.post("/budget/consume")
+async def budget_consume(body: BudgetConsumeBody) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"ok": True, "reason": "no_db_fallback_allow"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT * FROM pipeline_usage WHERE pipeline_id = %s", (body.pipeline_id,))
+            usage = cur.fetchone()
+
+            if usage:
+                cur.execute(
+                    """UPDATE pipeline_usage
+                       SET cost_usd = cost_usd + %s, api_calls = api_calls + %s,
+                           gpu_seconds = gpu_seconds + %s, last_updated = NOW()
+                       WHERE pipeline_id = %s RETURNING *""",
+                    (body.cost, body.api_calls, body.gpu_seconds, body.pipeline_id),
+                )
+            else:
+                cur.execute(
+                    """INSERT INTO pipeline_usage (pipeline_id, pipeline_type, cost_usd, api_calls, gpu_seconds)
+                       VALUES (%s, %s, %s, %s, %s) RETURNING *""",
+                    (body.pipeline_id, body.pipeline_type, body.cost, body.api_calls, body.gpu_seconds),
+                )
+            row = cur.fetchone()
+            conn.commit()
+
+            cur.execute("SELECT * FROM pipeline_budgets WHERE pipeline_type = %s", (body.pipeline_type,))
+            budget_row = cur.fetchone()
+
+            if budget_row:
+                pct = float(row["cost_usd"]) / float(budget_row["max_cost_usd"]) * 100 if float(budget_row["max_cost_usd"]) > 0 else 0
+                threshold = int(budget_row.get("notify_threshold_pct", 80))
+
+                if pct >= 100:
+                    try:
+                        async with httpx.AsyncClient() as client:
+                            await client.post(f"{NOTIFICATION_HUB_URL}/notify", json={
+                                "severity": "critical",
+                                "title": f"Pipeline budget EXCEEDED: {body.pipeline_type}",
+                                "detail": f"Pipeline {body.pipeline_id} used {pct:.0f}% of budget",
+                                "source": "agent_16_cost_guard",
+                            }, timeout=5)
+                    except Exception:
+                        pass
+                    return {"ok": False, "blocked": True, "used_pct": round(pct, 1)}
+                elif pct >= threshold:
+                    try:
+                        async with httpx.AsyncClient() as client:
+                            await client.post(f"{NOTIFICATION_HUB_URL}/notify", json={
+                                "severity": "warning",
+                                "title": f"Pipeline budget warning: {body.pipeline_type}",
+                                "detail": f"Pipeline {body.pipeline_id} used {pct:.0f}% of budget",
+                                "source": "agent_16_cost_guard",
+                            }, timeout=5)
+                    except Exception:
+                        pass
+
+            return {"ok": True, "pipeline_id": body.pipeline_id, "consumed": {
+                "cost": body.cost, "api_calls": body.api_calls, "gpu_seconds": body.gpu_seconds
+            }}
+    finally:
+        conn.close()
+
+
+@app.get("/budget/status/{pipeline_id}")
+def budget_status(pipeline_id: str) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("SELECT * FROM pipeline_usage WHERE pipeline_id = %s", (pipeline_id,))
+            usage = cur.fetchone()
+            if not usage:
+                return {"pipeline_id": pipeline_id, "usage": None}
+            cur.execute("SELECT * FROM pipeline_budgets WHERE pipeline_type = %s", (usage["pipeline_type"],))
+            budget_row = cur.fetchone()
+            return {
+                "pipeline_id": pipeline_id,
+                "pipeline_type": usage["pipeline_type"],
+                "usage": {k: str(v) for k, v in usage.items() if k != "id"},
+                "budget": {k: str(v) for k, v in budget_row.items()} if budget_row else None,
+            }
+    finally:
+        conn.close()
 
 
 @app.post("/invoke")
