@@ -1,0 +1,33 @@
+---
+description: Operational standards na v2.2 hardening
+globs:
+alwaysApply: true
+---
+
+# Operational Standards
+
+## Notifications
+- Bij critical errors: agent 61 → Telegram + Discord
+- Bij budget warnings: agent 16 → Discord via agent 61
+- Bij pipeline failures: agent 11 → notification chain
+
+## Pipeline development
+- Altijd checkpoints schrijven na major steps
+- Altijd quality gates includen (config/quality_gates.yaml)
+- Altijd budget check voor costly operations
+- Audit log voor alle resource changes
+
+## Health checks
+- Agents implementeren /health/deep met dependency validation
+- Uptime Kuma monitors gebruiken /health
+- Compose healthchecks voor startup ordering
+
+## LLM calls
+- Niet direct naar providers, gebruik agent 62
+- Fallback chain: Anthropic → OpenAI
+- Cost tracking via agent 16
+
+## Container startup
+- Staggered via staggered_startup.sh (5 tiers)
+- Nooit docker compose up -d op productie
+- Systemd nova-startup.service bij reboot

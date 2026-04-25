@@ -1,0 +1,40 @@
+policies:
+  pipeline_runs:
+    keep_successful: 30 days
+    keep_failed: 7 days
+
+  audit_log:
+    keep: 90 days
+    archive_after: 30 days
+
+  asset_versions:
+    keep_active: forever
+    keep_inactive: 180 days
+    max_versions_per_logical: 10
+
+  cost_log:
+    keep: 365 days
+
+  error_log:
+    keep_unresolved: forever
+    keep_resolved: 90 days
+
+  benchmark_results:
+    keep: 90 days
+
+  pipeline_checkpoints:
+    keep: 30 days
+
+cleanup:
+  schedule: "0 4 * * *"
+  timezone: "Europe/Amsterdam"
+  dry_run: false
+  notify_on_cleanup: true
+
+minio:
+  orphan_detection:
+    enabled: true
+    grace_period_days: 7
+    scan_buckets:
+      - nova-assets
+      - nova-pipeline-output
