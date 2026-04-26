@@ -1,0 +1,17 @@
+Godot Asset Library only (no Kenney). Downloaded via official API download_url.
+
+- 2124 KayKit Space Base Bits (CC0)
+  https://godotengine.org/asset-library/asset/2124
+  Vendor copy: res://vendor/kaykit_gltf/ (spacetruck, structure_low, solarpanel + shared spacebits_texture.png)
+
+- 2318 GodotParadise ProjectileComponent (MIT) — optional addon, full zip under third_party/
+  https://godotengine.org/asset-library/asset/2318
+  Not required to run this demo; bullets use solarpanel mesh from 2124.
+
+Re-fetch: python scripts/download_assetlib_assets.py
+
+Import glTF into Godot cache (once per clone):
+  Godot_v4.6.2-stable_win64_console.exe --path "<this_project>" --headless --import
+
+Run headless smoke (2 frames):
+  ... --path "<this_project>" --headless --quit-after 2
