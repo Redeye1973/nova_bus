@@ -85,6 +85,44 @@ def _placement_from_spec(ps):
     )
 
 
+def _placement_box(ps):
+    """Part::Box corner base; optional pivot=center uses position as box center."""
+    L = float(ps.get("length", 1.0))
+    W = float(ps.get("width", 1.0))
+    H = float(ps.get("height", 1.0))
+    pos = ps.get("position") or [0.0, 0.0, 0.0]
+    ax = ps.get("rotation_axis") or [0.0, 0.0, 1.0]
+    ang = float(ps.get("rotation_angle", 0.0))
+    rot = FreeCAD.Rotation(FreeCAD.Vector(float(ax[0]), float(ax[1]), float(ax[2])), ang)
+    if str(ps.get("pivot", "")).lower() == "center":
+        base = FreeCAD.Vector(float(pos[0]) - L / 2, float(pos[1]) - W / 2, float(pos[2]) - H / 2)
+    else:
+        base = FreeCAD.Vector(float(pos[0]), float(pos[1]), float(pos[2]))
+    return FreeCAD.Placement(base, rot)
+
+
+def _placement_cylinder_center(ps):
+    """Cylinder local +Z axis; position = center of cylinder (before rotation)."""
+    H = float(ps.get("height", 10.0))
+    pos = ps.get("position") or [0.0, 0.0, 0.0]
+    ax = ps.get("rotation_axis") or [0.0, 0.0, 1.0]
+    ang = float(ps.get("rotation_angle", 0.0))
+    rot = FreeCAD.Rotation(FreeCAD.Vector(float(ax[0]), float(ax[1]), float(ax[2])), ang)
+    c = FreeCAD.Vector(float(pos[0]), float(pos[1]), float(pos[2]))
+    base = c - rot.multVec(FreeCAD.Vector(0, 0, H / 2.0))
+    return FreeCAD.Placement(base, rot)
+
+
+def _shape_box_solid(ps):
+    """Oriented box as Part.Shape for booleans."""
+    L = float(ps.get("length", 1.0))
+    W = float(ps.get("width", 1.0))
+    H = float(ps.get("height", 1.0))
+    pl = _placement_box(ps)
+    b = Part.makeBox(L, W, H)
+    return b.transformShape(pl.toMatrix())
+
+
 def _run_multi_fuse(spec, workdir, exports, name, result_path):
     """Ship-kit style: multiple Part::Box / Part::Cylinder, boolean fuse, export."""
     parts_spec = list(spec.get("parts") or [])
@@ -98,8 +136,8 @@ def _run_multi_fuse(spec, workdir, exports, name, result_path):
             kind = (ps.get("kind") or "box").lower()
             label = "".join(c if c.isalnum() else "_" for c in str(ps.get("name") or "part"))[:24] or "part"
             oname = "P%d_%s" % (i, label)
-            pl = _placement_from_spec(ps)
             if kind == "box":
+                pl = _placement_box(ps)
                 o = doc.addObject("Part::Box", oname)
                 o.Length = float(ps.get("length", 10.0))
                 o.Width = float(ps.get("width", 10.0))
@@ -107,10 +145,36 @@ def _run_multi_fuse(spec, workdir, exports, name, result_path):
                 o.Placement = pl
                 objs.append(o)
             elif kind == "cylinder":
+                if str(ps.get("pivot", "")).lower() == "center":
+                    pl = _placement_cylinder_center(ps)
+                else:
+                    pl = _placement_from_spec(ps)
                 o = doc.addObject("Part::Cylinder", oname)
                 o.Radius = float(ps.get("radius", 1.0))
                 o.Height = float(ps.get("height", 10.0))
                 o.Placement = pl
+                objs.append(o)
+            elif kind == "cone":
+                pl = _placement_from_spec(ps)
+                o = doc.addObject("Part::Cone", oname)
+                o.Radius1 = float(ps.get("radius1", 1.0))
+                o.Radius2 = float(ps.get("radius2", 0.1))
+                o.Height = float(ps.get("height", 10.0))
+                o.Placement = pl
+                objs.append(o)
+            elif kind == "box_cut":
+                pos_spec = ps.get("positive") or {}
+                neg_spec = ps.get("negative") or {}
+                try:
+                    sh_p = _shape_box_solid(pos_spec)
+                    sh_n = _shape_box_solid(neg_spec)
+                    sh_r = sh_p.cut(sh_n)
+                    if sh_r.isNull() or float(sh_r.Volume) < 1e-3:
+                        raise ValueError("cut result empty")
+                except Exception as _e:
+                    raise ValueError("box_cut failed for %s: %s" % (label, _e)) from _e
+                o = doc.addObject("Part::Feature", oname)
+                o.Shape = sh_r
                 objs.append(o)
             else:
                 raise ValueError("unknown part kind: %s" % kind)
