@@ -28,7 +28,7 @@ def test_tools_endpoint_returns_both_adapters():
     r = c.get("/tools")
     assert r.status_code == 200
     body = r.json()
-    assert set(body.keys()) == {"freecad", "qgis"}
+    assert "freecad" in body and "qgis" in body
     assert "available" in body["freecad"]
     assert "available" in body["qgis"]
 

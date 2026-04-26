@@ -17,6 +17,7 @@ DEFAULT_FREECAD_BIN = r"L:\ZZZ Software\FreeCad\bin"
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "freecad_parametric.py"
 
 CATEGORY_DEFAULTS: Dict[str, Dict[str, Any]] = {
+    "box":       {"primitive": "box",       "default": {"length": 10.0, "width": 10.0, "height": 10.0}},
     "fighter":   {"primitive": "capsule", "default": {"length": 12.0, "radius": 1.5}},
     "ship":      {"primitive": "capsule", "default": {"length": 60.0, "radius": 6.0}},
     "boss":      {"primitive": "capsule", "default": {"length": 120.0, "radius": 18.0}},
@@ -55,7 +56,7 @@ def build_parametric(
     spec: Dict[str, Any],
     workdir_root: Path,
     freecad_bin: Optional[str] = None,
-    timeout_s: float = 60.0,
+    timeout_s: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Run the FreeCAD parametric script with the given spec.
 
@@ -94,16 +95,34 @@ def build_parametric(
     env["FC_SPEC"] = str(spec_path)
     env["FC_RESULT"] = str(result_path)
     env["FC_WORKDIR"] = str(workdir)
+    eff_timeout = float(timeout_s) if timeout_s is not None else float(
+        os.environ.get("BRIDGE_FREECAD_TIMEOUT_S", "300")
+    )
     started = time.perf_counter()
+    proc: Optional[subprocess.Popen] = None
+    out, err = "", ""
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_s, env=env)
-    except subprocess.TimeoutExpired as e:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env,
+        )
+        out, err = proc.communicate(timeout=eff_timeout)
+    except subprocess.TimeoutExpired:
+        if proc is not None:
+            proc.kill()
+            try:
+                proc.communicate(timeout=30)
+            except Exception:
+                pass
         return {
             "ok": False,
             "job_id": job_id,
-            "error": f"timeout after {timeout_s}s",
-            "stdout_tail": (e.stdout or "")[-500:],
-            "stderr_tail": (e.stderr or "")[-500:],
+            "error": f"timeout_after_{eff_timeout}s_killed",
+            "stdout_tail": "",
+            "stderr_tail": "freecadcmd killed after TimeoutExpired",
         }
     elapsed_ms = (time.perf_counter() - started) * 1000.0
 
@@ -112,19 +131,20 @@ def build_parametric(
             "ok": False,
             "job_id": job_id,
             "error": "freecadcmd_did_not_write_result",
-            "exit_code": proc.returncode,
-            "stdout_tail": (proc.stdout or "")[-500:],
-            "stderr_tail": (proc.stderr or "")[-500:],
+            "exit_code": proc.returncode if proc else -1,
+            "stdout_tail": (out or "")[-500:] if proc else "",
+            "stderr_tail": (err or "")[-500:] if proc else "",
             "elapsed_ms": round(elapsed_ms, 2),
         }
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     payload.setdefault("job_id", job_id)
     payload["elapsed_ms"] = round(elapsed_ms, 2)
     payload["workdir"] = str(workdir)
-    payload["exit_code"] = proc.returncode
-    if proc.returncode != 0 and payload.get("ok"):
+    rc = proc.returncode if proc else -1
+    payload["exit_code"] = rc
+    if rc != 0 and payload.get("ok"):
         payload["ok"] = False
-        payload["stderr_tail"] = (proc.stderr or "")[-500:]
+        payload["stderr_tail"] = (err or "")[-500:]
     return payload
 
 

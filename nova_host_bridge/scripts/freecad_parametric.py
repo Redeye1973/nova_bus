@@ -93,71 +93,84 @@ def main():
     name = spec.get("name") or "parametric_base"
 
     doc = FreeCAD.newDocument("ParametricBase")
-    sheet = doc.addObject("Spreadsheet::Sheet", "Parameters")
-    row = 1
-    for k, v in dims.items():
-        sheet.set("A%d" % row, str(k))
+    try:
+        sheet = doc.addObject("Spreadsheet::Sheet", "Parameters")
+        row = 1
+        for k, v in dims.items():
+            sheet.set("A%d" % row, str(k))
+            try:
+                sheet.set("B%d" % row, float(v))
+            except Exception:
+                sheet.set("B%d" % row, str(v))
+            row += 1
+        doc.recompute()
+
+        if primitive.lower() == "box":
+            obj = doc.addObject("Part::Box", "BaseShape")
+            obj.Length = float(dims.get("length", 1.0))
+            obj.Width = float(dims.get("width", 1.0))
+            obj.Height = float(dims.get("height", 1.0))
+        else:
+            shape0 = _make_primitive(primitive, dims)
+            obj = doc.addObject("Part::Feature", "BaseShape")
+            obj.Shape = shape0
+
+        mp_objs = {}
+        for mp_name, xyz in mount_points.items():
+            if not (isinstance(xyz, list) and len(xyz) == 3):
+                continue
+            v = FreeCAD.Vector(float(xyz[0]), float(xyz[1]), float(xyz[2]))
+            mp = doc.addObject("Part::Feature", "MP_%s" % mp_name)
+            mp.Shape = Part.Vertex(v)
+            mp_objs[mp_name] = [v.x, v.y, v.z]
+
+        doc.recompute()
+        shape = obj.Shape
+
+        files = {}
+        if "fcstd" in exports:
+            out_fc = workdir / ("%s.FCStd" % name)
+            doc.saveAs(str(out_fc))
+            files["fcstd"] = str(out_fc)
+        if "step" in exports:
+            out_st = workdir / ("%s.step" % name)
+            Part.export([obj], str(out_st))
+            files["step"] = str(out_st)
+        if "stl" in exports:
+            out_mesh = workdir / ("%s.stl" % name)
+            mesh = Mesh.Mesh()
+            mesh.addFacets(shape.tessellate(0.1))
+            mesh.write(str(out_mesh))
+            files["stl"] = str(out_mesh)
+
+        metrics = {
+            "vertex_count": int(len(shape.Vertexes)),
+            "edge_count": int(len(shape.Edges)),
+            "face_count": int(len(shape.Faces)),
+            "solid_count": int(len(shape.Solids)),
+            "bounding_box": _bbox(shape),
+            "volume": float(shape.Volume),
+            "surface_area": float(shape.Area),
+            "is_closed": bool(shape.isClosed()),
+        }
+
+        result = {
+            "ok": True,
+            "name": name,
+            "primitive": primitive,
+            "dimensions": {k: float(v) if isinstance(v, (int, float)) else v for k, v in dims.items()},
+            "mount_points": mp_objs,
+            "files": files,
+            "metrics": metrics,
+            "freecad_version": ".".join(str(x) for x in FreeCAD.Version()[:3]),
+        }
+        Path(result_path).write_text(json.dumps(result, indent=2), encoding="utf-8")
+        return 0
+    finally:
         try:
-            sheet.set("B%d" % row, float(v))
+            FreeCAD.closeDocument(doc.Name)
         except Exception:
-            sheet.set("B%d" % row, str(v))
-        row += 1
-    doc.recompute()
-
-    shape = _make_primitive(primitive, dims)
-    obj = doc.addObject("Part::Feature", "BaseShape")
-    obj.Shape = shape
-
-    mp_objs = {}
-    for mp_name, xyz in mount_points.items():
-        if not (isinstance(xyz, list) and len(xyz) == 3):
-            continue
-        v = FreeCAD.Vector(float(xyz[0]), float(xyz[1]), float(xyz[2]))
-        mp = doc.addObject("Part::Feature", "MP_%s" % mp_name)
-        mp.Shape = Part.Vertex(v)
-        mp_objs[mp_name] = [v.x, v.y, v.z]
-
-    doc.recompute()
-
-    files = {}
-    if "fcstd" in exports:
-        out = workdir / ("%s.FCStd" % name)
-        doc.saveAs(str(out))
-        files["fcstd"] = str(out)
-    if "step" in exports:
-        out = workdir / ("%s.step" % name)
-        Part.export([obj], str(out))
-        files["step"] = str(out)
-    if "stl" in exports:
-        out = workdir / ("%s.stl" % name)
-        mesh = Mesh.Mesh()
-        mesh.addFacets(shape.tessellate(0.1))
-        mesh.write(str(out))
-        files["stl"] = str(out)
-
-    metrics = {
-        "vertex_count": int(len(shape.Vertexes)),
-        "edge_count": int(len(shape.Edges)),
-        "face_count": int(len(shape.Faces)),
-        "solid_count": int(len(shape.Solids)),
-        "bounding_box": _bbox(shape),
-        "volume": float(shape.Volume),
-        "surface_area": float(shape.Area),
-        "is_closed": bool(shape.isClosed()),
-    }
-
-    result = {
-        "ok": True,
-        "name": name,
-        "primitive": primitive,
-        "dimensions": {k: float(v) if isinstance(v, (int, float)) else v for k, v in dims.items()},
-        "mount_points": mp_objs,
-        "files": files,
-        "metrics": metrics,
-        "freecad_version": ".".join(str(x) for x in FreeCAD.Version()[:3]),
-    }
-    Path(result_path).write_text(json.dumps(result, indent=2), encoding="utf-8")
-    return 0
+            pass
 
 
 # freecadcmd.exe loads scripts as modules (__name__ == file stem), so we
