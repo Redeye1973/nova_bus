@@ -123,6 +123,18 @@ def _shape_box_solid(ps):
     return b.transformShape(pl.toMatrix())
 
 
+def _shape_cylinder_solid(ps):
+    """Infinite-precision cylinder along local +Z; placement via pivot=center or position."""
+    r = float(ps.get("radius", 1.0))
+    h = float(ps.get("height", 10.0))
+    cyl = Part.makeCylinder(r, h)
+    if str(ps.get("pivot", "")).lower() == "center":
+        pl = _placement_cylinder_center(ps)
+    else:
+        pl = _placement_from_spec(ps)
+    return cyl.transformShape(pl.toMatrix())
+
+
 def _run_multi_fuse(spec, workdir, exports, name, result_path):
     """Ship-kit style: multiple Part::Box / Part::Cylinder, boolean fuse, export."""
     parts_spec = list(spec.get("parts") or [])
@@ -173,6 +185,36 @@ def _run_multi_fuse(spec, workdir, exports, name, result_path):
                         raise ValueError("cut result empty")
                 except Exception as _e:
                     raise ValueError("box_cut failed for %s: %s" % (label, _e)) from _e
+                o = doc.addObject("Part::Feature", oname)
+                o.Shape = sh_r
+                objs.append(o)
+            elif kind == "box_cut_chain":
+                pos_spec = ps.get("positive") or {}
+                negs = ps.get("negatives") or []
+                if not isinstance(negs, list) or len(negs) == 0:
+                    raise ValueError("box_cut_chain requires non-empty negatives[]")
+                try:
+                    sh = _shape_box_solid(pos_spec)
+                    for neg_spec in negs:
+                        sh = sh.cut(_shape_box_solid(neg_spec))
+                    if sh.isNull() or float(sh.Volume) < 1e-3:
+                        raise ValueError("box_cut_chain result empty")
+                except Exception as _e:
+                    raise ValueError("box_cut_chain failed for %s: %s" % (label, _e)) from _e
+                o = doc.addObject("Part::Feature", oname)
+                o.Shape = sh
+                objs.append(o)
+            elif kind == "cylinder_cut":
+                cyl_spec = ps.get("positive") or ps.get("cylinder") or {}
+                neg_spec = ps.get("negative") or {}
+                try:
+                    sh_c = _shape_cylinder_solid(cyl_spec)
+                    sh_n = _shape_box_solid(neg_spec)
+                    sh_r = sh_c.cut(sh_n)
+                    if sh_r.isNull() or float(sh_r.Volume) < 1e-3:
+                        raise ValueError("cylinder_cut result empty")
+                except Exception as _e:
+                    raise ValueError("cylinder_cut failed for %s: %s" % (label, _e)) from _e
                 o = doc.addObject("Part::Feature", oname)
                 o.Shape = sh_r
                 objs.append(o)
