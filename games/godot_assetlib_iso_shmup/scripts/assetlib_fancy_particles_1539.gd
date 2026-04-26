@@ -2,12 +2,16 @@ extends Control
 ## Fancy line/particle background — adapted from Asset Library #1539 (MIT, Ark2000 / k2kra).
 ## Original: https://godotengine.org/asset-library/asset/1539
 ## When follow_mouse is false, the first point stays at the control center (shmup-friendly).
+## Physics for velocity2 runs in _physics_process only; _draw is read-only (no NaN / no div-by-zero).
+
+const _MIN_DIST := 12.0
+const _MIN_RECT := 32.0
 
 @export var follow_mouse: bool = false
-@export var max_points: int = 60
+@export var max_points: int = 48
 @export var fade_time: float = 2.0
 @export var max_line_length: float = 160.0
-@export var interact_intension: float = 3000.0
+@export var interact_intension: float = 2800.0
 @export var min_radius: float = 0.5
 @export var max_radius: float = 3.0
 @export var min_velocity: float = 20.0
@@ -28,13 +32,16 @@ class Po:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_physics_process(true)
 	for i in range(max_points):
 		_points.push_back(_reset_po(Po.new()))
 
 
 func _reset_po(po: Po) -> Po:
 	var r := get_rect()
-	po.position = Vector2(randf() * r.size.x, randf() * r.size.y)
+	var sx := maxf(r.size.x, _MIN_RECT)
+	var sy := maxf(r.size.y, _MIN_RECT)
+	po.position = Vector2(randf() * sx, randf() * sy)
 	po.velocity = Vector2.RIGHT.rotated(randf() * TAU) * randf_range(min_velocity, max_velocity)
 	po.radius = randf_range(min_radius, max_radius)
 	po.life = 0.0
@@ -43,26 +50,44 @@ func _reset_po(po: Po) -> Po:
 
 
 func _physics_process(delta: float) -> void:
-	for po in _points:
-		if not get_rect().has_point(po.position):
-			po.life -= delta
-			if po.life < 0.0:
-				_reset_po(po)
-		else:
-			po.life = minf(po.life + delta, fade_time)
-		po.position += (po.velocity + po.velocity2) * delta
+	var rect := get_rect()
+	var ft := maxf(fade_time, 0.05)
+	var attractor := get_rect().get_center()
 	if _points.size() > 0:
 		if follow_mouse:
 			_points[0].position = get_local_mouse_position()
 		else:
-			_points[0].position = get_rect().get_center()
+			_points[0].position = attractor
+
+	for po in _points:
+		if not rect.has_point(po.position):
+			po.life -= delta
+			if po.life < 0.0:
+				_reset_po(po)
+		else:
+			po.life = minf(po.life + delta, ft)
+		po.position += (po.velocity + po.velocity2) * delta
+
+	var p0: Vector2 = attractor
+	if _points.size() > 0:
+		p0 = (_points[0] as Po).position
+	for i in range(1, _points.size()):
+		var po: Po = _points[i] as Po
+		var delta_p: Vector2 = po.position - p0
+		var mouse_dist: float = delta_p.length()
+		if mouse_dist < max_line_length and mouse_dist > 0.001:
+			var inv: float = interact_intension / maxf(mouse_dist, _MIN_DIST)
+			po.velocity2 = delta_p.normalized() * inv
+		else:
+			po.velocity2 = Vector2.ZERO
+
 	queue_redraw()
 
 
 func _draw() -> void:
 	if _points.is_empty():
 		return
-	var p_mouse_pos: Vector2 = _points[0].position
+	var ft := maxf(fade_time, 0.05)
 	var p_a: Po
 	var p_b: Po
 	var p_color: Color
@@ -70,13 +95,8 @@ func _draw() -> void:
 	for a in range(_points.size()):
 		p_a = _points[a]
 		p_color = point_color
-		p_color.a = p_a.life / fade_time
+		p_color.a = clampf(p_a.life / ft, 0.0, 1.0)
 		draw_circle(p_a.position, p_a.radius, p_color)
-		var mouse_dist := p_a.position.distance_to(p_mouse_pos)
-		if mouse_dist < max_line_length and a != 0:
-			p_a.velocity2 = (p_a.position - p_mouse_pos).normalized() * (1.0 / mouse_dist) * interact_intension
-		else:
-			p_a.velocity2 = Vector2.ZERO
 		for b in range(_points.size()):
 			if a <= b:
 				continue
@@ -84,5 +104,5 @@ func _draw() -> void:
 			var distance := p_a.position.distance_to(p_b.position)
 			if distance < max_line_length:
 				l_color = line_color
-				l_color.a = (1.0 - distance / max_line_length) * minf(p_a.life, p_b.life) / fade_time
+				l_color.a = (1.0 - distance / max_line_length) * minf(p_a.life, p_b.life) / ft
 				draw_line(p_a.position, p_b.position, l_color, 2.0 * (1.0 - distance / max_line_length))

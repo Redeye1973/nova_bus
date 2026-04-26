@@ -20,3 +20,8 @@ Import glTF into Godot cache (once per clone):
 
 Run headless smoke (2 frames):
   ... --path "<this_project>" --headless --quit-after 2
+
+Play (game window, not editor):
+  Double-click run_game_opengl3.cmd — recommended if Vulkan CTDs (ReShade/RTSS layers).
+  Or run_game_vulkan.cmd for default Vulkan.
+  Editor: open project.godot in Godot, then F5.
