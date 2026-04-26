@@ -4,10 +4,22 @@ Vier vaste enemy-presets: combineert
 - `Freecad Modulair systeem enemy.py` (hull/wing/gun types + mirror)
 
 Run in Blender: Scripting workspace → Open → Run Script.
+
+Export: schrijft `.blend` + `.glb` naar ``GEMINI_OUTPUT_DIR`` (standaard Nova-outputmap).
+Overschrijf met omgevingsvariabele ``NOVA_GEMINI_OUTPUT`` (volledige map).
 """
 from __future__ import annotations
 
+import os
+from datetime import datetime, timezone
+
 import bpy
+
+# Standaard Nova Gemini-output (map wordt aangemaakt indien nodig).
+GEMINI_OUTPUT_DIR = os.environ.get(
+    "NOVA_GEMINI_OUTPUT",
+    r"L:\! 2 Nova v2 OUTPUT !\Gemini",
+)
 
 
 def _clear_scene() -> None:
@@ -43,6 +55,31 @@ def _principled_mat(
         mat.blend_method = "BLEND"
         mat.shadow_method = "HASHED"
     return mat
+
+
+def _ensure_output_dir(path: str) -> None:
+    os.makedirs(path, exist_ok=True)
+
+
+def _export_to_gemini(out_dir: str) -> tuple[str, str]:
+    """Schrijf scene als .blend en .glb naar out_dir; retourneer paden."""
+    _ensure_output_dir(out_dir)
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    stem = os.path.join(out_dir, f"four_modular_enemies_{ts}")
+    blend_path = stem + ".blend"
+    glb_path = stem + ".glb"
+
+    bpy.ops.wm.save_as_mainfile(filepath=blend_path, check_existing=False)
+
+    try:
+        bpy.ops.export_scene.gltf(filepath=glb_path, export_format="GLB", export_apply=True)
+    except TypeError:
+        bpy.ops.export_scene.gltf(filepath=glb_path, export_format="GLB")
+
+    info_path = os.path.join(out_dir, "four_modular_enemies_latest.txt")
+    with open(info_path, "w", encoding="utf-8") as f:
+        f.write(f"blend={blend_path}\nglb={glb_path}\nutc={datetime.now(timezone.utc).isoformat()}\n")
+    return blend_path, glb_path
 
 
 def _mirror_x(obj: bpy.types.Object) -> None:
@@ -218,6 +255,10 @@ def main() -> None:
     spacing = 6.0
     for i, preset in enumerate(ENEMY_PRESETS):
         factory.assemble_preset(i * spacing, preset)
+
+    blend_path, glb_path = _export_to_gemini(GEMINI_OUTPUT_DIR)
+    print(f"[four_modular_enemies] blend -> {blend_path}")
+    print(f"[four_modular_enemies] glb   -> {glb_path}")
 
 
 if __name__ == "__main__":
