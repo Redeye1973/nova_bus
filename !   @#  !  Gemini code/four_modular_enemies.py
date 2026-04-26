@@ -53,7 +53,9 @@ def _principled_mat(
         bsdf.inputs["Emission Strength"].default_value = emission_strength
     if blend or alpha < 0.999:
         mat.blend_method = "BLEND"
-        mat.shadow_method = "HASHED"
+        # Blender 4.1+: shadow_method verwijderd op Material
+        if hasattr(mat, "shadow_method"):
+            mat.shadow_method = "HASHED"
     return mat
 
 
