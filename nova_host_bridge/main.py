@@ -24,6 +24,7 @@ from adapters import aseprite as aseprite_adapter
 from adapters import krita as krita_adapter
 from adapters import blender as blender_adapter
 from adapters import godot as godot_adapter
+from adapters import daz as daz_adapter
 
 logger = logging.getLogger("bridge")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -59,6 +60,7 @@ ASEPRITE_BIN = (HOST_TOOLS.get("aseprite") or {}).get("bin") if HOST_TOOLS else 
 KRITA_BIN    = (HOST_TOOLS.get("krita")    or {}).get("bin") if HOST_TOOLS else None
 BLENDER_BIN  = (HOST_TOOLS.get("blender")  or {}).get("bin") if HOST_TOOLS else None
 GODOT_BIN    = (HOST_TOOLS.get("godot")    or {}).get("bin") if HOST_TOOLS else None
+DAZ_BIN      = (HOST_TOOLS.get("daz")      or {}).get("bin") if HOST_TOOLS else None
 
 
 def require_token(authorization: Optional[str] = Header(default=None)) -> None:
@@ -73,8 +75,26 @@ def require_token(authorization: Optional[str] = Header(default=None)) -> None:
 app = FastAPI(title="NOVA Host Bridge", version="0.2.0")
 
 
+def _tool_yaml_configured(tool: str) -> bool:
+    """Snel: staat er in nova_config een bin-pad (zonder uitvoerbaarheid te testen)."""
+    entry = (HOST_TOOLS.get(tool) or {}) if HOST_TOOLS else {}
+    b = entry.get("bin")
+    return bool(b and str(b).strip())
+
+
 @app.get("/health")
 def health() -> Dict[str, Any]:
+    tools_configured = {
+        "freecad": _tool_yaml_configured("freecad"),
+        "qgis": _tool_yaml_configured("qgis"),
+        "aseprite": _tool_yaml_configured("aseprite"),
+        "krita": _tool_yaml_configured("krita"),
+        "blender": _tool_yaml_configured("blender"),
+        "godot": _tool_yaml_configured("godot"),
+        "daz": _tool_yaml_configured("daz"),
+        "gimp": _tool_yaml_configured("gimp"),
+    }
+    n_ok = sum(1 for v in tools_configured.values() if v)
     return {
         "status": "ok",
         "service": "nova_host_bridge",
@@ -82,6 +102,8 @@ def health() -> Dict[str, Any]:
         "auth_required": bool(BRIDGE_TOKEN),
         "config_loaded": CONFIG_DEFAULT_PATH.is_file(),
         "workdir": str(WORKDIR_ROOT),
+        "tools_configured": tools_configured,
+        "tools_configured_count": f"{n_ok}/{len(tools_configured)}",
     }
 
 
@@ -94,6 +116,7 @@ def tools() -> Dict[str, Any]:
         "krita":    krita_adapter.is_available(KRITA_BIN),
         "blender":  blender_adapter.is_available(BLENDER_BIN),
         "godot":    godot_adapter.is_available(GODOT_BIN),
+        "daz":      daz_adapter.is_available(DAZ_BIN),
     }
 
 
@@ -106,7 +129,7 @@ class FreeCADBuildRequest(BaseModel):
     mount_points: Optional[Dict[str, List[float]]] = None
     exports: Optional[List[str]] = Field(default_factory=lambda: ["fcstd", "step", "stl"])
     name: Optional[str] = None
-    timeout_s: Optional[float] = 60.0
+    timeout_s: Optional[float] = None
 
 
 @app.post("/freecad/parametric", dependencies=[Depends(require_token)])
@@ -117,7 +140,7 @@ def freecad_parametric(req: FreeCADBuildRequest) -> Dict[str, Any]:
             spec=spec,
             workdir_root=WORKDIR_ROOT,
             freecad_bin=FREECAD_BIN,
-            timeout_s=req.timeout_s or 60.0,
+            timeout_s=req.timeout_s,
         )
     except fc_adapter.FreeCADUnavailable as e:
         raise HTTPException(503, detail={"reason": "freecad_unavailable", "error": str(e)})
@@ -258,6 +281,28 @@ def godot_validate(req: GodotValidateRequest) -> Dict[str, Any]:
         )
     except godot_adapter.GodotUnavailable as e:
         raise HTTPException(503, detail={"reason": "godot_unavailable", "error": str(e)})
+
+
+# ---- DAZ --------------------------------------------------------------------
+
+class DazRenderRequest(BaseModel):
+    script_content: str
+    output_dir: str = "L:\\! 2 Nova v2  OUTPUT !\\Dazz"
+    timeout_s: Optional[float] = 900.0
+
+
+@app.post("/daz/render", dependencies=[Depends(require_token)])
+def daz_render(req: DazRenderRequest) -> Dict[str, Any]:
+    try:
+        return daz_adapter.render_script(
+            script_content=req.script_content,
+            output_dir=req.output_dir,
+            workdir_root=WORKDIR_ROOT,
+            daz_bin=DAZ_BIN,
+            timeout_s=req.timeout_s or 900.0,
+        )
+    except daz_adapter.DAZUnavailable as e:
+        raise HTTPException(503, detail={"reason": "daz_unavailable", "error": str(e)})
 
 
 class GodotScriptRequest(BaseModel):
