@@ -43,7 +43,30 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 HOST_BRIDGE_URL = (os.getenv("HOST_BRIDGE_URL") or "").rstrip("/") or None
 BRIDGE_TOKEN = os.getenv("BRIDGE_TOKEN") or None
 BRIDGE_TIMEOUT_S = float(os.getenv("HOST_BRIDGE_TIMEOUT_S", "60"))
+BRIDGE_READ_TIMEOUT_S = float(os.getenv("HOST_BRIDGE_READ_TIMEOUT_S", "300"))
+BRIDGE_PROBE_TIMEOUT_S = float(os.getenv("HOST_BRIDGE_PROBE_TIMEOUT_S", "4"))
 BRIDGE_DEFAULT_EXPORTS = ["fcstd", "step", "stl"]
+
+_FORBIDDEN_DIM_KEYS = frozenset({"x", "y", "z"})
+
+
+def _bridge_http_timeout(*, read: float) -> httpx.Timeout:
+    return httpx.Timeout(connect=10.0, read=read, write=60.0, pool=10.0)
+
+
+def _reject_xyz_dimension_keys(dims: Optional[Dict[str, float]]) -> None:
+    """FreeCAD_API_Referentie.md §4: sizes = length/width/height; x/y/z are axes, not box dims."""
+    if not dims:
+        return
+    bad = _FORBIDDEN_DIM_KEYS.intersection({str(k).lower() for k in dims})
+    if bad:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"dimensions_use_length_width_height_not_xyz:{sorted(bad)}; "
+                "use placement.position for offsets (see FreeCAD_API_Referentie.md §11.A)"
+            ),
+        )
 
 
 def _bridge_headers() -> Dict[str, str]:
@@ -57,7 +80,11 @@ def _bridge_probe() -> Dict[str, Any]:
     if not HOST_BRIDGE_URL:
         return {"available": False, "reason": "HOST_BRIDGE_URL_not_set"}
     try:
-        r = httpx.get(f"{HOST_BRIDGE_URL}/tools", timeout=5.0, headers=_bridge_headers())
+        r = httpx.get(
+            f"{HOST_BRIDGE_URL}/tools",
+            timeout=_bridge_http_timeout(read=BRIDGE_PROBE_TIMEOUT_S),
+            headers=_bridge_headers(),
+        )
         r.raise_for_status()
         info = r.json()
         fc = info.get("freecad", {})
@@ -101,6 +128,7 @@ def _bridge_metrics_to_local(bridge_metrics: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 CATEGORY_DEFAULTS: Dict[str, Dict[str, Any]] = {
+    "box":       {"primitive": "box",       "default": {"length": 10.0, "width": 10.0, "height": 10.0}},
     "fighter":   {"primitive": "capsule", "default": {"length": 12.0, "radius": 1.5}},
     "ship":      {"primitive": "capsule", "default": {"length": 60.0, "radius": 6.0}},
     "boss":      {"primitive": "capsule", "default": {"length": 120.0, "radius": 18.0}},
@@ -162,8 +190,10 @@ def _bbox_metrics(mesh: trimesh.Trimesh) -> Dict[str, Any]:
 
 def _save_mesh(mesh: trimesh.Trimesh, prefix: str) -> Dict[str, str]:
     uid = uuid.uuid4().hex[:10]
-    stl_path = OUTPUT_DIR / f"{prefix}_{uid}.stl"
-    glb_path = OUTPUT_DIR / f"{prefix}_{uid}.glb"
+    job_dir = OUTPUT_DIR / "jobs" / uid
+    job_dir.mkdir(parents=True, exist_ok=True)
+    stl_path = job_dir / f"{prefix}.stl"
+    glb_path = job_dir / f"{prefix}.glb"
     mesh.export(stl_path.as_posix())
     try:
         mesh.export(glb_path.as_posix())
@@ -177,6 +207,10 @@ class BuildBaseRequest(BaseModel):
     category: str
     dimensions: Optional[Dict[str, float]] = None
     mount_points_config: Optional[Dict[str, List[float]]] = None
+    placement: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Reserved: position/rotation per FreeCAD_API_Referentie.md §11.A (not forwarded to bridge yet).",
+    )
 
 
 class VariantGenRequest(BaseModel):
@@ -239,7 +273,7 @@ def _bridge_call_freecad(category: str, dimensions: Dict[str, float],
         r = httpx.post(
             f"{HOST_BRIDGE_URL}/freecad/parametric",
             json=payload,
-            timeout=BRIDGE_TIMEOUT_S,
+            timeout=_bridge_http_timeout(read=max(BRIDGE_TIMEOUT_S, BRIDGE_READ_TIMEOUT_S)),
             headers=_bridge_headers(),
         )
         r.raise_for_status()
@@ -247,6 +281,9 @@ def _bridge_call_freecad(category: str, dimensions: Dict[str, float],
         if data.get("ok"):
             return data
         logger.warning("bridge freecad call returned ok=false: %s", data.get("error"))
+        return None
+    except httpx.TimeoutException as e:
+        logger.warning("bridge freecad timeout: %s", e)
         return None
     except Exception as e:
         logger.warning("bridge freecad call failed: %s", e)
@@ -279,6 +316,7 @@ def build_base(req: BuildBaseRequest) -> Dict[str, Any]:
     if cat not in CATEGORY_DEFAULTS:
         raise HTTPException(400, detail=f"unknown_category:{cat}; valid={list(CATEGORY_DEFAULTS)}")
     cfg = CATEGORY_DEFAULTS[cat]
+    _reject_xyz_dimension_keys(req.dimensions)
     dims = {**cfg["default"], **(req.dimensions or {})}
 
     mounts: Dict[str, List[float]] = {}
@@ -290,21 +328,28 @@ def build_base(req: BuildBaseRequest) -> Dict[str, Any]:
 
     bridge_info = _refresh_bridge_info()
     if bridge_info.get("available"):
-        bridge_resp = _bridge_call_freecad(cat, dims, mounts=mounts)
-        if bridge_resp is not None:
-            return {
-                "category": cat,
-                "primitive": bridge_resp.get("primitive", cfg["primitive"]),
-                "dimensions": {k: float(v) for k, v in dims.items()},
-                "mount_points": mounts,
-                "files": _bridge_file_urls(bridge_resp),
-                "metrics": _bridge_metrics_to_local(bridge_resp.get("metrics") or {}),
-                "step_export": _bridge_file_urls(bridge_resp).get("step"),
-                "engine_used": "freecad_via_bridge",
-                "freecad_version": bridge_resp.get("freecad_version"),
-                "bridge_job_id": bridge_resp.get("job_id"),
-                "bridge_elapsed_ms": bridge_resp.get("elapsed_ms"),
-            }
+        try:
+            bridge_resp = _bridge_call_freecad(cat, dims, mounts=mounts)
+            if bridge_resp is not None:
+                return {
+                    "category": cat,
+                    "primitive": bridge_resp.get("primitive", cfg["primitive"]),
+                    "dimensions": {k: float(v) for k, v in dims.items()},
+                    "mount_points": mounts,
+                    "placement": req.placement,
+                    "files": _bridge_file_urls(bridge_resp),
+                    "metrics": _bridge_metrics_to_local(bridge_resp.get("metrics") or {}),
+                    "step_export": _bridge_file_urls(bridge_resp).get("step"),
+                    "engine_used": "freecad_via_bridge",
+                    "freecad_version": bridge_resp.get("freecad_version"),
+                    "bridge_job_id": bridge_resp.get("job_id"),
+                    "bridge_elapsed_ms": bridge_resp.get("elapsed_ms"),
+                }
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.exception("build_base bridge path failed")
+            raise HTTPException(status_code=502, detail={"status": "error", "message": f"{type(e).__name__}:{e}"}) from e
         logger.info("bridge build_base failed; falling back to trimesh for category=%s", cat)
 
     mesh = _make_primitive(cfg["primitive"], dims)
@@ -384,6 +429,7 @@ def variants_generate(req: VariantGenRequest) -> Dict[str, Any]:
     if cat not in CATEGORY_DEFAULTS:
         raise HTTPException(400, detail=f"unknown_category:{cat}")
     cfg = CATEGORY_DEFAULTS[cat]
+    _reject_xyz_dimension_keys(base.dimensions)
     base_dims = {**cfg["default"], **(base.dimensions or {})}
 
     keys = sorted(req.parameter_matrix.keys())
@@ -549,12 +595,13 @@ def invoke(body: InvokeBody) -> Dict[str, Any]:
         return components_assemble(req)
 
     if action == "info":
+        bi = _refresh_bridge_info()
         return {
             "categories": list(CATEGORY_DEFAULTS),
-            "fallback_mode": True,
-            "fallback_reason": "freecad_not_installed",
-            "engine": "trimesh",
-            "endpoints": ["/model/build-base", "/variants/generate", "/components/assemble"],
+            "fallback_mode": not bi.get("available"),
+            "fallback_reason": None if bi.get("available") else bi.get("reason"),
+            "engine": "freecad_via_bridge" if bi.get("available") else "trimesh",
+            "endpoints": ["/health", "/model/build-base", "/variants/generate", "/components/assemble", "/invoke"],
         }
 
     return {"error": f"unknown_action:{action}", "valid_actions": ["build_base", "generate", "assemble", "info"]}

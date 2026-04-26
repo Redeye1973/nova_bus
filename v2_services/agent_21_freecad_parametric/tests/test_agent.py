@@ -67,3 +67,23 @@ def test_invoke_unknown_action():
     r = c.post("/invoke", json={"action": "no_such"})
     assert r.status_code == 200
     assert "error" in r.json()
+
+
+def test_rejects_xyz_dimension_keys():
+    c = TestClient(main.app)
+    r = c.post("/model/build-base", json={"category": "vehicle", "dimensions": {"x": 1, "y": 2, "z": 3}})
+    assert r.status_code == 400
+    detail = str(r.json().get("detail", "")).lower()
+    assert "length" in detail or "xyz" in detail
+
+
+def test_build_base_box_category():
+    c = TestClient(main.app)
+    r = c.post(
+        "/model/build-base",
+        json={"category": "box", "dimensions": {"length": 2.0, "width": 3.0, "height": 4.0}},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["primitive"] == "box"
+    assert body["dimensions"]["length"] == 2.0
