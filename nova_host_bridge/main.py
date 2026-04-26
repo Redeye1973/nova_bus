@@ -182,19 +182,75 @@ def qgis_algorithms(limit: int = 50) -> Dict[str, Any]:
 class AsepriteSheetRequest(BaseModel):
     source: str
     sheet_type: Optional[str] = "horizontal"
-    timeout_s: Optional[float] = 120.0
+    timeout_s: Optional[float] = None
+
+
+def _aseprite_timeout_response(result: Dict[str, Any]) -> bool:
+    err = str(result.get("error") or "")
+    return "timeout_after_" in err and err.endswith("_killed")
 
 
 @app.post("/aseprite/spritesheet", dependencies=[Depends(require_token)])
 def aseprite_spritesheet(req: AsepriteSheetRequest) -> Dict[str, Any]:
     try:
-        return aseprite_adapter.export_spritesheet(
+        result = aseprite_adapter.export_spritesheet(
             source=req.source,
             workdir_root=WORKDIR_ROOT,
             sheet_type=req.sheet_type or "horizontal",
             aseprite_bin=ASEPRITE_BIN,
-            timeout_s=req.timeout_s or 120.0,
+            timeout_s=req.timeout_s,
         )
+        if not result.get("ok") and _aseprite_timeout_response(result):
+            raise HTTPException(status_code=504, detail=result)
+        return result
+    except aseprite_adapter.AsepriteUnavailable as e:
+        raise HTTPException(503, detail={"reason": "aseprite_unavailable", "error": str(e)})
+
+
+class AsepriteBatchSaveRequest(BaseModel):
+    source: str
+    timeout_s: Optional[float] = None
+
+
+@app.post("/aseprite/batch-save", dependencies=[Depends(require_token)])
+def aseprite_batch_save(req: AsepriteBatchSaveRequest) -> Dict[str, Any]:
+    try:
+        result = aseprite_adapter.batch_save_as(
+            source=req.source,
+            workdir_root=WORKDIR_ROOT,
+            aseprite_bin=ASEPRITE_BIN,
+            timeout_s=req.timeout_s,
+        )
+        if _aseprite_timeout_response(result):
+            raise HTTPException(status_code=504, detail=result)
+        if not result.get("ok"):
+            raise HTTPException(status_code=500, detail=result)
+        return result
+    except aseprite_adapter.AsepriteUnavailable as e:
+        raise HTTPException(503, detail={"reason": "aseprite_unavailable", "error": str(e)})
+
+
+class AsepriteLuaRequest(BaseModel):
+    script: str
+    source: Optional[str] = None
+    timeout_s: Optional[float] = None
+
+
+@app.post("/aseprite/lua", dependencies=[Depends(require_token)])
+def aseprite_lua(req: AsepriteLuaRequest) -> Dict[str, Any]:
+    try:
+        result = aseprite_adapter.run_lua_script(
+            script=req.script,
+            workdir_root=WORKDIR_ROOT,
+            source=req.source,
+            aseprite_bin=ASEPRITE_BIN,
+            timeout_s=req.timeout_s,
+        )
+        if _aseprite_timeout_response(result):
+            raise HTTPException(status_code=504, detail=result)
+        if not result.get("ok"):
+            raise HTTPException(status_code=500, detail=result)
+        return result
     except aseprite_adapter.AsepriteUnavailable as e:
         raise HTTPException(503, detail={"reason": "aseprite_unavailable", "error": str(e)})
 

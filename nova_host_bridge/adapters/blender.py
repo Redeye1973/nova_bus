@@ -64,6 +64,11 @@ def _blender_popen_communicate(
         return -1, out or "", (err or "") + "\nblender_subprocess_killed_after_timeout", True, (time.perf_counter() - t0) * 1000.0
 
 
+def _blender_stderr_python_failed(stderr: str) -> bool:
+    s = stderr or ""
+    return any(p in s for p in ("SyntaxError", "Traceback (most recent call last)", "Error: Python script failed", "ModuleNotFoundError", "ImportError", "AttributeError"))
+
+
 def is_available(blender_bin: Optional[str] = None) -> Dict[str, Any]:
     try:
         exe = _resolve_exe(blender_bin)
@@ -119,7 +124,8 @@ def render_frame(
         }
 
     expected = workdir / f"frame_{frame:04d}.png"
-    ok = rc == 0 and expected.is_file()
+    py_stderr = _blender_stderr_python_failed(stderr)
+    ok = rc == 0 and expected.is_file() and not py_stderr
     result: Dict[str, Any] = {
         "ok": ok,
         "job_id": job_id,
@@ -129,6 +135,8 @@ def render_frame(
         "frame": frame,
         "files": {"png": str(expected) if expected.is_file() else None},
     }
+    if py_stderr:
+        result["error_kind"] = "python_error_in_stderr"
     if not ok:
         result["stdout_tail"] = stdout[-1000:]
         result["stderr_tail"] = stderr[-500:]
@@ -178,8 +186,10 @@ def run_script(
             "stderr_tail": stderr[-500:],
         }
 
-    return {
-        "ok": rc == 0,
+    py_stderr = _blender_stderr_python_failed(stderr)
+    ok = rc == 0 and not py_stderr
+    out: Dict[str, Any] = {
+        "ok": ok,
         "job_id": job_id,
         "workdir": str(workdir),
         "exit_code": rc,
@@ -187,6 +197,9 @@ def run_script(
         "stdout_tail": stdout[-1500:],
         "stderr_tail": stderr[-500:],
     }
+    if py_stderr:
+        out["error_kind"] = "python_error_in_stderr"
+    return out
 
 
 def cleanup_workdir(workdir: str) -> bool:
