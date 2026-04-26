@@ -5,6 +5,8 @@ Vijf vaste spelers-/NPC-schepen: combineert
 
 Multi-wing: meerdere gespiegelde vleugellagen per schip.
 Hardpoints: meerdere slots per zijde (raket en/of railgun).
+Damaged: tweede rij (``y_row``) met donkerdere hull/vleugels, minder wapens, zwakkere thruster-neon,
+scorch-decal en ingeklapte eerste vleugel.
 
 Run in Blender UI of headless:
   blender --background --python "...five_modular_ships_hardpoints.py"
@@ -14,6 +16,7 @@ Override: omgevingsvariabele ``NOVA_BLENDER_OUTPUT``.
 """
 from __future__ import annotations
 
+import copy
 import os
 from datetime import datetime, timezone
 
@@ -182,6 +185,53 @@ def _build_wing_layer(
     return obj
 
 
+def _damaged_preset(p: dict) -> dict:
+    """Kopie met visuele/logische damage (kleuren, roughness, halve hardpoints)."""
+    q = copy.deepcopy(p)
+    q["id"] = f'{p["id"]}_DMG'
+
+    def _dark(rgb: tuple[float, ...], mul: float) -> tuple[float, float, float, float]:
+        return (
+            max(0.03, float(rgb[0]) * mul),
+            max(0.03, float(rgb[1]) * mul),
+            max(0.03, float(rgb[2]) * mul),
+            1.0,
+        )
+
+    q["hull_rgba"] = _dark(p["hull_rgba"], 0.48)
+    q["wing_rgba"] = _dark(p["wing_rgba"], 0.52)
+    q["hull_metal"] = max(0.12, float(p["hull_metal"]) * 0.55)
+    q["hull_rough"] = min(0.96, float(p["hull_rough"]) + 0.22)
+    q["wing_metal"] = max(0.1, float(p["wing_metal"]) * 0.48)
+    q["wing_rough"] = min(0.96, float(p["wing_rough"]) + 0.2)
+    cr, cg, cb = (float(c) for c in p["cockpit_rgb"])
+    q["cockpit_rgb"] = (max(0.05, cr * 0.35), max(0.05, cg * 0.35), max(0.05, cb * 0.35))
+    q["cockpit_alpha"] = min(0.78, float(p["cockpit_alpha"]) + 0.18)
+    nr, ng, nb = (float(c) for c in p["neon_rgb"])
+    q["neon_rgb"] = (nr * 0.45 + 0.55, ng * 0.45 + 0.12, nb * 0.45 + 0.02)
+    q["neon_strength"] = max(1.5, float(p["neon_strength"]) * 0.28)
+    hp = list(p["hardpoints"])
+    keep = max(1, (len(hp) + 1) // 2)
+    q["hardpoints"] = hp[:keep]
+    return q
+
+
+def _build_scorch_decal(prefix: str, base: tuple[float, float, float]) -> None:
+    bpy.ops.mesh.primitive_cube_add(size=0.45, location=(base[0] + 0.35, base[1] + 1.2, base[2] + 0.25))
+    sc = bpy.context.object
+    sc.name = f"{prefix}_Scorch"
+    sc.scale = (1.4, 0.35, 0.12)
+    sc.rotation_euler[2] = 0.35
+    sc.active_material = _principled_mat(
+        f"{prefix}_ScorchMat",
+        (0.04, 0.03, 0.02, 1.0),
+        metallic=0.25,
+        roughness=0.88,
+        emission_rgb=(0.9, 0.22, 0.04),
+        emission_strength=2.2,
+    )
+
+
 def _place_hardpoints_symmetric(
     wf: WeaponFactory,
     prefix: str,
@@ -202,8 +252,14 @@ def _place_hardpoints_symmetric(
             wf.create_railgun(pl, suf_l)
 
 
-def _assemble_ship(x_offset: float, preset: dict) -> None:
-    base = (x_offset, 0.0, 0.0)
+def _assemble_ship(
+    x_offset: float,
+    preset: dict,
+    *,
+    damaged: bool = False,
+    y_row: float = 0.0,
+) -> None:
+    base = (x_offset, y_row, 0.0)
     pfx = str(preset["id"])
     hull_m = _principled_mat(
         f"{pfx}_HullMat",
@@ -248,6 +304,12 @@ def _assemble_ship(x_offset: float, preset: dict) -> None:
     wf = WeaponFactory(wpn_metal, wpn_neon)
     slots = [(float(s[0]), float(s[1]), float(s[2]), str(s[3])) for s in preset["hardpoints"]]
     _place_hardpoints_symmetric(wf, pfx, base, slots)
+
+    if damaged:
+        _build_scorch_decal(pfx, base)
+        w0 = bpy.data.objects.get(f"{pfx}_Wing_L0")
+        if w0 is not None:
+            w0.scale = (w0.scale[0] * 0.82, w0.scale[1] * 0.88, w0.scale[2] * 0.52)
 
 
 # Vijf schepen: verschillende hull, multi-wing, verschillende hardpoint-belasting.
@@ -376,8 +438,11 @@ SHIP_PRESETS: list[dict] = [
 def main() -> None:
     _clear_scene()
     spacing = 14.0
+    row_dy = -17.0
     for i, preset in enumerate(SHIP_PRESETS):
-        _assemble_ship(i * spacing, preset)
+        _assemble_ship(i * spacing, preset, damaged=False, y_row=0.0)
+    for i, preset in enumerate(SHIP_PRESETS):
+        _assemble_ship(i * spacing, _damaged_preset(preset), damaged=True, y_row=row_dy)
     blend_path, glb_path = _export_scene(BLENDER_OUTPUT_DIR, "five_modular_ships")
     print(f"[five_modular_ships] blend -> {blend_path}")
     print(f"[five_modular_ships] glb   -> {glb_path}")
