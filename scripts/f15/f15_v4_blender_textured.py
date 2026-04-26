@@ -433,12 +433,14 @@ def render_view(name, location, look_at=(0, 0, 1), is_ortho=False,
     direction = Vector(look_at) - Vector(location)
     rot_quat = direction.to_track_quat('-Z', 'Y')
     cam.rotation_euler = rot_quat.to_euler()
+    cam.data.clip_start = 0.01
+    cam.data.clip_end = 500.0
     bpy.context.scene.camera = cam
 
     output_path = RENDER_DIR / f"f15_v4_textured_{name}.png"
     bpy.context.scene.render.filepath = str(output_path)
     bpy.ops.render.render(write_still=True)
-    print(f"[F15] Rendered {name}: {output_path}")
+    print(f"[F15-tex] Rendered {name}: {output_path}")
 
     bpy.data.objects.remove(cam, do_unlink=True)
 
@@ -509,10 +511,18 @@ def main():
                      location=(15, 10, 6), look_at=(0, 0, 2),
                      is_ortho=False, lens=70)
 
+        # Font → mesh voor stabiele glTF-export
+        print("[F15-tex] Converting text markings to mesh...")
+        bpy.ops.object.select_all(action='DESELECT')
+        for m in markings:
+            bpy.context.view_layer.objects.active = m
+            m.select_set(True)
+            bpy.ops.object.convert(target="MESH")
+            m.select_set(False)
+
         # Export GLB voor Godot
         print("[F15-tex] Exporting GLB...")
         glb_path = RENDER_DIR / "f15_v4_textured.glb"
-        # Selecteer ship + alle markings
         bpy.ops.object.select_all(action='DESELECT')
         obj.select_set(True)
         for m in markings:
