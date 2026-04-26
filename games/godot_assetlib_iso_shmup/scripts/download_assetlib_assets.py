@@ -15,6 +15,7 @@ GLTF_DST = ROOT / "vendor" / "kaykit_gltf"
 
 ASSETS = (
     ("2124", "KayKit-Space-Base-Bits.zip"),
+    ("1539", "fancy-particles.zip"),
     ("2318", "GodotParadise-ProjectileComponent.zip"),
 )
 
@@ -56,6 +57,14 @@ def main() -> None:
     ):
         shutil.copy2(src / fname, GLTF_DST / fname)
     print("Copied glTF subset to", GLTF_DST)
+
+    # #1539 Fancy particles — MIT license file for attribution (game uses scripts/assetlib_fancy_particles_1539.gd).
+    lic1539 = next(TP.glob("**/fancy-particles*/LICENSE"), None)
+    if lic1539 and lic1539.is_file():
+        dst1539 = ROOT / "vendor" / "assetlib_1539"
+        dst1539.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(lic1539, dst1539 / "LICENSE")
+        print("Copied #1539 LICENSE to", dst1539 / "LICENSE")
 
 
 if __name__ == "__main__":
