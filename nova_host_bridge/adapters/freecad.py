@@ -79,13 +79,16 @@ def build_parametric(
     job_id = uuid.uuid4().hex[:12]
     workdir = workdir_root / f"freecad_{job_id}"
     workdir.mkdir(parents=True, exist_ok=True)
-    spec_full = {
+    spec_full: Dict[str, Any] = {
         "name": spec.get("name") or f"base_{cat or primitive}",
         "primitive": primitive,
         "dimensions": dims,
         "mount_points": spec.get("mount_points") or {},
         "exports": spec.get("exports") or ["fcstd", "step", "stl"],
     }
+    if spec.get("composition") == "multi_fuse":
+        spec_full["composition"] = "multi_fuse"
+        spec_full["parts"] = list(spec.get("parts") or [])
     spec_path = workdir / "spec.json"
     result_path = workdir / "result.json"
     spec_path.write_text(json.dumps(spec_full, indent=2), encoding="utf-8")

@@ -130,6 +130,8 @@ class FreeCADBuildRequest(BaseModel):
     exports: Optional[List[str]] = Field(default_factory=lambda: ["fcstd", "step", "stl"])
     name: Optional[str] = None
     timeout_s: Optional[float] = None
+    composition: Optional[str] = None
+    parts: Optional[List[Dict[str, Any]]] = None
 
 
 @app.post("/freecad/parametric", dependencies=[Depends(require_token)])

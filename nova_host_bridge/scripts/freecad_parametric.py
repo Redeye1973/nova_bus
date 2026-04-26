@@ -75,6 +75,101 @@ def _bbox(shape):
     }
 
 
+def _placement_from_spec(ps):
+    pos = ps.get("position") or [0.0, 0.0, 0.0]
+    ax = ps.get("rotation_axis") or [0.0, 0.0, 1.0]
+    ang = float(ps.get("rotation_angle", 0.0))
+    return FreeCAD.Placement(
+        FreeCAD.Vector(float(pos[0]), float(pos[1]), float(pos[2])),
+        FreeCAD.Rotation(FreeCAD.Vector(float(ax[0]), float(ax[1]), float(ax[2])), ang),
+    )
+
+
+def _run_multi_fuse(spec, workdir, exports, name, result_path):
+    """Ship-kit style: multiple Part::Box / Part::Cylinder, boolean fuse, export."""
+    parts_spec = list(spec.get("parts") or [])
+    if not parts_spec:
+        raise ValueError("multi_fuse requires non-empty parts[]")
+
+    doc = FreeCAD.newDocument("MultiFuseShip")
+    objs = []
+    try:
+        for i, ps in enumerate(parts_spec):
+            kind = (ps.get("kind") or "box").lower()
+            label = "".join(c if c.isalnum() else "_" for c in str(ps.get("name") or "part"))[:24] or "part"
+            oname = "P%d_%s" % (i, label)
+            pl = _placement_from_spec(ps)
+            if kind == "box":
+                o = doc.addObject("Part::Box", oname)
+                o.Length = float(ps.get("length", 10.0))
+                o.Width = float(ps.get("width", 10.0))
+                o.Height = float(ps.get("height", 10.0))
+                o.Placement = pl
+                objs.append(o)
+            elif kind == "cylinder":
+                o = doc.addObject("Part::Cylinder", oname)
+                o.Radius = float(ps.get("radius", 1.0))
+                o.Height = float(ps.get("height", 10.0))
+                o.Placement = pl
+                objs.append(o)
+            else:
+                raise ValueError("unknown part kind: %s" % kind)
+
+        doc.recompute()
+        merged = objs[0].Shape.copy()
+        for o in objs[1:]:
+            merged = merged.fuse(o.Shape)
+        exp = doc.addObject("Part::Feature", "FusedExport")
+        exp.Shape = merged
+        doc.recompute()
+        shape = merged
+
+        files = {}
+        if "fcstd" in exports:
+            out_fc = workdir / ("%s.FCStd" % name)
+            doc.saveAs(str(out_fc))
+            files["fcstd"] = str(out_fc)
+        if "step" in exports:
+            out_st = workdir / ("%s.step" % name)
+            Part.export([exp], str(out_st))
+            files["step"] = str(out_st)
+        if "stl" in exports:
+            out_mesh = workdir / ("%s.stl" % name)
+            mesh = Mesh.Mesh()
+            mesh.addFacets(shape.tessellate(0.08))
+            mesh.write(str(out_mesh))
+            files["stl"] = str(out_mesh)
+
+        metrics = {
+            "vertex_count": int(len(shape.Vertexes)),
+            "edge_count": int(len(shape.Edges)),
+            "face_count": int(len(shape.Faces)),
+            "solid_count": int(len(shape.Solids)),
+            "bounding_box": _bbox(shape),
+            "volume": float(shape.Volume),
+            "surface_area": float(shape.Area),
+            "is_closed": bool(shape.isClosed()),
+        }
+        result = {
+            "ok": True,
+            "name": name,
+            "primitive": "multi_fuse",
+            "composition": "multi_fuse",
+            "parts_built": len(objs),
+            "dimensions": {},
+            "mount_points": {},
+            "files": files,
+            "metrics": metrics,
+            "freecad_version": ".".join(str(x) for x in FreeCAD.Version()[:3]),
+        }
+        Path(result_path).write_text(json.dumps(result, indent=2), encoding="utf-8")
+    finally:
+        try:
+            FreeCAD.closeDocument(doc.Name)
+        except Exception:
+            pass
+
+
 def main():
     spec_path = os.environ.get("FC_SPEC")
     result_path = os.environ.get("FC_RESULT")
@@ -91,6 +186,10 @@ def main():
     mount_points = spec.get("mount_points") or {}
     exports = [e.lower() for e in (spec.get("exports") or ["fcstd", "step", "stl"])]
     name = spec.get("name") or "parametric_base"
+
+    if spec.get("composition") == "multi_fuse":
+        _run_multi_fuse(spec, workdir, exports, name, result_path)
+        return 0
 
     doc = FreeCAD.newDocument("ParametricBase")
     try:
