@@ -27,6 +27,43 @@ def _resolve_exe(blender_bin: Optional[str]) -> Path:
     return exe
 
 
+def _eff_blender_timeout(timeout_s: Optional[float]) -> float:
+    if timeout_s is not None:
+        return float(timeout_s)
+    return float(os.environ.get("BRIDGE_BLENDER_TIMEOUT_S", "600"))
+
+
+def _blender_popen_communicate(
+    args: List[str],
+    timeout_s: Optional[float],
+    env_full: Optional[Dict[str, str]] = None,
+) -> tuple[int, str, str, bool, float]:
+    """Run blender subprocess; on timeout kill child. Returns (rc, stdout, stderr, killed, elapsed_ms)."""
+    eff = _eff_blender_timeout(timeout_s)
+    proc: Optional[subprocess.Popen[str]] = None
+    out, err = "", ""
+    t0 = time.perf_counter()
+    try:
+        proc = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env_full or os.environ.copy(),
+        )
+        out, err = proc.communicate(timeout=eff)
+        rc = int(proc.returncode) if proc.returncode is not None else -1
+        return rc, out or "", err or "", False, (time.perf_counter() - t0) * 1000.0
+    except subprocess.TimeoutExpired:
+        if proc is not None:
+            proc.kill()
+            try:
+                out, err = proc.communicate(timeout=30)
+            except Exception:
+                pass
+        return -1, out or "", (err or "") + "\nblender_subprocess_killed_after_timeout", True, (time.perf_counter() - t0) * 1000.0
+
+
 def is_available(blender_bin: Optional[str] = None) -> Dict[str, Any]:
     try:
         exe = _resolve_exe(blender_bin)
@@ -47,7 +84,7 @@ def render_frame(
     frame: int = 1,
     engine: Optional[str] = None,
     blender_bin: Optional[str] = None,
-    timeout_s: float = 300.0,
+    timeout_s: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Render a single frame from a .blend file.
 
@@ -69,30 +106,32 @@ def render_frame(
         args += ["--engine", engine]
     args += ["--render-output", str(out_prefix), "--render-format", "PNG", "--render-frame", str(frame)]
 
-    started = time.perf_counter()
-    try:
-        proc = subprocess.run(args, capture_output=True, text=True, timeout=timeout_s)
-    except subprocess.TimeoutExpired as e:
+    rc, stdout, stderr, killed, elapsed_ms = _blender_popen_communicate(args, timeout_s, os.environ.copy())
+    if killed:
         return {
-            "ok": False, "job_id": job_id, "error": f"timeout after {timeout_s}s",
-            "stdout_tail": (e.stdout or "")[-500:], "stderr_tail": (e.stderr or "")[-500:],
+            "ok": False,
+            "job_id": job_id,
+            "workdir": str(workdir),
+            "error": f"timeout_after_{_eff_blender_timeout(timeout_s)}s_killed",
+            "stdout_tail": stdout[-500:],
+            "stderr_tail": stderr[-500:],
+            "elapsed_ms": round(elapsed_ms, 2),
         }
-    elapsed_ms = (time.perf_counter() - started) * 1000.0
 
     expected = workdir / f"frame_{frame:04d}.png"
-    ok = proc.returncode == 0 and expected.is_file()
+    ok = rc == 0 and expected.is_file()
     result: Dict[str, Any] = {
         "ok": ok,
         "job_id": job_id,
         "workdir": str(workdir),
-        "exit_code": proc.returncode,
+        "exit_code": rc,
         "elapsed_ms": round(elapsed_ms, 2),
         "frame": frame,
         "files": {"png": str(expected) if expected.is_file() else None},
     }
     if not ok:
-        result["stdout_tail"] = (proc.stdout or "")[-1000:]
-        result["stderr_tail"] = (proc.stderr or "")[-500:]
+        result["stdout_tail"] = stdout[-1000:]
+        result["stderr_tail"] = stderr[-500:]
     return result
 
 
@@ -101,11 +140,12 @@ def run_script(
     workdir_root: Path,
     source: Optional[str] = None,
     blender_bin: Optional[str] = None,
-    timeout_s: float = 300.0,
+    timeout_s: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Run a Python script in Blender's background mode.
 
     `script`: path to .py file. `source`: optional .blend to load first.
+    Each invocation is a **new** `blender.exe` subprocess (no persistent server).
     """
     exe = _resolve_exe(blender_bin)
     script_path = Path(script)
@@ -124,25 +164,28 @@ def run_script(
         args.append(str(src))
     args += ["--python", str(script_path)]
 
-    started = time.perf_counter()
-    try:
-        proc = subprocess.run(args, capture_output=True, text=True, timeout=timeout_s,
-                              env={**os.environ, "BLENDER_WORKDIR": str(workdir)})
-    except subprocess.TimeoutExpired as e:
+    env = {**os.environ, "BLENDER_WORKDIR": str(workdir)}
+    rc, stdout, stderr, killed, elapsed_ms = _blender_popen_communicate(args, timeout_s, env)
+    if killed:
         return {
-            "ok": False, "job_id": job_id, "error": f"timeout after {timeout_s}s",
-            "stdout_tail": (e.stdout or "")[-500:], "stderr_tail": (e.stderr or "")[-500:],
+            "ok": False,
+            "job_id": job_id,
+            "workdir": str(workdir),
+            "exit_code": rc,
+            "elapsed_ms": round(elapsed_ms, 2),
+            "error": f"timeout_after_{_eff_blender_timeout(timeout_s)}s_killed",
+            "stdout_tail": stdout[-1500:],
+            "stderr_tail": stderr[-500:],
         }
-    elapsed_ms = (time.perf_counter() - started) * 1000.0
 
     return {
-        "ok": proc.returncode == 0,
+        "ok": rc == 0,
         "job_id": job_id,
         "workdir": str(workdir),
-        "exit_code": proc.returncode,
+        "exit_code": rc,
         "elapsed_ms": round(elapsed_ms, 2),
-        "stdout_tail": (proc.stdout or "")[-1500:],
-        "stderr_tail": (proc.stderr or "")[-500:],
+        "stdout_tail": stdout[-1500:],
+        "stderr_tail": stderr[-500:],
     }
 
 

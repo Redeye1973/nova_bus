@@ -225,20 +225,28 @@ class BlenderRenderRequest(BaseModel):
     source: str
     frame: Optional[int] = 1
     engine: Optional[str] = None
-    timeout_s: Optional[float] = 300.0
+    timeout_s: Optional[float] = None
+
+
+def _blender_timeout_response(result: Dict[str, Any]) -> bool:
+    err = str(result.get("error") or "")
+    return "timeout_after_" in err and err.endswith("_killed")
 
 
 @app.post("/blender/render", dependencies=[Depends(require_token)])
 def blender_render(req: BlenderRenderRequest) -> Dict[str, Any]:
     try:
-        return blender_adapter.render_frame(
+        result = blender_adapter.render_frame(
             source=req.source,
             workdir_root=WORKDIR_ROOT,
             frame=req.frame or 1,
             engine=req.engine,
             blender_bin=BLENDER_BIN,
-            timeout_s=req.timeout_s or 300.0,
+            timeout_s=req.timeout_s,
         )
+        if not result.get("ok") and _blender_timeout_response(result):
+            raise HTTPException(status_code=504, detail=result)
+        return result
     except blender_adapter.BlenderUnavailable as e:
         raise HTTPException(503, detail={"reason": "blender_unavailable", "error": str(e)})
 
@@ -246,19 +254,22 @@ def blender_render(req: BlenderRenderRequest) -> Dict[str, Any]:
 class BlenderScriptRequest(BaseModel):
     script: str
     source: Optional[str] = None
-    timeout_s: Optional[float] = 300.0
+    timeout_s: Optional[float] = None
 
 
 @app.post("/blender/script", dependencies=[Depends(require_token)])
 def blender_script(req: BlenderScriptRequest) -> Dict[str, Any]:
     try:
-        return blender_adapter.run_script(
+        result = blender_adapter.run_script(
             script=req.script,
             workdir_root=WORKDIR_ROOT,
             source=req.source,
             blender_bin=BLENDER_BIN,
-            timeout_s=req.timeout_s or 300.0,
+            timeout_s=req.timeout_s,
         )
+        if not result.get("ok") and _blender_timeout_response(result):
+            raise HTTPException(status_code=504, detail=result)
+        return result
     except blender_adapter.BlenderUnavailable as e:
         raise HTTPException(503, detail={"reason": "blender_unavailable", "error": str(e)})
 
