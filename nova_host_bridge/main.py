@@ -33,6 +33,11 @@ ROOT = Path(__file__).resolve().parent
 CONFIG_DEFAULT_PATH = Path(os.getenv("NOVA_CONFIG_PATH", r"L:\!Nova V2\nova_config.yaml"))
 WORKDIR_ROOT = Path(os.getenv("BRIDGE_WORKDIR", str(ROOT / "jobs")))
 WORKDIR_ROOT.mkdir(parents=True, exist_ok=True)
+# Aseprite CLI jobs (spritesheet / batch / lua): aparte outputmap op Alex's schijf.
+ASEPRITE_WORKDIR_ROOT = Path(
+    os.getenv("NOVA_ASEPRITE_OUTPUT", r"L:\! 2 Nova v2 OUTPUT !\! Aseprite"),
+)
+ASEPRITE_WORKDIR_ROOT.mkdir(parents=True, exist_ok=True)
 BRIDGE_TOKEN = os.getenv("BRIDGE_TOKEN", "").strip()
 
 # Where the local Agent 26 (godot_import) service listens. This is a
@@ -102,6 +107,7 @@ def health() -> Dict[str, Any]:
         "auth_required": bool(BRIDGE_TOKEN),
         "config_loaded": CONFIG_DEFAULT_PATH.is_file(),
         "workdir": str(WORKDIR_ROOT),
+        "aseprite_workdir": str(ASEPRITE_WORKDIR_ROOT),
         "tools_configured": tools_configured,
         "tools_configured_count": f"{n_ok}/{len(tools_configured)}",
     }
@@ -197,7 +203,7 @@ def aseprite_spritesheet(req: AsepriteSheetRequest) -> Dict[str, Any]:
     try:
         result = aseprite_adapter.export_spritesheet(
             source=req.source,
-            workdir_root=WORKDIR_ROOT,
+            workdir_root=ASEPRITE_WORKDIR_ROOT,
             sheet_type=req.sheet_type or "horizontal",
             aseprite_bin=ASEPRITE_BIN,
             timeout_s=req.timeout_s,
@@ -219,7 +225,7 @@ def aseprite_batch_save(req: AsepriteBatchSaveRequest) -> Dict[str, Any]:
     try:
         result = aseprite_adapter.batch_save_as(
             source=req.source,
-            workdir_root=WORKDIR_ROOT,
+            workdir_root=ASEPRITE_WORKDIR_ROOT,
             aseprite_bin=ASEPRITE_BIN,
             timeout_s=req.timeout_s,
         )
@@ -243,7 +249,7 @@ def aseprite_lua(req: AsepriteLuaRequest) -> Dict[str, Any]:
     try:
         result = aseprite_adapter.run_lua_script(
             script=req.script,
-            workdir_root=WORKDIR_ROOT,
+            workdir_root=ASEPRITE_WORKDIR_ROOT,
             source=req.source,
             aseprite_bin=ASEPRITE_BIN,
             timeout_s=req.timeout_s,
