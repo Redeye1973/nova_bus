@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     adapter_surilians_enabled: bool = True
     cache_ttl_default_days: int = 30
     cache_ttl_fictional_days: int = 36500
+    rate_limit_lookup_per_min: int = 60
+    rate_limit_search_per_min: int = 30
+    rate_limit_ingest_per_min: int = 10
+    rate_limit_feedback_per_min: int = 120
+    rate_limit_override_cache_seconds: int = 300
+    bridge_notify_url: str = "http://localhost:8088/notify"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False)
 

@@ -1,19 +1,26 @@
 from __future__ import annotations
 
 import time
-from datetime import UTC
-from fastapi import APIRouter, HTTPException
-from ..core import AdapterRouter, CacheStore, EventPublisher, compute_expiry, now_utc
+from fastapi import APIRouter, HTTPException, Request, Response
+from ..core import AdapterRouter, CacheStore, EventPublisher, RateLimiter, compute_expiry, now_utc
 from ..models import Entity, LookupRequest, LookupResponse
 
 router = APIRouter(tags=["lookup"])
 _cache = CacheStore()
 _router = AdapterRouter()
 _events = EventPublisher()
+_limiter = RateLimiter()
 
 
 @router.post("/lookup", response_model=LookupResponse)
-async def lookup(payload: LookupRequest) -> LookupResponse:
+async def lookup(payload: LookupRequest, request: Request, response: Response) -> LookupResponse:
+    result = _limiter.check(build_name=payload.build_name, endpoint="/lookup")
+    if not result.allowed:
+        response.headers["Retry-After"] = str(result.retry_after)
+        raise HTTPException(
+            status_code=429,
+            detail={"error": "rate_limit_exceeded", "limit": result.limit, "window": "1min"},
+        )
     started = time.perf_counter()
     query = payload.query.strip()
     if not query:

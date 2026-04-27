@@ -119,6 +119,35 @@ class CacheStore:
             )
             conn.commit()
 
+    def get_rate_limit_override(self, build_name: str, endpoint: str) -> int | None:
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT limit_per_min
+                FROM cache.rate_limits
+                WHERE build_name = %s AND endpoint = %s
+                """,
+                (build_name, endpoint),
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            value = row.get("limit_per_min")
+            return int(value) if value is not None else None
+
+    def set_rate_limit_override(self, build_name: str, endpoint: str, limit_per_min: int) -> None:
+        with self._connect() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO cache.rate_limits (build_name, endpoint, limit_per_min, updated_at)
+                VALUES (%s, %s, %s, NOW())
+                ON CONFLICT (build_name, endpoint)
+                DO UPDATE SET limit_per_min = EXCLUDED.limit_per_min, updated_at = NOW()
+                """,
+                (build_name, endpoint, limit_per_min),
+            )
+            conn.commit()
+
     @staticmethod
     def _row_to_entity_payload(row: dict[str, Any]) -> dict[str, Any]:
         result = dict(row)
