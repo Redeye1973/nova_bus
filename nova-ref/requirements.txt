@@ -8,4 +8,4 @@ psycopg[binary]>=3.2
 asyncpg>=0.29
 redis>=5.0
 structlog>=24.2
-prometheus-client>=0.20
+prometheus_client>=0.20
