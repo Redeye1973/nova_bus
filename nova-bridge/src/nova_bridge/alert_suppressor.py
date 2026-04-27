@@ -10,10 +10,11 @@ import httpx
 from fastapi import FastAPI, HTTPException
 
 from .middleware import AlertMessage, should_send_alert
-from .models import LifecycleEvent, NotifyRequest, TelegramCommandRequest
+from .models import LifecycleEvent, NotifyRequest, TelegramCommandRequest, WeeklyReportRequest
 from .notifier import send_discord, send_telegram
 from .store import QuietModeStore
 from .timeutils import format_for_user, now_utc, to_local
+from .weekly_report import WeeklyMetrics, build_weekly_markdown, chunk_markdown, sample_entities, save_report
 
 app = FastAPI(title="nova-bridge", version="0.2.0")
 store = QuietModeStore()
@@ -198,3 +199,35 @@ def telegram_command(payload: TelegramCommandRequest) -> dict:
         return {"ok": True, "handled": True, "reply": "/nova snooze 4h | 30m | night\n/nova wake\n/nova status"}
 
     return {"ok": True, "handled": False}
+
+
+@app.post("/reports/weekly")
+def generate_weekly_report(payload: WeeklyReportRequest) -> dict:
+    metrics = WeeklyMetrics(
+        lookup_count=payload.lookup_count,
+        prev_lookup_count=payload.prev_lookup_count,
+        cache_hit_rate=payload.cache_hit_rate,
+        prev_cache_hit_rate=payload.prev_cache_hit_rate,
+        adapter_avg_latency=payload.adapter_avg_latency,
+        prev_adapter_avg_latency=payload.prev_adapter_avg_latency,
+        top_builds=payload.top_builds,
+        sample_entities=sample_entities(payload.sample_entities, count=3),
+        ingest_count=payload.ingest_count,
+        top_actor=payload.top_actor,
+        postgres_size_gb=payload.postgres_size_gb,
+        postgres_growth_gb=payload.postgres_growth_gb,
+        backup_count=payload.backup_count,
+        backup_oldest_days=payload.backup_oldest_days,
+        disk_l_percent=payload.disk_l_percent,
+        todo_count=payload.todo_count,
+    )
+    markdown = build_weekly_markdown(metrics, payload.week_iso)
+    chunks = chunk_markdown(markdown, max_chars=4000)
+    saved = save_report(markdown, payload.week_iso)
+    return {
+        "ok": True,
+        "week_iso": payload.week_iso,
+        "chunks": chunks,
+        "chunk_count": len(chunks),
+        "saved_path": str(saved),
+    }
