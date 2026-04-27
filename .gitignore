@@ -24,6 +24,7 @@ venv/
 .env
 .env.*
 !.env.template
+!.env.example
 
 # IDE
 .idea/
