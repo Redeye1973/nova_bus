@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pre-commit hook: blocks commits containing likely secrets.
+# Pre-commit hook: blocks commits containing likely secrets and naive datetime/SQL pitfalls.
 # Install: cp scripts/pre-commit-secret-scan.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 PATTERNS=(
@@ -49,13 +49,33 @@ for file in $STAGED; do
             FOUND=$((FOUND + 1))
         fi
     done
+
+    # datetime guardrails
+    py_matches=$(echo "$content" | grep -nE 'datetime\.now\(\)|datetime\.utcnow\(\)' 2>/dev/null)
+    if [ -n "$py_matches" ]; then
+        echo "BLOCKED: timezone-unsafe datetime usage in $file"
+        echo "$py_matches" | head -3 | sed 's/^/  /'
+        echo ""
+        FOUND=$((FOUND + 1))
+    fi
+
+    # SQL timestamp guardrail (allow explicit override comment)
+    if [[ "$file" == *.sql ]]; then
+        sql_matches=$(echo "$content" | grep -nE 'TIMESTAMP\s+NOT\s+NULL' 2>/dev/null | grep -v 'TIMESTAMP-OK' 2>/dev/null)
+        if [ -n "$sql_matches" ]; then
+            echo "BLOCKED: non-TZ timestamp declaration in $file"
+            echo "$sql_matches" | head -3 | sed 's/^/  /'
+            echo ""
+            FOUND=$((FOUND + 1))
+        fi
+    fi
+
 done
 
 if [ $FOUND -gt 0 ]; then
     echo "============================================"
-    echo "COMMIT BLOCKED: $FOUND potential secret(s) found"
-    echo "If these are false positives, commit with:"
-    echo "  git commit --trailer "Made-with: Cursor" --no-verify"
+    echo "COMMIT BLOCKED: $FOUND potential issue(s) found"
+    echo "Fix the reported lines before committing."
     echo "============================================"
     exit 1
 fi

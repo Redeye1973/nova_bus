@@ -13,6 +13,8 @@ services:
       - "log_disconnections=on"
       - "-c"
       - "log_min_duration_statement=1000"
+      - "-c"
+      - "timezone=UTC"
     environment:
       - POSTGRES_DB=nova_ref_db
       - POSTGRES_USER=nova_ref
@@ -35,6 +37,7 @@ services:
     env_file:
       - ../nova-ref/.env.example
     environment:
+      - TZ=UTC
       - NOVA_REF_DB_HOST=postgres-ref
       - NOVA_REF_DB_PORT=5432
       - NOVA_REF_DB_NAME=nova_ref_db
@@ -65,6 +68,7 @@ services:
     env_file:
       - ../nova-learn/.env.example
     environment:
+      - TZ=UTC
       - NOVA_REF_DB_HOST=postgres-ref
       - NOVA_REF_DB_PORT=5432
       - NOVA_REF_DB_NAME=nova_ref_db
