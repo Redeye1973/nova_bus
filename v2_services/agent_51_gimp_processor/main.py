@@ -52,10 +52,12 @@ def health() -> Dict[str, Any]:
 async def availability() -> Dict[str, Any]:
     try:
         async with httpx.AsyncClient() as client:
-            r = await client.get(f"{BRIDGE_URL}/health", headers=_bridge_headers(), timeout=10)
-            data = r.json()
-            tools = data.get("tools", {})
-            return {"bridge_reachable": True, "gimp": tools.get("gimp", {})}
+            rh = await client.get(f"{BRIDGE_URL}/health", headers=_bridge_headers(), timeout=10)
+            health_json = rh.json()
+            rg = await client.get(f"{BRIDGE_URL}/gimp/status", headers=_bridge_headers(), timeout=15)
+            gimp_json = rg.json() if rg.status_code == 200 else {"available": False, "http_status": rg.status_code}
+            return {"bridge_reachable": True, "gimp": gimp_json,
+                    "bridge_health": {"tools_configured_count": health_json.get("tools_configured_count")}}
     except Exception as e:
         return {"bridge_reachable": False, "error": str(e)}
 
