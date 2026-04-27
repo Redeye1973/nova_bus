@@ -3,13 +3,23 @@
   "nodes": [
     {
       "parameters": {
-        "rule": {"interval": [{"field": "hours", "hoursInterval": 1}]}
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
       },
       "id": "cron-trigger",
       "name": "Hourly Cron",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
-      "position": [250, 400]
+      "position": [
+        250,
+        400
+      ]
     },
     {
       "parameters": {
@@ -19,7 +29,10 @@
       "name": "Check PDOK Updates",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [500, 200]
+      "position": [
+        500,
+        200
+      ]
     },
     {
       "parameters": {
@@ -29,7 +42,10 @@
       "name": "Check Service Health",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [500, 300]
+      "position": [
+        500,
+        300
+      ]
     },
     {
       "parameters": {
@@ -39,7 +55,10 @@
       "name": "Check Feedback Queue",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [500, 400]
+      "position": [
+        500,
+        400
+      ]
     },
     {
       "parameters": {
@@ -49,7 +68,10 @@
       "name": "Check Current Costs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [500, 500]
+      "position": [
+        500,
+        500
+      ]
     },
     {
       "parameters": {
@@ -59,7 +81,10 @@
       "name": "Check Storage Usage",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [500, 600]
+      "position": [
+        500,
+        600
+      ]
     },
     {
       "parameters": {
@@ -70,7 +95,10 @@
       "name": "Merge All Signals",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2,
-      "position": [750, 400]
+      "position": [
+        750,
+        400
+      ]
     },
     {
       "parameters": {
@@ -80,13 +108,20 @@
       "name": "Analyze Signals",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [950, 400]
+      "position": [
+        950,
+        400
+      ]
     },
     {
       "parameters": {
         "conditions": {
           "number": [
-            {"value1": "={{ $json.summary.critical_alerts }}", "operation": "larger", "value2": 0}
+            {
+              "value1": "={{ $json.summary.critical_alerts }}",
+              "operation": "larger",
+              "value2": 0
+            }
           ]
         }
       },
@@ -94,26 +129,36 @@
       "name": "Has Critical?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [1150, 400]
+      "position": [
+        1150,
+        400
+      ]
     },
     {
       "parameters": {
-        "url": "http://localhost:8025/notify/telegram",
+        "url": "http://localhost:8088/notify",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({priority: 'urgent', message: 'CRITICAL: ' + JSON.stringify($json.alerts.filter(a => a.severity === 'critical'))}) }}"
+        "jsonBody": "={{ JSON.stringify({kind: 'infrastructure', severity: 'critical', title: 'Nova monitor critical', detail: JSON.stringify($json.alerts.filter(a => a.severity === 'critical')), channels: ['telegram','discord']}) }}"
       },
       "id": "telegram-alert",
       "name": "Telegram Urgent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1350, 300]
+      "position": [
+        1350,
+        300
+      ]
     },
     {
       "parameters": {
         "conditions": {
           "number": [
-            {"value1": "={{ $json.summary.total_recommendations }}", "operation": "larger", "value2": 0}
+            {
+              "value1": "={{ $json.summary.total_recommendations }}",
+              "operation": "larger",
+              "value2": 0
+            }
           ]
         }
       },
@@ -121,7 +166,10 @@
       "name": "Has Recommendations?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [1350, 500]
+      "position": [
+        1350,
+        500
+      ]
     },
     {
       "parameters": {
@@ -131,7 +179,10 @@
       "name": "Queue Bakes",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [1550, 500]
+      "position": [
+        1550,
+        500
+      ]
     },
     {
       "parameters": {
@@ -144,7 +195,10 @@
       "name": "Trigger Bake",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1750, 500]
+      "position": [
+        1750,
+        500
+      ]
     },
     {
       "parameters": {
@@ -157,47 +211,170 @@
       "name": "Update Dashboard",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1550, 700]
+      "position": [
+        1550,
+        700
+      ]
     }
   ],
   "connections": {
     "Hourly Cron": {
-      "main": [[
-        {"node": "Check PDOK Updates", "type": "main", "index": 0},
-        {"node": "Check Service Health", "type": "main", "index": 0},
-        {"node": "Check Feedback Queue", "type": "main", "index": 0},
-        {"node": "Check Current Costs", "type": "main", "index": 0},
-        {"node": "Check Storage Usage", "type": "main", "index": 0}
-      ]]
+      "main": [
+        [
+          {
+            "node": "Check PDOK Updates",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Service Health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Feedback Queue",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Current Costs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Storage Usage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Check PDOK Updates": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 0}]]},
-    "Check Service Health": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 1}]]},
-    "Check Feedback Queue": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 2}]]},
-    "Check Current Costs": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 3}]]},
-    "Check Storage Usage": {"main": [[{"node": "Merge All Signals", "type": "main", "index": 4}]]},
-    "Merge All Signals": {"main": [[{"node": "Analyze Signals", "type": "main", "index": 0}]]},
+    "Check PDOK Updates": {
+      "main": [
+        [
+          {
+            "node": "Merge All Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Service Health": {
+      "main": [
+        [
+          {
+            "node": "Merge All Signals",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Check Feedback Queue": {
+      "main": [
+        [
+          {
+            "node": "Merge All Signals",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Check Current Costs": {
+      "main": [
+        [
+          {
+            "node": "Merge All Signals",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Check Storage Usage": {
+      "main": [
+        [
+          {
+            "node": "Merge All Signals",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge All Signals": {
+      "main": [
+        [
+          {
+            "node": "Analyze Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Analyze Signals": {
-      "main": [[
-        {"node": "Has Critical?", "type": "main", "index": 0},
-        {"node": "Has Recommendations?", "type": "main", "index": 0},
-        {"node": "Update Dashboard", "type": "main", "index": 0}
-      ]]
+      "main": [
+        [
+          {
+            "node": "Has Critical?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Has Recommendations?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Has Critical?": {
       "main": [
-        [{"node": "Telegram Urgent", "type": "main", "index": 0}],
+        [
+          {
+            "node": "Telegram Urgent",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
     "Has Recommendations?": {
       "main": [
-        [{"node": "Queue Bakes", "type": "main", "index": 0}],
+        [
+          {
+            "node": "Queue Bakes",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
-    "Queue Bakes": {"main": [[{"node": "Trigger Bake", "type": "main", "index": 0}]]}
+    "Queue Bakes": {
+      "main": [
+        [
+          {
+            "node": "Trigger Bake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": {"executionOrder": "v1"},
+  "settings": {
+    "executionOrder": "v1"
+  },
   "versionId": "1.0.0",
   "meta": {
     "description": "NOVA v2 Monitor Workflow. Elke uur: health checks, PDOK updates, feedback queue, costs, storage. Alerts + auto-bake triggers.",
