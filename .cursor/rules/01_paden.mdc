@@ -10,9 +10,10 @@ alwaysApply: true
 - NOVA repo: `L:\!Nova V2\`
 - Bridge: `L:\!Nova V2\nova_host_bridge\`
 - Tool config: `L:\!Nova V2\config\tool_paths.yaml` (single source of truth)
-- Software: `L:\ZZZ Software\`
+- Software: **`L:\ZZZ Software\`** — **vast pad** (wijzigt niet); alle GUI/CLI-tools (Godot, Blender, GIMP, …) staan hieronder. Geen aannames zoals `C:\Godot\`; altijd `tool_paths.yaml` of dit pad gebruiken.
 - Rapport archief: `L:\! 2 Nova v2  OUTPUT !\Z RAPORT\`
-- Game projecten: `L:\Nova\SpaceShooter\`, `C:\GODOT_PROJECTS\TyrianKloon\`
+- Game projecten: `L:\Nova\SpaceShooter\`, `L:\Z Nova Games\` (o.a. Veilbreach), `C:\GODOT_PROJECTS\TyrianKloon\`
+- Godot **AI Assistant Hub** template (standaard per project): `L:\!Nova V2\templates\godot\ai_assistant_hub` — installeren met `L:\!Nova V2\scripts\install_godot_ai_assistant_hub.ps1` (zie `.cursor/rules/09_godot_ai_assistant_hub.mdc`)
 - Keys: `L:\Nova\Key's\` (legacy), nu in Vault Agent 44
 
 ## Productie

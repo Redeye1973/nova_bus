@@ -21,3 +21,13 @@ alwaysApply: true
 - Cursor sessies zijn 2-3x sneller dan standaard schattingen
 - Schat ruim, lever snel
 - Geen kunstmatige vertraging
+
+## Black Ledger / Dark Ledger — wie bouwt
+- **Primair Nova** (Orchestrator v1, Dale/bridge/gate v2, jobs, exports): Cursor **schrijft geen game-code als hoofdwerk** zolang die pipeline draait.
+- **Ingreep assistent** alleen als **> 60 seconden** geen meetbare activiteit (geen progress-update, Dale `last_tick` stil, of duidelijke hang) — dan: diagnose, `L:\!Nova V2\scripts\nova_idle_recover.ps1`, of minimale unblock; daarna weer Nova laten bouwen.
+- Watchdog (optioneel, naast heartbeat): `powershell -NoProfile -ExecutionPolicy Bypass -File "L:\!Nova V2\scripts\nova_idle_recover.ps1"` (`-IdleSec 60`, `-PollSec 15`, of `-Once` voor test).
+
+## Veilbreach / game-assets — NOVA eerst
+- **Code & data in Godot** (GDScript, `data/*.json`, scenes, wiring): Cursor mag dat doen als smalle, reviewbare diffs.
+- **Graphics bulk** (textures, renders, portraits, animated sprites, audio batches, tool-run exports): **via NOVA** — bridge `nova_host_bridge` / agents (o.a. bake, raster/2D, Blender-game, Godot-import-pad waar actief), **niet** als hoofdstrategie “alleen Cursor/alleen hand in editor”.
+- Nieuwe art-aanvragen: waar mogelijk als **Nova-job** formuleren (doelpad onder `L:\Z Nova Games\Veilbreach\`, formaat, naamgevingsconventie), niet alleen als chatprompt zonder pipeline-hook.

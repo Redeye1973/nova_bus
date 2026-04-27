@@ -1,0 +1,29 @@
+---
+description: Standaard Godot-editorplugin AI Assistant Hub voor nieuwe game-projecten
+alwaysApply: true
+---
+
+# Godot — AI Assistant Hub (standaard)
+
+Godot heeft **geen** ingebouwde “globale plugin voor alle projecten” (zie o.a. PR global editor add-on loader). Daarom: **per project** `addons/ai_assistant_hub` + `project.godot` `[editor_plugins]`.
+
+## NOVA-standaard
+
+- **Canonieke template:** `L:\!Nova V2\templates\godot\ai_assistant_hub` (kopie van FlamxGames AI Assistant Hub, Asset Library ~3427).
+- **Installatiescript:** `L:\!Nova V2\scripts\install_godot_ai_assistant_hub.ps1`  
+  Aanroep: `powershell -NoProfile -ExecutionPolicy Bypass -File "L:\!Nova V2\scripts\install_godot_ai_assistant_hub.ps1" -ProjectRoot "<pad_met_project.godot>"`  
+  Kopieert de addon en voegt/schrijft `enabled=PackedStringArray(..., "res://addons/ai_assistant_hub/plugin.cfg")` idempotent.
+
+## Wanneer toepassen
+
+- Bij **nieuw Godot-project** onder o.a. `L:\Z Nova Games\`, `C:\GODOT_PROJECTS\`, of Godot-map in deze repo: **direct** het install-script draaien (of zelfde stappen handmatig).
+- Bestaand project zonder plugin: idem.
+
+## Na installatie
+
+- Godot **herstarten** of project opnieuw openen → **Project → Project Settings → Plugins**: controleren dat “AI Assistant Hub” aan staat.
+- LLM-backend (Ollama, enz.) apart configureren volgens plugin-docs.
+
+## Niet doen
+
+- Geen secrets/API-keys in `project.godot` of addon-map committen.
