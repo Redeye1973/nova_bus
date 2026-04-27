@@ -147,3 +147,48 @@ def test_lifecycle_endpoint_returns_503_if_redis_down():
     client = TestClient(svc.app)
     r = client.post("/lifecycle", json={"event": "shutdown", "host": "nova-desktop"})
     assert r.status_code == 503
+
+
+def test_snooze_sets_quiet_mode_correct_duration(monkeypatch):
+    fake = FakeRedis()
+    _set_fake_store(fake)
+    monkeypatch.setenv("NOVA_TELEGRAM_ADMIN_CHATIDS", "123")
+    client = TestClient(svc.app)
+    r = client.post("/telegram/command", json={"chat_id": "123", "text": "/nova snooze 30m"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["handled"] is True
+    assert "Snooze actief" in body["reply"]
+    assert 1700 <= svc.store.ttl() <= 1800
+
+
+def test_snooze_unauthorized_chatid_silently_declines(monkeypatch):
+    fake = FakeRedis()
+    _set_fake_store(fake)
+    monkeypatch.setenv("NOVA_TELEGRAM_ADMIN_CHATIDS", "123")
+    client = TestClient(svc.app)
+    r = client.post("/telegram/command", json={"chat_id": "999", "text": "/nova snooze 30m"})
+    assert r.status_code == 200
+    assert r.json()["handled"] is False
+
+
+def test_wake_clears_quiet_mode(monkeypatch):
+    fake = FakeRedis()
+    fake.set("nova:quiet_mode", "snooze", ex=600)
+    _set_fake_store(fake)
+    monkeypatch.setenv("NOVA_TELEGRAM_ADMIN_CHATIDS", "123")
+    client = TestClient(svc.app)
+    r = client.post("/telegram/command", json={"chat_id": "123", "text": "/nova wake"})
+    assert r.status_code == 200
+    assert r.json()["handled"] is True
+    assert svc.store.is_active() is False
+
+
+def test_invalid_duration_format_returns_helpful_error(monkeypatch):
+    fake = FakeRedis()
+    _set_fake_store(fake)
+    monkeypatch.setenv("NOVA_TELEGRAM_ADMIN_CHATIDS", "123")
+    client = TestClient(svc.app)
+    r = client.post("/telegram/command", json={"chat_id": "123", "text": "/nova snooze banaan"})
+    assert r.status_code == 200
+    assert "Usage: /nova snooze 4h | 30m | night" in r.json()["reply"]

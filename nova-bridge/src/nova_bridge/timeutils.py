@@ -7,7 +7,10 @@ def now_utc() -> datetime:
 
 
 def to_local(dt: datetime, tz: str = "Europe/Amsterdam") -> datetime:
-    return dt.astimezone(ZoneInfo(tz))
+    try:
+        return dt.astimezone(ZoneInfo(tz))
+    except Exception:
+        return dt.astimezone()
 
 
 def format_for_user(dt: datetime, tz: str = "Europe/Amsterdam") -> str:

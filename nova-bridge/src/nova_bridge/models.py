@@ -14,3 +14,8 @@ class NotifyRequest(BaseModel):
     channels: list[str] = Field(default_factory=lambda: ["telegram", "discord"])
     kind: str = Field(default="infrastructure", pattern="^(infrastructure|user_message|critical_alert)$")
     source: str = "unknown"
+
+
+class TelegramCommandRequest(BaseModel):
+    chat_id: str
+    text: str
