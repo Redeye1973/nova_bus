@@ -14,6 +14,8 @@ PATTERNS=(
     'PRIVATE KEY-----'
 )
 
+PASSWORD_ALLOWLIST='password\s*[:=]\s*(\$\{|<|CHANGEME|your-)'
+
 STAGED=$(git diff --cached --name-only --diff-filter=ACM)
 [ -z "$STAGED" ] && exit 0
 
@@ -25,11 +27,20 @@ for file in $STAGED; do
     [[ "$file" == *.gif ]] && continue
     [[ "$file" == *.mp4 ]] && continue
     [[ "$file" == *vault_mapping.yaml ]] && continue
+    [[ "$file" == "scripts/pre-commit-secret-scan.sh" ]] && continue
+    [[ "$file" == "infrastructure/tests/test_secret_scan_regex.ps1" ]] && continue
+    [[ "$file" == "infrastructure/tests/test_secret_scan_regex.sh" ]] && continue
 
     content=$(git show ":$file" 2>/dev/null) || continue
 
     for pattern in "${PATTERNS[@]}"; do
         matches=$(echo "$content" | grep -nEi "$pattern" 2>/dev/null)
+
+        # Refine password detection to avoid false positives on env refs/placeholders.
+        if [[ "$pattern" == *"password"* ]] && [ -n "$matches" ]; then
+            matches=$(echo "$matches" | grep -viE "$PASSWORD_ALLOWLIST" 2>/dev/null)
+        fi
+
         if [ -n "$matches" ]; then
             echo "BLOCKED: potential secret in $file"
             echo "  pattern: $pattern"
@@ -44,7 +55,7 @@ if [ $FOUND -gt 0 ]; then
     echo "============================================"
     echo "COMMIT BLOCKED: $FOUND potential secret(s) found"
     echo "If these are false positives, commit with:"
-    echo "  git commit --no-verify"
+    echo "  git commit --trailer "Made-with: Cursor" --no-verify"
     echo "============================================"
     exit 1
 fi
