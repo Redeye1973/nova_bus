@@ -25,6 +25,7 @@ from adapters import krita as krita_adapter
 from adapters import blender as blender_adapter
 from adapters import godot as godot_adapter
 from adapters import daz as daz_adapter
+from adapters import gimp as gimp_adapter
 
 logger = logging.getLogger("bridge")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -68,6 +69,26 @@ GODOT_BIN    = (HOST_TOOLS.get("godot")    or {}).get("bin") if HOST_TOOLS else 
 DAZ_BIN      = (HOST_TOOLS.get("daz")      or {}).get("bin") if HOST_TOOLS else None
 
 
+def _gimp_install_root() -> Optional[str]:
+    """Pad dat gimp_adapter verwacht: install root van GIMP 3 (bevat bin\\gimp-console-*.exe)."""
+    g = HOST_TOOLS.get("gimp") if isinstance(HOST_TOOLS, dict) else None
+    if not isinstance(g, dict):
+        return None
+    inst = g.get("install_root")
+    if inst and str(inst).strip():
+        return str(inst).strip()
+    raw = g.get("bin")
+    if not raw or not str(raw).strip():
+        return None
+    p = Path(str(raw).strip())
+    if p.name.lower() == "bin":
+        return str(p.parent)
+    return str(p)
+
+
+GIMP_INSTALL_ROOT: Optional[str] = _gimp_install_root()
+
+
 def require_token(authorization: Optional[str] = Header(default=None)) -> None:
     if not BRIDGE_TOKEN:
         return
@@ -83,6 +104,11 @@ app = FastAPI(title="NOVA Host Bridge", version="0.2.0")
 def _tool_yaml_configured(tool: str) -> bool:
     """Snel: staat er in nova_config een bin-pad (zonder uitvoerbaarheid te testen)."""
     entry = (HOST_TOOLS.get(tool) or {}) if HOST_TOOLS else {}
+    if tool == "gimp":
+        return bool(
+            str(entry.get("install_root") or "").strip()
+            or str(entry.get("bin") or "").strip()
+        )
     b = entry.get("bin")
     return bool(b and str(b).strip())
 
@@ -123,6 +149,7 @@ def tools() -> Dict[str, Any]:
         "blender":  blender_adapter.is_available(BLENDER_BIN),
         "godot":    godot_adapter.is_available(GODOT_BIN),
         "daz":      daz_adapter.is_available(DAZ_BIN),
+        "gimp":     gimp_adapter.is_available(GIMP_INSTALL_ROOT),
     }
 
 
@@ -281,6 +308,53 @@ def krita_export(req: KritaExportRequest) -> Dict[str, Any]:
         )
     except krita_adapter.KritaUnavailable as e:
         raise HTTPException(503, detail={"reason": "krita_unavailable", "error": str(e)})
+
+
+# ---- GIMP 3 (console Script-Fu; install onder L:\\ZZZ Software\\GIMP 3) -------
+
+
+class GimpScriptRequest(BaseModel):
+    script: str = Field(..., description="Script-Fu batch fragment voor gimp-console")
+    timeout_s: Optional[float] = 120.0
+
+
+class GimpBatchRequest(BaseModel):
+    source: str = Field(..., description="Bronbestand op bridge-host")
+    output_dir: str = Field(..., description="Doelmap op bridge-host")
+    script: str = Field(..., description="Script-Fu met {source} en {output} placeholders")
+    timeout_s: Optional[float] = 300.0
+
+
+@app.get("/gimp/status", dependencies=[Depends(require_token)])
+def gimp_status() -> Dict[str, Any]:
+    return gimp_adapter.is_available(GIMP_INSTALL_ROOT)
+
+
+@app.post("/gimp/script", dependencies=[Depends(require_token)])
+def gimp_script(req: GimpScriptRequest) -> Dict[str, Any]:
+    try:
+        return gimp_adapter.run_script_fu(
+            script=req.script,
+            workdir_root=WORKDIR_ROOT,
+            gimp_bin=GIMP_INSTALL_ROOT,
+            timeout_s=float(req.timeout_s or 120.0),
+        )
+    except gimp_adapter.GimpUnavailable as e:
+        raise HTTPException(503, detail={"reason": "gimp_unavailable", "error": str(e)})
+
+
+@app.post("/gimp/batch", dependencies=[Depends(require_token)])
+def gimp_batch(req: GimpBatchRequest) -> Dict[str, Any]:
+    try:
+        return gimp_adapter.batch_process(
+            source=req.source,
+            output_dir=req.output_dir,
+            script=req.script,
+            gimp_bin=GIMP_INSTALL_ROOT,
+            timeout_s=float(req.timeout_s or 300.0),
+        )
+    except gimp_adapter.GimpUnavailable as e:
+        raise HTTPException(503, detail={"reason": "gimp_unavailable", "error": str(e)})
 
 
 # ---- Blender ----------------------------------------------------------------

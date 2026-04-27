@@ -11,6 +11,7 @@ alwaysApply: true
 - Bridge: `L:\!Nova V2\nova_host_bridge\`
 - Tool config: `L:\!Nova V2\config\tool_paths.yaml` (single source of truth)
 - Software: **`L:\ZZZ Software\`** — **vast pad** (wijzigt niet); alle GUI/CLI-tools (Godot, Blender, GIMP, …) staan hieronder. Geen aannames zoals `C:\Godot\`; altijd `tool_paths.yaml` of dit pad gebruiken.
+- **GIMP 3:** install-root `L:\ZZZ Software\GIMP 3\`, console-batch `bin\gimp-console-3.2.exe` (bridge gebruikt install-root uit `nova_config.yaml` → `host_tools.gimp.install_root`).
 - Rapport archief: `L:\! 2 Nova v2  OUTPUT !\Z RAPORT\`
 - Game projecten: `L:\Nova\SpaceShooter\`, `L:\Z Nova Games\` (o.a. Veilbreach), `C:\GODOT_PROJECTS\TyrianKloon\`
 - Godot **AI Assistant Hub** template (standaard per project): `L:\!Nova V2\templates\godot\ai_assistant_hub` — installeren met `L:\!Nova V2\scripts\install_godot_ai_assistant_hub.ps1` (zie `.cursor/rules/09_godot_ai_assistant_hub.mdc`)

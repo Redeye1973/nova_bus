@@ -22,9 +22,10 @@ host_tools:
     version: '3.40.13'
     edition: 'LTR Bratislava'
   gimp:
+    # Bridge adapter (adapters/gimp.py) verwacht *install root* (map met submap bin/)
+    install_root: 'L:\ZZZ Software\GIMP 3'
     bin: 'L:\ZZZ Software\GIMP 3\bin'
-    headless: 'gimp-console.exe'      # batch mode: -i -b "(script)" -b "(gimp-quit 0)"
-    script_fu: 'gimp-script-fu-interpreter-3.0.exe'
+    cli: 'gimp-console-3.2.exe'
     version: '3.2.4'
   krita:
     bin: 'C:\Program Files\Krita (x64)\bin'
