@@ -1,12 +1,4 @@
-from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
-
-_RATE_LIMIT_PATH = Path(__file__).resolve().parents[1] / "src" / "nova_ref" / "core" / "rate_limit.py"
-_spec = spec_from_file_location("nova_ref_rate_limit_module", _RATE_LIMIT_PATH)
-assert _spec and _spec.loader
-_module = module_from_spec(_spec)
-_spec.loader.exec_module(_module)
-RateLimiter = _module.RateLimiter
+from nova_ref.core.rate_limit import RateLimiter
 
 
 def _new_limiter_without_redis() -> RateLimiter:
