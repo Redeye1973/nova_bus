@@ -9,9 +9,17 @@
 > **Eerlijke noot — gecrashte eerdere poging:** vóór deze run was er een eerdere fase 8-poging
 > die mid-way crashte (Dale lag eruit, haar eigen `fase8_regressie.json` toonde Z4/Z7 = FAIL).
 > Die poging liet residu achter: een al-gepatcht `agent_38` (FIX 5-code, ongecommit), testprojecten
-> `fase8_r1_0..9` in `projects.json`, testregels in de art-bible en een verouderd, deels onjuist
-> `docs/fase8_report.md`. Deze run heeft dat residu opgeruimd, alle fixes opnieuw geverifieerd
-> (de agent_38-patch is gereviewd, getest en als FIX 5 overgenomen) en dit rapport vervangt het oude.
+> `fase8_r1_0..9` in `projects.json`, testregels in de art-bible, een verouderd/deels onjuist
+> `docs/fase8_report.md` én een **prematuur geplaatste tag `fase8-integriteit-compleet`** die nog
+> op de baseline-commit (43b39ab) wees — zonder dat er fixes gecommit waren. Deze run heeft dat
+> residu opgeruimd, alle fixes opnieuw geverifieerd (de agent_38-patch is gereviewd, getest en als
+> FIX 5 overgenomen), dit rapport vervangen en de tag verplaatst naar de echte fix-commit.
+>
+> **Noot parallel werk:** tijdens deze run draaide een parallelle sessie "fase 10 vlootcheck" op
+> dezelfde repo (commit `aa71991`, 00:13 — agent_42 + canonical v1.2). De fase 8-commit staat daar
+> netjes bovenop en raakt die bestanden niet; de eenmalig her-verschenen testprojecten in
+> `projects.json` zijn vermoedelijk daaraan toe te schrijven en bij de eindopschoning verwijderd
+> (eindstand geverifieerd: alleen de 3 baseline-projecten).
 
 ---
 
