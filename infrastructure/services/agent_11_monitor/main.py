@@ -49,51 +49,22 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger("monitor")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
+# Fase 4 agent-sanering (2026-06-10): alleen de actieve kern wordt geveegd.
+# Gearchiveerde agents staan in L:\!Nova V2\_archief\ (zie nova_betrouwbaar\actieve_kern.md).
+# 41/42 draaien als host-uvicorn -> via host.docker.internal.
 DEFAULT_TARGETS: List[Dict[str, Any]] = [
-    {"name": "agent_02_code_jury",          "url": "http://agent-02-code-jury:8102/health"},
-    {"name": "agent_03_audio_jury",         "url": "http://agent-03-audio-jury:8103/health"},
-    {"name": "agent_04_3d_model_jury",      "url": "http://agent-04-3d-model-jury:8104/health"},
-    {"name": "agent_05_gis_jury",           "url": "http://agent-05-gis-jury:8105/health"},
-    {"name": "agent_06_cad_jury",           "url": "http://agent-06-cad-jury:8106/health"},
-    {"name": "agent_07_narrative_jury",     "url": "http://agent-07-narrative-jury:8107/health"},
-    {"name": "agent_08_character_art_jury", "url": "http://agent-08-character-art-jury:8108/health"},
-    {"name": "agent_09_illustration_jury",  "url": "http://agent-09-illustration-jury:8109/health"},
-    {"name": "agent_10_game_balance_jury",  "url": "http://agent-10-game-balance-jury:8110/health"},
-    {"name": "agent_12_bake_orchestrator",  "url": "http://agent-12-bake-orchestrator:8112/health"},
-    {"name": "agent_13_pdok_downloader",    "url": "http://agent-13-pdok-downloader:8113/health"},
-    {"name": "agent_14_blender_baker",      "url": "http://agent-14-blender-baker:8114/health"},
-    {"name": "agent_15_qgis_processor",     "url": "http://agent-15-qgis-processor:8115/health"},
+    {"name": "sprite_jury_v2",              "url": "http://sprite-jury-v2:8101/health"},
     {"name": "agent_16_cost_guard",         "url": "http://agent-16-cost-guard:8116/health"},
-    {"name": "agent_17_error_handler",      "url": "http://agent-17-error-handler:8117/health"},
-    {"name": "agent_18_prompt_director",    "url": "http://agent-18-prompt-director:8118/health"},
-    {"name": "agent_19_distribution",       "url": "http://agent-19-distribution:8119/health"},
-    {"name": "agent_20_design_fase",        "url": "http://agent-20-design-fase:8120/health"},
-    {"name": "agent_21_freecad_parametric", "url": "http://agent-21-freecad-parametric:8121/health"},
-    {"name": "agent_22_blender_renderer",   "url": "http://agent-22-blender-renderer:8122/health"},
-    {"name": "agent_23_aseprite_processor", "url": "http://agent-23-aseprite-processor:8123/health"},
-    {"name": "agent_24_aseprite_anim_jury", "url": "http://agent-24-aseprite-anim-jury:8124/health"},
-    {"name": "agent_25_pyqt_assembly",      "url": "http://agent-25-pyqt-assembly:8125/health"},
-    {"name": "agent_26_godot_import",       "url": "http://agent-26-godot-import:8126/health"},
-    {"name": "agent_27_storyboard",         "url": "http://agent-27-storyboard:8127/health"},
-    {"name": "agent_28_story_integration",  "url": "http://agent-28-story-integration:8128/health"},
     {"name": "agent_29_elevenlabs",         "url": "http://agent-29-elevenlabs:8129/health"},
-    {"name": "agent_30_audio_asset_jury",   "url": "http://agent-30-audio-asset-jury:8130/health"},
-    {"name": "agent_31_qgis_analysis",      "url": "http://agent-31-qgis-analysis:8131/health"},
-    {"name": "agent_32_grass_gis",          "url": "http://agent-32-grass-gis:8132/health"},
-    {"name": "agent_33_blender_arch_walkthrough", "url": "http://agent-33-blender-arch-walkthrough:8133/health"},
-    {"name": "agent_34_unreal_import",      "url": "http://agent-34-unreal-import:8134/health"},
-    {"name": "agent_35_raster_2d",          "url": "http://agent-35-raster-2d:8135/health"},
     {"name": "agent_36_parallax_jury",      "url": "http://agent-36-parallax-jury:8136/health"},
     {"name": "agent_37_art_director",       "url": "http://agent-37-art-director:8137/health"},
     {"name": "agent_38_quality_inspector",  "url": "http://agent-38-quality-inspector:8138/health"},
     {"name": "agent_39_audio_director",     "url": "http://agent-39-audio-director:8139/health"},
     {"name": "agent_40_juice_inspector",    "url": "http://agent-40-juice-inspector:8140/health"},
-    {"name": "agent_41_resume_agent",       "url": "http://agent-41-resume-agent:8141/health"},
-    {"name": "agent_42_parts_planner",      "url": "http://agent-42-parts-planner:8142/health"},
-    {"name": "agent_41_resume_agent",       "url": "http://agent-41-resume-agent:8141/health"},
-    {"name": "agent_42_parts_planner",      "url": "http://agent-42-parts-planner:8142/health"},
+    {"name": "agent_41_resume_agent",       "url": "http://host.docker.internal:8141/health"},
+    {"name": "agent_42_parts_planner",      "url": "http://host.docker.internal:8142/health"},
+    {"name": "dale_factory_worker_70",      "url": "http://host.docker.internal:8170/health"},
     {"name": "audiocraft",                  "url": "http://audiocraft:8080/health"},
-    {"name": "sprite_jury_v2",              "url": "http://sprite-jury-v2:8101/health"},
 ]
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")

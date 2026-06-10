@@ -1,0 +1,116 @@
+# NOVA v2 — canonieke endpoints (mens + tooling)
+# Laatst: 2026-06-10 (fase 4 agent-sanering) — alleen ACTIEVE agents staan hier.
+# Gearchiveerde agents: L:\!Nova V2\_archief\ (zie nova_betrouwbaar\actieve_kern.md).
+# Override lokaal via env.
+
+version: "1.1"
+paths:
+  art_direction_bible: "L:\\ZZZZZ ZZ 31-05-2026\\agents\\art_direction_bible.yaml"
+  art_direction_bible_loader: "L:\\!Nova V2\\config\\art_direction_bible_loader.py"
+notes:
+  preferred_bridge_port: 8500
+  legacy_bridge_port: 8501
+  rationale: |
+    Dale, Hybrid Gate en Black Ledger-cmd gebruiken 8500 als bridge-URL.
+    Bridge draait op 8500 (NSSM/start_bridge). Poort 8501 is niet geactiveerd.
+    Zet NOVA_BRIDGE_PORT=8501 alleen als je een sidecar op 8501 start.
+
+endpoints:
+  host_bridge:
+    default_port: 8500
+    health_path: /health
+    env_port: NOVA_BRIDGE_PORT
+    env_base_url: NOVA_FACTORY_BRIDGE_URL
+    adapters:
+      flax_script:
+        path: /flax/script
+        method: POST
+        description: Headless Flax C# script runner (project create, import, build); default project L:\ZZZ  ZZ   NOVA GAME  OUTPUT\Flax\MyProject
+  dale_factory_worker:
+    port: 8170
+    health_path: /health
+  hybrid_gate:
+    port: 8191
+    health_path: /health
+  orchestrator_nova1:
+    port: 8000
+    status_path: /status
+  agent_36_parallax_jury:
+    port: 8136
+    health_path: /health
+    description: Vertical shmup parallax jury + judge (Raptor/Tyrian); scores vs art_direction_bible.yaml
+    art_direction_bible: "L:\\ZZZZZ ZZ 31-05-2026\\agents\\art_direction_bible.yaml"
+    invoke_path: /invoke
+    check_path: /v1/parallax-check
+    verdict_path: /v1/verdict
+    review_path: /review
+  agent_37_art_director:
+    port: 8137
+    health_path: /health
+    review_path: /review
+    description: Meta-judge geheel build/scene (visueel geheel)
+    composition_bible: "L:\\!Nova V2\\config\\composition_bible.yaml"
+  agent_38_quality_inspector:
+    port: 8138
+    health_path: /health
+    inspect_path: /inspect
+    description: Per-eenheid inspectie + autonome correctie (z_index, parallax, collision)
+    composition_bible: "L:\\!Nova V2\\config\\composition_bible.yaml"
+  agent_39_audio_director:
+    port: 8139
+    health_path: /health
+    plan_path: /plan
+    review_path: /review
+    description: Meta-judge audiolaag (audio geheel)
+    audio_bible: "L:\\!Nova V2\\config\\audio_bible.yaml"
+  agent_40_juice_inspector:
+    port: 8140
+    health_path: /health
+    inspect_path: /inspect
+    description: Game feel inspectie + GDScript snippet generatie
+    juice_bible: "L:\\!Nova V2\\config\\juice_bible.yaml"
+  agent_41_resume_agent:
+    port: 8141
+    runtime: host-uvicorn  # niet als container; vanuit containers via host.docker.internal:8141
+    health_path: /health
+    active_path: /active
+    progress_path: /progress/{project}
+    progress_all_path: /progress-all
+    part_update_path: /part-update  # completed_task vereist geldig proof (fase 2)
+    feedback_path: /feedback        # fout->regel loop (fase 3)
+    feedback_stats_path: /feedback/stats
+    description: Parts progress state + resume; source of truth via projects.json
+    projects_file: "L:\\!Nova V2\\state\\projects.json"
+  agent_42_parts_planner:
+    port: 8142
+    runtime: host-uvicorn  # niet als container; vanuit containers via host.docker.internal:8142
+    health_path: /health
+    plan_path: /plan
+    description: Ontleedt opdracht/brief in parts-lijst; registreert bij Resume agent (41)
+    model: qwen2.5-coder:7b
+    resume_agent_url: "http://127.0.0.1:8141"
+  agent_11_monitor:
+    port: 8111
+    health_path: /health
+    status_path: /status
+    description: Health sweeps actieve kern + proof-steekproef per sweep (fase 2)
+  sprite_jury_v2:
+    port: 8101
+    health_path: /health
+    description: Sprite jury (01) — bible-gestuurde sprite-beoordeling
+  agent_29_elevenlabs:
+    port: 8129
+    health_path: /health
+  agent_16_cost_guard:
+    port: 8116
+    health_path: /health
+  audiocraft:
+    port: 8080
+    health_path: /health
+    description: Music/ambience generation (stub or host venv)
+
+scripts:
+  daystart: "L:\\!Nova V2\\scripts\\nova_dagstart.ps1"
+  bridge_start: "L:\\!Nova V2\\scripts\\start_bridge.ps1"
+  dale_black_ledger: "L:\\!Nova V2\\scripts\\run_dale_black_ledger.cmd"
+  runtime_ports: "L:\\!Nova V2\\scripts\\nova_runtime_config.py"
