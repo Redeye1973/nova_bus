@@ -1,0 +1,1717 @@
+{
+  "generated_at": "2026-06-10T22:10:36.566565+00:00",
+  "gate": {
+    "fase9_tag": true,
+    "fase9_report": true,
+    "fase9_diagnose": true,
+    "fase8_evidence": true
+  },
+  "local": [
+    {
+      "scope": "local",
+      "id": "orchestrator",
+      "name": "orchestrator_nova1",
+      "in_canonical": true,
+      "runtime": "host",
+      "layer1": {
+        "ok": true,
+        "detail": "port_open"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 89.6,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'ok': True, 'nova_llm_backend': 'ollama', 'ollama_model': 'nemotron-mini:4b', 'ollama_base_url': 'http://127.0.0.1:11434', 'gpu_profile_active': False, 'api_key_configured': False, 'agents': ['orchestrator', 'brainstorm', 'dale'], 'exports_dir': 'L:\\\\Nova\\\\1 Orchestrator\\\\exports', 'nova_status_exi"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "sprite_jury",
+      "name": "sprite_jury_v2",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 54 minutes (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 18.1,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'verdict': 'accept', 'reasoning': 'all jury scores > 7'}"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "monitor",
+      "name": "agent_11_monitor",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 3 seconds (health: starting)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 16.5,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'timestamp': 1781129437.1753018, 'targets_checked': 12, 'up': 12, 'down': 0, 'alerts': [{'severity': 'critical', 'service': 'proof:41_resume_agent', 'reason': 'proof_invalid:hash_mismatch path=L:\\\\ZZZZZ ZZ 31-05-2026\\\\agents\\\\art_direction_bible.yaml'}, {'severity': 'critical', 'service': 'proof:fa"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "cost_guard",
+      "name": "agent_16_cost_guard",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 54 minutes (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 7.4,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'status': 'ok', 'agent': '16_cost_guard', 'version': '0.1.0'}"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "elevenlabs",
+      "name": "agent_29_elevenlabs",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 54 minutes (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 7.9,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'status': 'ok', 'agent': '29_elevenlabs', 'version': '0.1.0'}"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "parallax_36",
+      "name": "agent_36_parallax_jury",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 54 minutes (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 29.1,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'verdict': 'accept', 'reasoning': 'all layer scores >= 6.0, mean=7.50', 'regen': False}"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "art_dir_37",
+      "name": "agent_37_art_director",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 54 minutes (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 8.8,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'agent': 'Art Director', 'agent_id': 37, 'domain': 'shmup', 'visual_findings': [], 'structural_findings': {'issues': [], 'ok': True, 'checks_reference': ['Moeilijkheidscurve loopt logisch op (makkelijk start, pieken bij bosses, rust ertussen)', 'Genoeg vijandvariatie per act (minimaal 3 types)', 'E"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "quality_38",
+      "name": "agent_38_quality_inspector",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 4 minutes (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 8.1,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'agent': 'Quality Inspector', 'domain': 'shmup', 'results': [{'check': 'layer_ordering', 'rule': 'player z_index > alle achtergrondlagen, < effecten en UI', 'status': 'ok', 'action': None}, {'check': 'parallax_speeds', 'rule': 'scroll_speeds oplopend, geen twee gelijk, ratio 1.6-2.2x (zie art_direc"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "audio_dir_39",
+      "name": "agent_39_audio_director",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 54 minutes (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 8.1,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'agent': 'Audio Director', 'agent_id': 39, 'domain': 'shmup', 'project': 'fase10_smoke', 'output_dir': 'C:/Users/awsme/AppData/Local/Temp/nova_fase10_tivdqr14', 'layers_planned': ['music', 'sfx_weapons', 'sfx_impact', 'sfx_engine', 'sfx_ui', 'ambience'], 'director_checks': ['Muziek-intensiteit volg"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "juice_40",
+      "name": "agent_40_juice_inspector",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 40 minutes (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 8.8,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'agent': 'Juice Inspector', 'agent_id': 40, 'domain': 'shmup', 'missing_count': 8, 'findings': [{'missing': 'screen_shake', 'trigger': 'explosie, player hit, boss death', 'rule': 'korte shake (0.1-0.3s), intensiteit schaalt met event-grootte', 'godot_impl': 'Camera2D offset randomisatie via tween, "
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "resume_41",
+      "name": "agent_41_resume_agent",
+      "in_canonical": true,
+      "runtime": "host",
+      "layer1": {
+        "ok": true,
+        "detail": "port_open"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 8.0,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'active_project': 'SM_Part1'}"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "parts_42",
+      "name": "agent_42_parts_planner",
+      "in_canonical": true,
+      "runtime": "host",
+      "layer1": {
+        "ok": true,
+        "detail": "port_open"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 7.9,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'project_id': 'fase10_smoke', 'project_name': 'Fase10 Smoke', 'domain': 'shmup', 'parts': {'audio_validation': {'label': 'Audio Validation', 'tasks': ['music_act1', 'sound_effects'], 'done': []}, 'parallax_layer_validation': {'label': 'Parallax Layer Validation', 'tasks': ['layer_1', 'layer_2', 'la"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "dale",
+      "name": "dale_factory_worker",
+      "in_canonical": true,
+      "runtime": "host",
+      "layer1": {
+        "ok": true,
+        "detail": "port_open"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 24.8,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'status': 'ok', 'agent': '70_factory_worker', 'worker_name': 'Dale', 'worker_peer_name_reserved': 'Tucker', 'running': True, 'telegram_enabled': False, 'job_dir': 'L:\\\\! 2 Nova v2  OUTPUT !\\\\Dazz\\\\NOVA_jobs', 'render_dir': 'L:\\\\! 2 Nova v2  OUTPUT !\\\\Dazz\\\\NOVA_renders', 'state_dir': 'L:\\\\! 2 Nova "
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "hybrid_gate",
+      "name": "hybrid_gate",
+      "in_canonical": true,
+      "runtime": "host",
+      "layer1": {
+        "ok": true,
+        "detail": "port_open"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 8.6,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'status': 'ok', 'service': 'nova_v1_v2_hybrid_gate', 'nova_v1_base': 'http://127.0.0.1:8000', 'bridge_url': 'http://127.0.0.1:8500', 'bridge_token_set': False}"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "bridge_8500",
+      "name": "host_bridge",
+      "in_canonical": true,
+      "runtime": "host",
+      "layer1": {
+        "ok": true,
+        "detail": "port_open"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 7.4,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "{'status': 'ok', 'service': 'nova_host_bridge', 'version': '0.2.0', 'auth_required': False, 'config_loaded': True, 'workdir': 'L:\\\\!Nova V2\\\\nova_host_bridge\\\\jobs', 'aseprite_workdir': 'L:\\\\! 2 Nova v2 OUTPUT !\\\\! Aseprite', 'tools_configured': {'freecad': True, 'qgis': True, 'aseprite': True, 'kri"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "bridge_8501",
+      "name": "host_bridge_legacy",
+      "in_canonical": false,
+      "runtime": "host",
+      "layer1": {
+        "ok": false,
+        "detail": "timed out"
+      },
+      "layer2": {
+        "ok": false,
+        "http": -1,
+        "ms": 2048.5,
+        "error": "URLError:<urlopen error [WinError 10061] Kan geen verbinding maken omdat de doelcomputer de verbinding actief heeft geweigerd>"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "port_not_listening_expected",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "local",
+      "id": "audiocraft",
+      "name": "audiocraft",
+      "in_canonical": true,
+      "runtime": "docker",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 3 hours (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 8.1,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "http_200",
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <title>ntfy web</title>\n\n    <!-- Mobile view -->\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no\" />\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge,chrome=1\" />"
+      },
+      "classification": "GROEN"
+    },
+    {
+      "scope": "local",
+      "id": "judge_local",
+      "name": "nova-judge",
+      "in_canonical": false,
+      "runtime": "docker_internal",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 2 hours (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 0,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "{\"score\":0.5,\"verdict\":\"reject\",\"errors\":[\"Invalid routing: must go V1 \u00e2\u2020\u2019 V2 \u00e2\u2020\u2019 agent\",\"Invalid response format\"],\"fix_prompt\":\"Fix the NOVA pipeline issues:\\n- Ensure flow: V1 \u00e2\u2020\u2019 V2 dispatcher \u00e2\u2020\u2019"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "local",
+      "id": "vault_local",
+      "name": "agent_44_secrets_vault",
+      "in_canonical": false,
+      "runtime": "docker_internal",
+      "layer1": {
+        "ok": true,
+        "detail": "Up 2 hours (healthy)"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 0,
+        "error": ""
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "health_only"
+      },
+      "classification": "GRIJS"
+    }
+  ],
+  "hetzner": [
+    {
+      "scope": "hetzner",
+      "id": "hetzner_01",
+      "num": 1,
+      "port": 8101,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-sprite-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 862.9,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '01_sprite_jury', 'mode': 'poc'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'verdict': 'review', 'reasoning': 'fallback mean=7.67'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_02",
+      "num": 2,
+      "port": 8102,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-02",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 667.5,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '02_code_jury', 'version': '0.1.0'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'language': 'python', 'jury': {'syntax': {'valid': True, 'errors': [], 'score': 10.0}, 'complexity': {'score': 10.0, 'max_cc': 1, 'issues': [], 'avg_complexity': 1.0}, 'style': {'score': 9.2, 'error_count': 2, 'samples': ['/tmp/tmpb0tzeshx.py:1:2: E225 missing whitespace around operator', '/tmp/tmp"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_03",
+      "num": 3,
+      "port": 8103,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-03-audio-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 892.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '03', 'mode': 'audio_jury_v1', 'version': '1.0.0'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_04",
+      "num": 4,
+      "port": 8104,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-04-3d-model-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 827.0,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '04', 'mode': '3d_model_jury_v1'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_05",
+      "num": 5,
+      "port": 8105,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-05-gis-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 828.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '05', 'mode': 'gis_jury_v1'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_06",
+      "num": 6,
+      "port": 8106,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-06-cad-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 918.8,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '06', 'mode': 'cad_jury_v1'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_07",
+      "num": 7,
+      "port": 8107,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-07-narrative-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 1006.8,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '07', 'mode': 'narrative_jury_v1'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_08",
+      "num": 8,
+      "port": 8108,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-08-character-art-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 947.5,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '08', 'mode': 'character_art_jury_v1'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_09",
+      "num": 9,
+      "port": 8109,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-09-illustration-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 826.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '09', 'mode': 'illustration_jury_v1'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_10",
+      "num": 10,
+      "port": 8110,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-10-game-balance-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 951.0,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '10_game_balance', 'version': '0.1.0'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'jury': {'stats': {'score': 4.0, 'valid': False, 'issues': ['missing_stat_curve'], 'notes': 'pass stat_curve: number[]'}, 'economy': {'score': 5.0, 'valid': True, 'issues': ['empty_economy'], 'ratio': None}, 'difficulty': {'score': 4.0, 'valid': False, 'issues': ['missing_curve'], 'smoothness': Non"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_11",
+      "num": 11,
+      "port": 8111,
+      "kind": "monitor",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-11-monitor",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 592.2,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '11_monitor', 'version': '0.3.0'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{\"timestamp\":1781129504.7947276,\"targets_checked\":34,\"up\":33,\"down\":1,\"alerts\":[{\"severity\":\"critical\",\"service\":\"agent_34_unreal_import\",\"reason\":\"ConnectError: [Errno -3] Temporary failure in name resolution\"}],\"results\":[{\"name\":\"agent_02_code_jury\",\"url\":\"http://agent-02-code-jury:8102/health\",\""
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_12",
+      "num": 12,
+      "port": 8112,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-12-bake-orchestrator",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 702.6,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '12_bake_orchestrator', 'version': '0.1.0'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '12_bake_orchestrator', 'version': '0.1.0'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_13",
+      "num": 13,
+      "port": 8113,
+      "kind": "pdok",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-13-pdok-downloader",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 575.2,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '13_pdok_downloader', 'version': '0.1.0'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 525, i"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_14",
+      "num": 14,
+      "port": 8114,
+      "kind": "blender",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-14-blender-baker",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 539.8,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '14_blender_baker', 'mode': 'stub_headless'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{\"status\":\"ok\",\"agent\":\"14_blender_baker\",\"mode\":\"stub_headless\"}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_15",
+      "num": 15,
+      "port": 8115,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-15-qgis-processor",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 746.7,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '15_qgis_processor', 'mode': 'pending_full_bridge'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '15_qgis_processor', 'mode': 'pending_full_bridge'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_16",
+      "num": 16,
+      "port": 8116,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-16-cost-guard",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 622.6,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '16_cost_guard', 'version': '0.1.0'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '16_cost_guard', 'version': '0.1.0'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_17",
+      "num": 17,
+      "port": 8117,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-17-error-handler",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 637.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '17_error_handler', 'version': '0.1.0', 'pattern_count': 9}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '17_error_handler', 'version': '0.1.0', 'pattern_count': 9}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_18",
+      "num": 18,
+      "port": 8118,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-18-prompt-director",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 702.8,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '18_prompt_director', 'version': '0.2.0'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '18_prompt_director', 'version': '0.2.0'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_19",
+      "num": 19,
+      "port": 8119,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-19-distribution",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 702.0,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '19_distribution', 'version': '0.1.0'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '19_distribution', 'version': '0.1.0'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_20",
+      "num": 20,
+      "port": 8120,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-20",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 579.4,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '20_design_fase', 'version': '0.1.0'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '20_design_fase', 'version': '0.1.0'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_21",
+      "num": 21,
+      "port": 8121,
+      "kind": "freecad",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-21-freecad-parametric",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 615.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '21_freecad_parametric', 'version': '0.1.0', 'fallback_mode': True, 'fallback_reason': 'freecad_not_installed', 'engine': 'trimesh'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 525, i"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_22",
+      "num": 22,
+      "port": 8122,
+      "kind": "blender",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-22-blender-renderer",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 616.8,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '22_blender_renderer', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{\"status\":\"ok\",\"agent\":\"22_blender_renderer\",\"version\":\"0.2.0\",\"bridge_url\":\"http://host.docker.internal:8500\"}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_23",
+      "num": 23,
+      "port": 8123,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-23-aseprite-processor",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 584.1,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '23_aseprite_processor', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '23_aseprite_processor', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_24",
+      "num": 24,
+      "port": 8124,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-24-aseprite-anim-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 669.6,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '24', 'mode': 'poc_stub'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_25",
+      "num": 25,
+      "port": 8125,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-25-pyqt-assembly",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 613.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '25_pyqt_assembly', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '25_pyqt_assembly', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_26",
+      "num": 26,
+      "port": 8126,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-26-godot-import",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 724.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '26_godot_import', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '26_godot_import', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_27",
+      "num": 27,
+      "port": 8127,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-27-storyboard",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 698.5,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '27', 'mode': 'poc_stub'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '27', 'mode': 'poc_stub'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_28",
+      "num": 28,
+      "port": 8128,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-28-story-integration",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 611.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '28', 'mode': 'poc_stub'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '28', 'mode': 'poc_stub'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_29",
+      "num": 29,
+      "port": 8129,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-29-elevenlabs",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 638.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '29', 'mode': 'poc_stub'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '29', 'mode': 'poc_stub'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_30",
+      "num": 30,
+      "port": 8130,
+      "kind": "jury",
+      "in_canonical": false,
+      "archived_local": true,
+      "container": "nova-v2-agent-30-audio-asset-jury",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 980.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '30', 'mode': 'poc_stub'}"
+      },
+      "layer3": {
+        "ok": false,
+        "detail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.11/urllib/request.py\", line 216, in urlopen\n    return opener.open(url, data, timeout)\n        ",
+        "sample": null
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_31",
+      "num": 31,
+      "port": 8131,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-31-qgis-analysis",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 589.9,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '31_qgis_analysis', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '31_qgis_analysis', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_32",
+      "num": 32,
+      "port": 8132,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-32-grass-gis",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 613.0,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '32_grass_gis', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '32_grass_gis', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_33",
+      "num": 33,
+      "port": 8133,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-33-blender-arch-walkthrough",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 600.9,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '33_blender_arch_walkthrough', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '33_blender_arch_walkthrough', 'version': '0.2.0', 'bridge_url': 'http://host.docker.internal:8500'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_35",
+      "num": 35,
+      "port": 8135,
+      "kind": "service",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-agent-35-raster-2d",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 706.3,
+        "error": "",
+        "body": "{'status': 'ok', 'agent': '35', 'mode': 'poc_stub'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'status': 'ok', 'agent': '35', 'mode': 'poc_stub'}"
+      },
+      "classification": "GRIJS"
+    },
+    {
+      "scope": "hetzner",
+      "id": "hetzner_judge",
+      "num": 0,
+      "port": 8000,
+      "kind": "judge",
+      "in_canonical": false,
+      "archived_local": false,
+      "container": "nova-v2-judge",
+      "layer1": {
+        "ok": true,
+        "detail": "running"
+      },
+      "layer2": {
+        "ok": true,
+        "http": 200,
+        "ms": 611.8,
+        "error": "",
+        "body": "{'status': 'ok', 'service': 'nova-judge'}"
+      },
+      "layer3": {
+        "ok": true,
+        "detail": "",
+        "sample": "{'score': 0.5, 'verdict': 'reject', 'errors': ['Invalid routing: must go V1 \u00e2\u2020\u2019 V2 \u00e2\u2020\u2019 agent', 'Invalid response format'], 'fix_prompt': 'Fix the NOVA pipeline issues:\\n- Ensure flow: V1 \u00e2\u2020\u2019 V2 dispatcher \u00e2\u2020\u2019 agent\\n- Ensure response format includes {status: ...}\\n\\nDo not modify unrelated systems.'"
+      },
+      "classification": "GRIJS"
+    }
+  ],
+  "hetzner_resources": {
+    "ok": true,
+    "containers": [
+      {
+        "name": "nova-v2-agent-02",
+        "cpu": "0.16%",
+        "mem": "40.29MiB / 256MiB",
+        "mem_pct": "15.74%"
+      },
+      {
+        "name": "nova-v2-agent-03-audio-jury",
+        "cpu": "0.14%",
+        "mem": "42.96MiB / 256MiB",
+        "mem_pct": "16.78%"
+      },
+      {
+        "name": "nova-v2-agent-04-3d-model-jury",
+        "cpu": "0.12%",
+        "mem": "34.49MiB / 256MiB",
+        "mem_pct": "13.47%"
+      },
+      {
+        "name": "nova-v2-agent-05-gis-jury",
+        "cpu": "0.16%",
+        "mem": "34.48MiB / 256MiB",
+        "mem_pct": "13.47%"
+      },
+      {
+        "name": "nova-v2-agent-06-cad-jury",
+        "cpu": "0.14%",
+        "mem": "34.6MiB / 256MiB",
+        "mem_pct": "13.52%"
+      },
+      {
+        "name": "nova-v2-agent-07-narrative-jury",
+        "cpu": "0.12%",
+        "mem": "35.59MiB / 256MiB",
+        "mem_pct": "13.90%"
+      },
+      {
+        "name": "nova-v2-agent-08-character-art-jury",
+        "cpu": "0.14%",
+        "mem": "34.72MiB / 256MiB",
+        "mem_pct": "13.56%"
+      },
+      {
+        "name": "nova-v2-agent-09-illustration-jury",
+        "cpu": "0.15%",
+        "mem": "35.76MiB / 256MiB",
+        "mem_pct": "13.97%"
+      },
+      {
+        "name": "nova-v2-agent-10-game-balance-jury",
+        "cpu": "0.18%",
+        "mem": "42.27MiB / 256MiB",
+        "mem_pct": "16.51%"
+      },
+      {
+        "name": "nova-v2-agent-11-monitor",
+        "cpu": "0.15%",
+        "mem": "48.56MiB / 512MiB",
+        "mem_pct": "9.48%"
+      },
+      {
+        "name": "nova-v2-agent-12-bake-orchestrator",
+        "cpu": "0.16%",
+        "mem": "37.61MiB / 512MiB",
+        "mem_pct": "7.35%"
+      },
+      {
+        "name": "nova-v2-agent-13-pdok-downloader",
+        "cpu": "0.16%",
+        "mem": "34.42MiB / 512MiB",
+        "mem_pct": "6.72%"
+      },
+      {
+        "name": "nova-v2-agent-14-blender-baker",
+        "cpu": "0.13%",
+        "mem": "34.43MiB / 1GiB",
+        "mem_pct": "3.36%"
+      },
+      {
+        "name": "nova-v2-agent-15-qgis-processor",
+        "cpu": "0.12%",
+        "mem": "34.42MiB / 512MiB",
+        "mem_pct": "6.72%"
+      },
+      {
+        "name": "nova-v2-agent-16-cost-guard",
+        "cpu": "0.14%",
+        "mem": "38.35MiB / 512MiB",
+        "mem_pct": "7.49%"
+      },
+      {
+        "name": "nova-v2-agent-17-error-handler",
+        "cpu": "0.14%",
+        "mem": "36.98MiB / 512MiB",
+        "mem_pct": "7.22%"
+      },
+      {
+        "name": "nova-v2-agent-18-prompt-director",
+        "cpu": "0.14%",
+        "mem": "34.59MiB / 512MiB",
+        "mem_pct": "6.76%"
+      },
+      {
+        "name": "nova-v2-agent-19-distribution",
+        "cpu": "0.12%",
+        "mem": "35.36MiB / 512MiB",
+        "mem_pct": "6.91%"
+      },
+      {
+        "name": "nova-v2-agent-20",
+        "cpu": "0.13%",
+        "mem": "36.7MiB / 512MiB",
+        "mem_pct": "7.17%"
+      },
+      {
+        "name": "nova-v2-agent-21-freecad-parametric",
+        "cpu": "0.15%",
+        "mem": "62.16MiB / 1GiB",
+        "mem_pct": "6.07%"
+      },
+      {
+        "name": "nova-v2-agent-22-blender-renderer",
+        "cpu": "0.14%",
+        "mem": "36.84MiB / 1GiB",
+        "mem_pct": "3.60%"
+      },
+      {
+        "name": "nova-v2-agent-23-aseprite-processor",
+        "cpu": "0.14%",
+        "mem": "36.8MiB / 1GiB",
+        "mem_pct": "3.59%"
+      },
+      {
+        "name": "nova-v2-agent-24-aseprite-anim-jury",
+        "cpu": "0.13%",
+        "mem": "34.77MiB / 256MiB",
+        "mem_pct": "13.58%"
+      },
+      {
+        "name": "nova-v2-agent-25-pyqt-assembly",
+        "cpu": "0.13%",
+        "mem": "36.75MiB / 1GiB",
+        "mem_pct": "3.59%"
+      },
+      {
+        "name": "nova-v2-agent-26-godot-import",
+        "cpu": "0.13%",
+        "mem": "36.84MiB / 512MiB",
+        "mem_pct": "7.20%"
+      },
+      {
+        "name": "nova-v2-agent-27-storyboard",
+        "cpu": "0.13%",
+        "mem": "34.38MiB / 512MiB",
+        "mem_pct": "6.71%"
+      },
+      {
+        "name": "nova-v2-agent-28-story-integration",
+        "cpu": "0.15%",
+        "mem": "34.61MiB / 512MiB",
+        "mem_pct": "6.76%"
+      },
+      {
+        "name": "nova-v2-agent-29-elevenlabs",
+        "cpu": "0.15%",
+        "mem": "34.38MiB / 512MiB",
+        "mem_pct": "6.71%"
+      },
+      {
+        "name": "nova-v2-agent-30-audio-asset-jury",
+        "cpu": "0.12%",
+        "mem": "34.75MiB / 256MiB",
+        "mem_pct": "13.57%"
+      },
+      {
+        "name": "nova-v2-agent-31-qgis-analysis",
+        "cpu": "0.13%",
+        "mem": "36.79MiB / 512MiB",
+        "mem_pct": "7.19%"
+      },
+      {
+        "name": "nova-v2-agent-32-grass-gis",
+        "cpu": "0.12%",
+        "mem": "36.92MiB / 512MiB",
+        "mem_pct": "7.21%"
+      },
+      {
+        "name": "nova-v2-agent-33-blender-arch-walkthrough",
+        "cpu": "0.13%",
+        "mem": "37.52MiB / 1GiB",
+        "mem_pct": "3.66%"
+      },
+      {
+        "name": "nova-v2-agent-35-raster-2d",
+        "cpu": "0.13%",
+        "mem": "35.55MiB / 512MiB",
+        "mem_pct": "6.94%"
+      },
+      {
+        "name": "nova-v2-agent-44-secrets-vault",
+        "cpu": "0.13%",
+        "mem": "47.55MiB / 256MiB",
+        "mem_pct": "18.57%"
+      },
+      {
+        "name": "nova-v2-judge",
+        "cpu": "0.13%",
+        "mem": "36.32MiB / 1GiB",
+        "mem_pct": "3.55%"
+      },
+      {
+        "name": "nova-v2-sprite-jury",
+        "cpu": "0.14%",
+        "mem": "39.47MiB / 256MiB",
+        "mem_pct": "15.42%"
+      }
+    ],
+    "raw_lines": 36
+  },
+  "summary": {
+    "total": 54,
+    "GROEN": 16,
+    "GEEL": 0,
+    "ROOD": 0,
+    "GRIJS": 38,
+    "local_health_15": 16,
+    "local_canonical_count": 16
+  },
+  "hetzner_container_map": {
+    "nova-postgres": "nova-postgres",
+    "nova-v2-agent-11-monitor": "nova-v2-agent-11-monitor",
+    "num_11": "nova-v2-agent-11-monitor",
+    "nova-v2-agent-30-audio-asset-jury": "nova-v2-agent-30-audio-asset-jury",
+    "num_30": "nova-v2-agent-30-audio-asset-jury",
+    "nova-v2-agent-24-aseprite-anim-jury": "nova-v2-agent-24-aseprite-anim-jury",
+    "num_24": "nova-v2-agent-24-aseprite-anim-jury",
+    "nova-v2-agent-10-game-balance-jury": "nova-v2-agent-10-game-balance-jury",
+    "num_10": "nova-v2-agent-10-game-balance-jury",
+    "nova-v2-agent-09-illustration-jury": "nova-v2-agent-09-illustration-jury",
+    "num_09": "nova-v2-agent-09-illustration-jury",
+    "nova-v2-agent-08-character-art-jury": "nova-v2-agent-08-character-art-jury",
+    "num_08": "nova-v2-agent-08-character-art-jury",
+    "nova-v2-agent-07-narrative-jury": "nova-v2-agent-07-narrative-jury",
+    "num_07": "nova-v2-agent-07-narrative-jury",
+    "nova-v2-agent-06-cad-jury": "nova-v2-agent-06-cad-jury",
+    "num_06": "nova-v2-agent-06-cad-jury",
+    "nova-v2-agent-05-gis-jury": "nova-v2-agent-05-gis-jury",
+    "num_05": "nova-v2-agent-05-gis-jury",
+    "nova-v2-agent-04-3d-model-jury": "nova-v2-agent-04-3d-model-jury",
+    "num_04": "nova-v2-agent-04-3d-model-jury",
+    "nova-v2-agent-03-audio-jury": "nova-v2-agent-03-audio-jury",
+    "num_03": "nova-v2-agent-03-audio-jury",
+    "nova-v2-agent-02": "nova-v2-agent-02",
+    "num_02": "nova-v2-agent-02",
+    "nova-v2-sprite-jury": "nova-v2-sprite-jury",
+    "sprite": "nova-v2-sprite-jury",
+    "nova-v2-agent-19-distribution": "nova-v2-agent-19-distribution",
+    "num_19": "nova-v2-agent-19-distribution",
+    "nova-v2-agent-35-raster-2d": "nova-v2-agent-35-raster-2d",
+    "num_35": "nova-v2-agent-35-raster-2d",
+    "nova-v2-agent-33-blender-arch-walkthrough": "nova-v2-agent-33-blender-arch-walkthrough",
+    "num_33": "nova-v2-agent-33-blender-arch-walkthrough",
+    "nova-v2-agent-32-grass-gis": "nova-v2-agent-32-grass-gis",
+    "num_32": "nova-v2-agent-32-grass-gis",
+    "nova-v2-agent-31-qgis-analysis": "nova-v2-agent-31-qgis-analysis",
+    "num_31": "nova-v2-agent-31-qgis-analysis",
+    "nova-v2-agent-29-elevenlabs": "nova-v2-agent-29-elevenlabs",
+    "num_29": "nova-v2-agent-29-elevenlabs",
+    "nova-v2-agent-28-story-integration": "nova-v2-agent-28-story-integration",
+    "num_28": "nova-v2-agent-28-story-integration",
+    "nova-v2-agent-27-storyboard": "nova-v2-agent-27-storyboard",
+    "num_27": "nova-v2-agent-27-storyboard",
+    "nova-v2-agent-15-qgis-processor": "nova-v2-agent-15-qgis-processor",
+    "num_15": "nova-v2-agent-15-qgis-processor",
+    "nova-v2-agent-13-pdok-downloader": "nova-v2-agent-13-pdok-downloader",
+    "num_13": "nova-v2-agent-13-pdok-downloader",
+    "nova-v2-agent-14-blender-baker": "nova-v2-agent-14-blender-baker",
+    "num_14": "nova-v2-agent-14-blender-baker",
+    "nova-v2-agent-21-freecad-parametric": "nova-v2-agent-21-freecad-parametric",
+    "num_21": "nova-v2-agent-21-freecad-parametric",
+    "nova-v2-agent-26-godot-import": "nova-v2-agent-26-godot-import",
+    "num_26": "nova-v2-agent-26-godot-import",
+    "nova-v2-agent-25-pyqt-assembly": "nova-v2-agent-25-pyqt-assembly",
+    "num_25": "nova-v2-agent-25-pyqt-assembly",
+    "nova-v2-agent-23-aseprite-processor": "nova-v2-agent-23-aseprite-processor",
+    "num_23": "nova-v2-agent-23-aseprite-processor",
+    "nova-v2-agent-22-blender-renderer": "nova-v2-agent-22-blender-renderer",
+    "num_22": "nova-v2-agent-22-blender-renderer",
+    "nova-v2-agent-20": "nova-v2-agent-20",
+    "num_20": "nova-v2-agent-20",
+    "nova-v2-service-router": "nova-v2-service-router",
+    "nova-v2-notification-hub": "nova-v2-notification-hub",
+    "nova-v2-agent-12-bake-orchestrator": "nova-v2-agent-12-bake-orchestrator",
+    "num_12": "nova-v2-agent-12-bake-orchestrator",
+    "nova-v2-agent-18-prompt-director": "nova-v2-agent-18-prompt-director",
+    "num_18": "nova-v2-agent-18-prompt-director",
+    "nova-v2-agent-17-error-handler": "nova-v2-agent-17-error-handler",
+    "num_17": "nova-v2-agent-17-error-handler",
+    "nova-v2-agent-16-cost-guard": "nova-v2-agent-16-cost-guard",
+    "num_16": "nova-v2-agent-16-cost-guard",
+    "nova-v2-judge": "nova-v2-judge",
+    "judge": "nova-v2-judge",
+    "nova-v2-memory-curator": "nova-v2-memory-curator",
+    "nova-v2-n8n-webhook": "nova-v2-n8n-webhook",
+    "nova-v2-n8n-worker-1": "nova-v2-n8n-worker-1",
+    "nova-v2-n8n-main": "nova-v2-n8n-main",
+    "nova-v2-agent-44-secrets-vault": "nova-v2-agent-44-secrets-vault",
+    "num_44": "nova-v2-agent-44-secrets-vault",
+    "nova-v2-qdrant": "nova-v2-qdrant",
+    "nova-v2-minio": "nova-v2-minio",
+    "nova-v2-redis": "nova-v2-redis",
+    "nova-v2-postgres": "nova-v2-postgres",
+    "uptime-kuma": "uptime-kuma",
+    "piper": "piper",
+    "nova-dashboard-nginx": "nova-dashboard-nginx",
+    "minio": "minio",
+    "gitea": "gitea",
+    "ntfy": "ntfy",
+    "headscale": "headscale",
+    "n8n": "n8n"
+  }
+}

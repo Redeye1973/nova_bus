@@ -25,7 +25,7 @@ AGENT_ID = 42
 PORT = int(os.getenv("PARTS_PLANNER_PORT", "8142"))
 OLLAMA = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/generate")
 RESUME_AGENT = os.getenv("RESUME_AGENT_URL", "http://127.0.0.1:8141")
-MODEL = os.getenv("PARTS_PLANNER_MODEL", "qwen2.5-coder:9b")
+MODEL = os.getenv("PARTS_PLANNER_MODEL", "qwen2.5-coder:7b")
 
 PLANNER_SYSTEM = """Je bent een projectplanner voor de NOVA game/content pipeline.
 Je ontleedt een opdracht in PARTS (logische deelprojecten) met elk concrete TAKEN.
