@@ -486,65 +486,6 @@ services:
       timeout: 15s
       retries: 3
 
-  agent-41-resume-agent:
-    build:
-      context: ./services/agent_41_resume_agent
-    image: nova-v2-agent-41-resume-agent:poc
-    container_name: nova-v2-agent-41-resume-agent
-    restart: unless-stopped
-    environment:
-      - NOVA_PROJECTS_FILE=/state/projects.json
-    volumes:
-      - "L:/!Nova V2/state:/state"
-    expose:
-      - "8141"
-    ports:
-      - "127.0.0.1:8141:8141"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "100m"
-        max-file: "3"
-    networks:
-      - nova-v2-network
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8141/health')"]
-      interval: 60s
-      timeout: 15s
-      retries: 3
-
-  agent-42-parts-planner:
-    build:
-      context: ./services/agent_42_parts_planner
-    image: nova-v2-agent-42-parts-planner:poc
-    container_name: nova-v2-agent-42-parts-planner
-    restart: unless-stopped
-    depends_on:
-      agent-41-resume-agent:
-        condition: service_healthy
-    environment:
-      - OLLAMA_URL=http://host.docker.internal:11434/api/generate
-      - RESUME_AGENT_URL=http://host.docker.internal:8141
-      - PARTS_PLANNER_MODEL=qwen2.5-coder:9b
-    expose:
-      - "8142"
-    ports:
-      - "127.0.0.1:8142:8142"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "100m"
-        max-file: "3"
-    networks:
-      - nova-v2-network
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8142/health')"]
-      interval: 60s
-      timeout: 15s
-      retries: 3
-
   audiocraft:
     build:
       context: ./services/audiocraft
