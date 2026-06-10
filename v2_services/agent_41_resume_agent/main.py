@@ -43,6 +43,222 @@ class PartUpdate(BaseModel):
     proof: Optional[Dict[str, Any]] = None
 
 
+# ---------------------------------------------------------------
+# FASE 3 — fout→regel loop
+# ---------------------------------------------------------------
+FEEDBACK_LOG = Path(os.getenv("NOVA_FEEDBACK_LOG", r"L:\!Nova V2\status\feedback_log.jsonl"))
+RULE_PROPOSALS = Path(os.getenv("NOVA_RULE_PROPOSALS", r"L:\!Nova V2\status\rule_proposals.jsonl"))
+PROPOSAL_THRESHOLD = 3
+
+BIBLES: Dict[str, Path] = {
+    "art": Path(
+        os.getenv("NOVA_ART_DIRECTION_BIBLE", r"L:\ZZZZZ ZZ 31-05-2026\agents\art_direction_bible.yaml")
+    ),
+    "audio": Path(os.getenv("NOVA_AUDIO_BIBLE", r"L:\!Nova V2\config\audio_bible.yaml")),
+    "juice": Path(os.getenv("NOVA_JUICE_BIBLE", r"L:\!Nova V2\config\juice_bible.yaml")),
+    "composition": Path(
+        os.getenv("NOVA_COMPOSITION_BIBLE", r"L:\!Nova V2\config\composition_bible.yaml")
+    ),
+}
+
+# Volgorde is betekenisvol: specifiekere domeinen eerst, art als visueel vangnet.
+_ASSET_BIBLE_KEYWORDS = (
+    ("audio", ("audio", "muziek", "music", "sfx", "sound", "geluid", "voice", "stem", "wav", "ogg")),
+    ("juice", ("juice", "feel", "shake", "screenshake", "hitstop", "particle", "tween", "knockback")),
+    ("composition", ("compositie", "composition", "layout", "hud", "menu", "ui_", " ui", "scherm")),
+    (
+        "art",
+        ("sprite", "parallax", "background", "achtergrond", "palet", "palette", "contrast",
+         "outline", "texture", "art", "visual", "pixel", "png", "laag", "layer"),
+    ),
+)
+
+
+class FeedbackIn(BaseModel):
+    project: str
+    asset_of_taak: str
+    oordeel: str  # "reject" | "accept"
+    reden: str
+    patroon: bool = False
+
+
+def _bible_for_asset(asset: str) -> tuple[str, Path]:
+    low = (asset or "").lower()
+    for key, words in _ASSET_BIBLE_KEYWORDS:
+        if any(w in low for w in words):
+            return key, BIBLES[key]
+    return "art", BIBLES["art"]
+
+
+def _yaml_quote(s: str) -> str:
+    # json.dumps levert een geldige dubbelgequote YAML-scalar op
+    return json.dumps(str(s), ensure_ascii=False)
+
+
+def _learned_rules_text(bible_path: Path) -> str:
+    """Tekst van de geleerde_regels-sectie (alles vanaf de sectieheader)."""
+    if not bible_path.is_file():
+        return ""
+    text = bible_path.read_text(encoding="utf-8")
+    idx = text.find("\ngeleerde_regels:")
+    if idx < 0 and not text.startswith("geleerde_regels:"):
+        return ""
+    return text[max(idx, 0):]
+
+
+def _append_learned_rule(bible_path: Path, entry: Dict[str, str]) -> Dict[str, Any]:
+    """Append-only: bestaande regels en YAML-commentaar blijven onaangetast."""
+    if not bible_path.is_file():
+        return {"ok": False, "reason": f"bible niet gevonden: {bible_path}"}
+    text = bible_path.read_text(encoding="utf-8")
+    if entry["regel"] in _learned_rules_text(bible_path):
+        return {"ok": True, "duplicate": True, "bible": str(bible_path)}
+    block = ""
+    if "\ngeleerde_regels:" not in text and not text.startswith("geleerde_regels:"):
+        block += (
+            "\n# ============================================================\n"
+            "# GELEERDE REGELS (automatisch via /feedback op agent 41 —\n"
+            "# append-only, bestaande regels nooit overschrijven)\n"
+            "# ============================================================\n"
+            "geleerde_regels:\n"
+        )
+    block += (
+        f"  - datum: {_yaml_quote(entry['datum'])}\n"
+        f"    project: {_yaml_quote(entry['project'])}\n"
+        f"    asset: {_yaml_quote(entry['asset'])}\n"
+        f"    regel: {_yaml_quote(entry['regel'])}\n"
+        f"    bron: {_yaml_quote(entry['bron'])}\n"
+    )
+    if not text.endswith("\n"):
+        block = "\n" + block
+    with open(bible_path, "a", encoding="utf-8") as f:
+        f.write(block)
+    return {"ok": True, "duplicate": False, "bible": str(bible_path)}
+
+
+def _append_jsonl(path: Path, obj: Dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+
+
+def _read_jsonl(path: Path) -> list[Dict[str, Any]]:
+    if not path.is_file():
+        return []
+    out = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            out.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return out
+
+
+def _norm_reden(reden: str) -> str:
+    return " ".join((reden or "").lower().split())
+
+
+@app.post("/feedback")
+def feedback(req: FeedbackIn):
+    oordeel = req.oordeel.strip().lower()
+    if oordeel not in ("reject", "accept"):
+        raise HTTPException(status_code=422, detail="oordeel moet 'reject' of 'accept' zijn")
+    now = datetime.now(timezone.utc)
+    bible_key, bible_path = _bible_for_asset(req.asset_of_taak)
+    entry: Dict[str, Any] = {
+        "timestamp": now.isoformat(timespec="seconds"),
+        "project": req.project,
+        "asset_of_taak": req.asset_of_taak,
+        "oordeel": oordeel,
+        "reden": req.reden,
+        "patroon": bool(req.patroon),
+        "bible": bible_key,
+    }
+    _append_jsonl(FEEDBACK_LOG, entry)
+
+    out: Dict[str, Any] = {"ok": True, "gelogd": True, "bible": bible_key}
+
+    if oordeel == "reject" and req.patroon:
+        rule = _append_learned_rule(
+            bible_path,
+            {
+                "datum": now.strftime("%Y-%m-%d"),
+                "project": req.project,
+                "asset": req.asset_of_taak,
+                "regel": req.reden,
+                "bron": "feedback patroon=true",
+            },
+        )
+        out["geleerde_regel"] = rule
+        if rule.get("ok") and not rule.get("duplicate"):
+            out["proof"] = make_proof(
+                "file",
+                path=str(bible_path),
+                agent="41_resume_agent",
+                note=f"geleerde regel toegevoegd: {req.reden[:80]}",
+            )
+            record_proof(dict(out["proof"]), context="feedback_bible_rule")
+    elif oordeel == "reject":
+        # 3x zelfde soort reject (zelfde bible + genormaliseerde reden) → voorstel tot regel
+        key = (bible_key, _norm_reden(req.reden))
+        same = [
+            e
+            for e in _read_jsonl(FEEDBACK_LOG)
+            if e.get("oordeel") == "reject"
+            and not e.get("patroon")
+            and (e.get("bible"), _norm_reden(e.get("reden", ""))) == key
+        ]
+        out["zelfde_rejects"] = len(same)
+        if len(same) >= PROPOSAL_THRESHOLD:
+            proposals = _read_jsonl(RULE_PROPOSALS)
+            already = any(
+                (p.get("bible"), _norm_reden(p.get("reden", ""))) == key for p in proposals
+            )
+            if not already:
+                proposal = {
+                    "timestamp": now.isoformat(timespec="seconds"),
+                    "bible": bible_key,
+                    "reden": req.reden,
+                    "aantal_rejects": len(same),
+                    "status": "voorgesteld",
+                    "voorstel": (
+                        f"{len(same)}x zelfde reject — overweeg als geleerde regel: {req.reden}"
+                    ),
+                }
+                _append_jsonl(RULE_PROPOSALS, proposal)
+                out["voorstel_tot_regel"] = proposal
+            else:
+                out["voorstel_tot_regel"] = "bestond al"
+    return out
+
+
+@app.get("/feedback/stats")
+def feedback_stats():
+    """Dashboard-paneel: geleerde regels deze maand + feedback-tellers."""
+    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    per_bible: Dict[str, int] = {}
+    total = 0
+    for key, path in BIBLES.items():
+        section = _learned_rules_text(path)
+        n = section.count(f'- datum: "{month}')
+        per_bible[key] = n
+        total += n
+    fb = _read_jsonl(FEEDBACK_LOG)
+    fb_month = [e for e in fb if str(e.get("timestamp", "")).startswith(month)]
+    proposals = _read_jsonl(RULE_PROPOSALS)
+    return {
+        "maand": month,
+        "geleerde_regels_deze_maand": total,
+        "per_bible": per_bible,
+        "feedback_deze_maand": len(fb_month),
+        "rejects_deze_maand": len([e for e in fb_month if e.get("oordeel") == "reject"]),
+        "open_voorstellen": len([p for p in proposals if p.get("status") == "voorgesteld"]),
+    }
+
+
 def load() -> Dict[str, Any]:
     if not PROJECTS_FILE.is_file():
         return {"active_project": "", "projects": {}}
