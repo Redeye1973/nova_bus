@@ -18,8 +18,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import random
+import sys
 import time
 from collections import deque
+from pathlib import Path
 from typing import Any, Deque, Dict, List, Optional
 
 import json as _json
@@ -31,6 +34,17 @@ import yaml
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
+
+sys.path.insert(0, "/nova_shared")
+sys.path.insert(0, r"L:\!Nova V2\shared")
+try:
+    from proof import read_recent_proofs, verify_proof
+except ImportError:  # pragma: no cover
+    def read_recent_proofs(limit: int = 50):  # type: ignore[misc]
+        return []
+
+    def verify_proof(_p):  # type: ignore[misc]
+        return {"ok": False, "reason": "proof_module_unavailable"}
 
 logger = logging.getLogger("monitor")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -69,6 +83,16 @@ DEFAULT_TARGETS: List[Dict[str, Any]] = [
     {"name": "agent_33_blender_arch_walkthrough", "url": "http://agent-33-blender-arch-walkthrough:8133/health"},
     {"name": "agent_34_unreal_import",      "url": "http://agent-34-unreal-import:8134/health"},
     {"name": "agent_35_raster_2d",          "url": "http://agent-35-raster-2d:8135/health"},
+    {"name": "agent_36_parallax_jury",      "url": "http://agent-36-parallax-jury:8136/health"},
+    {"name": "agent_37_art_director",       "url": "http://agent-37-art-director:8137/health"},
+    {"name": "agent_38_quality_inspector",  "url": "http://agent-38-quality-inspector:8138/health"},
+    {"name": "agent_39_audio_director",     "url": "http://agent-39-audio-director:8139/health"},
+    {"name": "agent_40_juice_inspector",    "url": "http://agent-40-juice-inspector:8140/health"},
+    {"name": "agent_41_resume_agent",       "url": "http://agent-41-resume-agent:8141/health"},
+    {"name": "agent_42_parts_planner",      "url": "http://agent-42-parts-planner:8142/health"},
+    {"name": "agent_41_resume_agent",       "url": "http://agent-41-resume-agent:8141/health"},
+    {"name": "agent_42_parts_planner",      "url": "http://agent-42-parts-planner:8142/health"},
+    {"name": "audiocraft",                  "url": "http://audiocraft:8080/health"},
     {"name": "sprite_jury_v2",              "url": "http://sprite-jury-v2:8101/health"},
 ]
 
@@ -89,6 +113,148 @@ except FileNotFoundError:
 LATENCY_WARN_MS = float(os.getenv("MONITOR_LATENCY_WARN_MS", "750"))
 LATENCY_CRIT_MS = float(os.getenv("MONITOR_LATENCY_CRIT_MS", "2000"))
 SWEEP_TIMEOUT_S = float(os.getenv("MONITOR_TIMEOUT_S", "3"))
+
+JURY_STATS_PATH = os.getenv("NOVA_JURY_STATS_PATH", "").strip()
+
+# Fase 2 bewijs-standaard: steekproef-verificatie van recente proofs per sweep
+PROOF_SAMPLE_N = int(os.getenv("NOVA_PROOF_SAMPLE_N", "3"))
+PROOF_CHECK_OUT = os.getenv("NOVA_PROOF_CHECK_PATH", "/nova_status/nova_proof_check.json").strip()
+
+
+def _verify_recent_proofs() -> Dict[str, Any]:
+    """Verifieer N willekeurige recente proofs (bestand bestaat, hash matcht)."""
+    recent = read_recent_proofs(limit=50)
+    if not recent:
+        return {"sampled": 0, "invalid": [], "available": 0}
+    sample = random.sample(recent, min(PROOF_SAMPLE_N, len(recent)))
+    invalid: List[Dict[str, Any]] = []
+    checked: List[Dict[str, Any]] = []
+    for proof in sample:
+        verdict = verify_proof(proof)
+        row = {
+            "agent": proof.get("agent", "?"),
+            "type": proof.get("type", "?"),
+            "id": proof.get("id", ""),
+            "path": proof.get("path", ""),
+            "timestamp": proof.get("timestamp", ""),
+            "ok": bool(verdict.get("ok")),
+            "reason": verdict.get("reason", ""),
+        }
+        checked.append(row)
+        if not verdict.get("ok"):
+            invalid.append(row)
+            logger.warning(
+                "PROOF MISMATCH agent=%s type=%s id=%s path=%s reason=%s",
+                row["agent"], row["type"], row["id"], row["path"], row["reason"],
+            )
+    result = {
+        "sampled": len(sample),
+        "available": len(recent),
+        "invalid": invalid,
+        "checked": checked,
+        "checked_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    if PROOF_CHECK_OUT:
+        try:
+            out = Path(PROOF_CHECK_OUT)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(_json.dumps(result, ensure_ascii=True, indent=2), encoding="utf-8")
+        except Exception:
+            logger.exception("proof check dashboard write failed")
+    return result
+
+
+def _default_jury_stats() -> Dict[str, Any]:
+    return {
+        "version": 1,
+        "updated_at": None,
+        "totals": {"scored_accept": 0, "scored_reject": 0, "other": 0},
+        "by_jury_agent": {},
+        "by_stage_type": {},
+        "recent": [],
+    }
+
+
+def _load_jury_stats() -> Dict[str, Any]:
+    if not JURY_STATS_PATH:
+        return _default_jury_stats()
+    p = Path(JURY_STATS_PATH)
+    if not p.is_file():
+        return _default_jury_stats()
+    try:
+        return _json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        logger.exception("failed to load jury stats")
+        return _default_jury_stats()
+
+
+def _save_jury_stats(data: Dict[str, Any]) -> None:
+    if not JURY_STATS_PATH:
+        return
+    p = Path(JURY_STATS_PATH)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    data["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    tmp.write_text(_json.dumps(data, ensure_ascii=True, indent=2), encoding="utf-8")
+    tmp.replace(p)
+
+
+def _record_gate_verdict(
+    category: str,
+    stage_type: str,
+    jury_agent: Optional[str],
+    detail: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Write gate / jury outcomes to host-mounted JSON for the Nova dashboard."""
+    if not JURY_STATS_PATH:
+        return
+    try:
+        data = _load_jury_stats()
+        totals = data.setdefault("totals", {"scored_accept": 0, "scored_reject": 0, "other": 0})
+        if category == "scored_accept":
+            totals["scored_accept"] = int(totals.get("scored_accept", 0)) + 1
+        elif category == "scored_reject":
+            totals["scored_reject"] = int(totals.get("scored_reject", 0)) + 1
+        else:
+            totals["other"] = int(totals.get("other", 0)) + 1
+
+        if jury_agent:
+            bja = data.setdefault("by_jury_agent", {})
+            if isinstance(bja, dict):
+                key = str(jury_agent)
+                cur = bja.get(key, {})
+                if not isinstance(cur, dict):
+                    cur = {}
+                slot = "accept" if category == "scored_accept" else ("reject" if category == "scored_reject" else "other")
+                cur[slot] = int(cur.get(slot, 0)) + 1
+                bja[key] = cur
+
+        bst = data.setdefault("by_stage_type", {})
+        if isinstance(bst, dict):
+            st = str(stage_type)
+            cur2 = bst.get(st, {})
+            if not isinstance(cur2, dict):
+                cur2 = {}
+            slot2 = "accept" if category == "scored_accept" else ("reject" if category == "scored_reject" else "other")
+            cur2[slot2] = int(cur2.get(slot2, 0)) + 1
+            bst[st] = cur2
+
+        rec = {
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "category": category,
+            "stage_type": stage_type,
+            "jury_agent": jury_agent or "",
+            "detail": detail or {},
+        }
+        recent = data.setdefault("recent", [])
+        if not isinstance(recent, list):
+            recent = []
+            data["recent"] = recent
+        recent.insert(0, rec)
+        data["recent"] = recent[:80]
+        _save_jury_stats(data)
+    except Exception:
+        logger.exception("jury stats persistence failed")
 
 
 class _State:
@@ -208,6 +374,19 @@ async def _sweep(targets: Optional[List[Dict[str, Any]]] = None) -> Dict[str, An
     STATE.metrics["monitor_target_up_total"] += up
     STATE.metrics["monitor_target_down_total"] += down
 
+    # Fase 2: proof-steekproef — mismatch wordt dashboard-alert + log
+    proof_check = _verify_recent_proofs()
+    for bad in proof_check.get("invalid", []):
+        alerts.append(
+            {
+                "severity": "critical",
+                "service": f"proof:{bad.get('agent', '?')}",
+                "reason": f"proof_invalid:{bad.get('reason', '?')}"
+                + (f" path={bad.get('path')}" if bad.get("path") else "")
+                + (f" id={bad.get('id')}" if bad.get("id") else ""),
+            }
+        )
+
     summary = {
         "timestamp": time.time(),
         "targets_checked": len(results),
@@ -215,6 +394,7 @@ async def _sweep(targets: Optional[List[Dict[str, Any]]] = None) -> Dict[str, An
         "down": down,
         "alerts": alerts,
         "results": results,
+        "proof_check": proof_check,
     }
     STATE.last_sweep = summary
     return summary
@@ -622,10 +802,12 @@ async def gate_check(body: GateCheckBody) -> Dict[str, Any]:
 
     gate = gates_cfg.get(body.stage_type)
     if not gate:
+        _record_gate_verdict("no_gate", body.stage_type, None, {"reason": "no_gate_configured"})
         return {"verdict": "pass", "reason": "no_gate_configured", "stage_type": body.stage_type}
 
     profile = profiles.get(body.profile, {})
     if profile.get("bypass_all") or body.bypass:
+        _record_gate_verdict("bypass", body.stage_type, gate.get("jury_agent"), {"reason": "bypass"})
         return {"verdict": "pass", "reason": "bypass", "stage_type": body.stage_type, "profile": body.profile}
 
     base_threshold = gate.get("threshold", 0.7)
@@ -634,6 +816,7 @@ async def gate_check(body: GateCheckBody) -> Dict[str, Any]:
 
     jury_url = gate.get("jury_url", "")
     if not jury_url:
+        _record_gate_verdict("no_jury_url", body.stage_type, None, {"reason": "no_jury_url"})
         return {"verdict": "pass", "reason": "no_jury_url", "stage_type": body.stage_type}
 
     try:
@@ -646,6 +829,12 @@ async def gate_check(body: GateCheckBody) -> Dict[str, Any]:
             }, timeout=30)
 
             if r.status_code != 200:
+                _record_gate_verdict(
+                    "jury_http_fallback",
+                    body.stage_type,
+                    gate.get("jury_agent"),
+                    {"http": r.status_code},
+                )
                 return {"verdict": "pass", "reason": f"jury_http_{r.status_code}", "stage_type": body.stage_type,
                         "fallback": True}
 
@@ -663,6 +852,21 @@ async def gate_check(body: GateCheckBody) -> Dict[str, Any]:
                 "jury_response": result,
             }
 
+            if accepted:
+                _record_gate_verdict(
+                    "scored_accept",
+                    body.stage_type,
+                    gate.get("jury_agent"),
+                    {"score": score, "threshold": threshold},
+                )
+            else:
+                _record_gate_verdict(
+                    "scored_reject",
+                    body.stage_type,
+                    gate.get("jury_agent"),
+                    {"score": score, "threshold": threshold},
+                )
+
             if not accepted and body.pipeline_id:
                 await _notify_failure(body.pipeline_id, body.stage_type,
                                       f"Quality gate rejected (score={score:.2f}, threshold={threshold:.2f})", 1)
@@ -672,6 +876,20 @@ async def gate_check(body: GateCheckBody) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Gate check failed for {body.stage_type}: {e}")
         bypass_on_error = gate.get("bypass_allowed", True) and profile.get("bypass_allowed", True)
+        if bypass_on_error:
+            _record_gate_verdict(
+                "jury_error_pass",
+                body.stage_type,
+                gate.get("jury_agent"),
+                {"error": type(e).__name__},
+            )
+        else:
+            _record_gate_verdict(
+                "jury_error_reject",
+                body.stage_type,
+                gate.get("jury_agent"),
+                {"error": type(e).__name__},
+            )
         return {
             "verdict": "pass" if bypass_on_error else "reject",
             "reason": f"jury_error: {type(e).__name__}",

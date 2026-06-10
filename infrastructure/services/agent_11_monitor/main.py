@@ -1,34 +1,50 @@
-"""NOVA v2 Agent 11 — Monitor (health/status/metrics/alerts).
-
-Scope (pragmatic POC, no Postgres/Telegram):
-- Periodic and on-demand health sweep across sister agents on the
-  internal Compose network.
-- Prometheus-style metrics (counters + per-target latency).
-- In-memory alert ledger derived from the latest sweep.
+"""NOVA v2 Agent 11 — Monitor (health/status/metrics/alerts/checkpoints).
 
 Endpoints:
 - GET  /health
-- GET  /status         alias of POST /invoke {"action":"sweep"}
+- GET  /status
 - GET  /alerts
-- GET  /metrics        plain text Prometheus exposition
-- POST /feedback       user / pipeline feedback (in-memory ledger)
+- GET  /metrics
+- POST /feedback
 - GET  /feedback/recent
-- GET  /pdok-weekly-delta   stub (real PDOK delta in later build)
-- POST /invoke         {"action":"sweep|status|alerts|metrics"}
+- POST /pipeline/start | /pipeline/stage | /pipeline/finish
+- POST /pipeline/{id}/checkpoint
+- GET  /pipeline/{id}/last_checkpoint
+- POST /pipeline/{id}/resume
+- POST /invoke
 """
 from __future__ import annotations
 
 import asyncio
 import logging
 import os
+import random
+import sys
 import time
 from collections import deque
+from pathlib import Path
 from typing import Any, Deque, Dict, List, Optional
 
+import json as _json
+
 import httpx
+import psycopg2
+import psycopg2.extras
+import yaml
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
+
+sys.path.insert(0, "/nova_shared")
+sys.path.insert(0, r"L:\!Nova V2\shared")
+try:
+    from proof import read_recent_proofs, verify_proof
+except ImportError:  # pragma: no cover
+    def read_recent_proofs(limit: int = 50):  # type: ignore[misc]
+        return []
+
+    def verify_proof(_p):  # type: ignore[misc]
+        return {"ok": False, "reason": "proof_module_unavailable"}
 
 logger = logging.getLogger("monitor")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -67,12 +83,178 @@ DEFAULT_TARGETS: List[Dict[str, Any]] = [
     {"name": "agent_33_blender_arch_walkthrough", "url": "http://agent-33-blender-arch-walkthrough:8133/health"},
     {"name": "agent_34_unreal_import",      "url": "http://agent-34-unreal-import:8134/health"},
     {"name": "agent_35_raster_2d",          "url": "http://agent-35-raster-2d:8135/health"},
+    {"name": "agent_36_parallax_jury",      "url": "http://agent-36-parallax-jury:8136/health"},
+    {"name": "agent_37_art_director",       "url": "http://agent-37-art-director:8137/health"},
+    {"name": "agent_38_quality_inspector",  "url": "http://agent-38-quality-inspector:8138/health"},
+    {"name": "agent_39_audio_director",     "url": "http://agent-39-audio-director:8139/health"},
+    {"name": "agent_40_juice_inspector",    "url": "http://agent-40-juice-inspector:8140/health"},
+    {"name": "agent_41_resume_agent",       "url": "http://agent-41-resume-agent:8141/health"},
+    {"name": "agent_42_parts_planner",      "url": "http://agent-42-parts-planner:8142/health"},
+    {"name": "agent_41_resume_agent",       "url": "http://agent-41-resume-agent:8141/health"},
+    {"name": "agent_42_parts_planner",      "url": "http://agent-42-parts-planner:8142/health"},
+    {"name": "audiocraft",                  "url": "http://audiocraft:8080/health"},
     {"name": "sprite_jury_v2",              "url": "http://sprite-jury-v2:8101/health"},
 ]
+
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+NOTIFICATION_HUB_URL = os.getenv("NOTIFICATION_HUB_URL", "http://nova-v2-notification-hub:8061")
+
+RETRY_DELAYS = [10, 30, 90]
+MAX_RETRIES = 3
+
+GATES_CONFIG_PATH = os.getenv("GATES_CONFIG", "/config/quality_gates.yaml")
+GATES: Dict[str, Any] = {}
+try:
+    with open(GATES_CONFIG_PATH) as f:
+        GATES = yaml.safe_load(f) or {}
+except FileNotFoundError:
+    logger.warning("quality_gates.yaml not found, gates disabled")
 
 LATENCY_WARN_MS = float(os.getenv("MONITOR_LATENCY_WARN_MS", "750"))
 LATENCY_CRIT_MS = float(os.getenv("MONITOR_LATENCY_CRIT_MS", "2000"))
 SWEEP_TIMEOUT_S = float(os.getenv("MONITOR_TIMEOUT_S", "3"))
+
+JURY_STATS_PATH = os.getenv("NOVA_JURY_STATS_PATH", "").strip()
+
+# Fase 2 bewijs-standaard: steekproef-verificatie van recente proofs per sweep
+PROOF_SAMPLE_N = int(os.getenv("NOVA_PROOF_SAMPLE_N", "3"))
+PROOF_CHECK_OUT = os.getenv("NOVA_PROOF_CHECK_PATH", "/nova_status/nova_proof_check.json").strip()
+
+
+def _verify_recent_proofs() -> Dict[str, Any]:
+    """Verifieer N willekeurige recente proofs (bestand bestaat, hash matcht)."""
+    recent = read_recent_proofs(limit=50)
+    if not recent:
+        return {"sampled": 0, "invalid": [], "available": 0}
+    sample = random.sample(recent, min(PROOF_SAMPLE_N, len(recent)))
+    invalid: List[Dict[str, Any]] = []
+    checked: List[Dict[str, Any]] = []
+    for proof in sample:
+        verdict = verify_proof(proof)
+        row = {
+            "agent": proof.get("agent", "?"),
+            "type": proof.get("type", "?"),
+            "id": proof.get("id", ""),
+            "path": proof.get("path", ""),
+            "timestamp": proof.get("timestamp", ""),
+            "ok": bool(verdict.get("ok")),
+            "reason": verdict.get("reason", ""),
+        }
+        checked.append(row)
+        if not verdict.get("ok"):
+            invalid.append(row)
+            logger.warning(
+                "PROOF MISMATCH agent=%s type=%s id=%s path=%s reason=%s",
+                row["agent"], row["type"], row["id"], row["path"], row["reason"],
+            )
+    result = {
+        "sampled": len(sample),
+        "available": len(recent),
+        "invalid": invalid,
+        "checked": checked,
+        "checked_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    if PROOF_CHECK_OUT:
+        try:
+            out = Path(PROOF_CHECK_OUT)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(_json.dumps(result, ensure_ascii=True, indent=2), encoding="utf-8")
+        except Exception:
+            logger.exception("proof check dashboard write failed")
+    return result
+
+
+def _default_jury_stats() -> Dict[str, Any]:
+    return {
+        "version": 1,
+        "updated_at": None,
+        "totals": {"scored_accept": 0, "scored_reject": 0, "other": 0},
+        "by_jury_agent": {},
+        "by_stage_type": {},
+        "recent": [],
+    }
+
+
+def _load_jury_stats() -> Dict[str, Any]:
+    if not JURY_STATS_PATH:
+        return _default_jury_stats()
+    p = Path(JURY_STATS_PATH)
+    if not p.is_file():
+        return _default_jury_stats()
+    try:
+        return _json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        logger.exception("failed to load jury stats")
+        return _default_jury_stats()
+
+
+def _save_jury_stats(data: Dict[str, Any]) -> None:
+    if not JURY_STATS_PATH:
+        return
+    p = Path(JURY_STATS_PATH)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    data["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    tmp.write_text(_json.dumps(data, ensure_ascii=True, indent=2), encoding="utf-8")
+    tmp.replace(p)
+
+
+def _record_gate_verdict(
+    category: str,
+    stage_type: str,
+    jury_agent: Optional[str],
+    detail: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Write gate / jury outcomes to host-mounted JSON for the Nova dashboard."""
+    if not JURY_STATS_PATH:
+        return
+    try:
+        data = _load_jury_stats()
+        totals = data.setdefault("totals", {"scored_accept": 0, "scored_reject": 0, "other": 0})
+        if category == "scored_accept":
+            totals["scored_accept"] = int(totals.get("scored_accept", 0)) + 1
+        elif category == "scored_reject":
+            totals["scored_reject"] = int(totals.get("scored_reject", 0)) + 1
+        else:
+            totals["other"] = int(totals.get("other", 0)) + 1
+
+        if jury_agent:
+            bja = data.setdefault("by_jury_agent", {})
+            if isinstance(bja, dict):
+                key = str(jury_agent)
+                cur = bja.get(key, {})
+                if not isinstance(cur, dict):
+                    cur = {}
+                slot = "accept" if category == "scored_accept" else ("reject" if category == "scored_reject" else "other")
+                cur[slot] = int(cur.get(slot, 0)) + 1
+                bja[key] = cur
+
+        bst = data.setdefault("by_stage_type", {})
+        if isinstance(bst, dict):
+            st = str(stage_type)
+            cur2 = bst.get(st, {})
+            if not isinstance(cur2, dict):
+                cur2 = {}
+            slot2 = "accept" if category == "scored_accept" else ("reject" if category == "scored_reject" else "other")
+            cur2[slot2] = int(cur2.get(slot2, 0)) + 1
+            bst[st] = cur2
+
+        rec = {
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "category": category,
+            "stage_type": stage_type,
+            "jury_agent": jury_agent or "",
+            "detail": detail or {},
+        }
+        recent = data.setdefault("recent", [])
+        if not isinstance(recent, list):
+            recent = []
+            data["recent"] = recent
+        recent.insert(0, rec)
+        data["recent"] = recent[:80]
+        _save_jury_stats(data)
+    except Exception:
+        logger.exception("jury stats persistence failed")
 
 
 class _State:
@@ -192,6 +374,19 @@ async def _sweep(targets: Optional[List[Dict[str, Any]]] = None) -> Dict[str, An
     STATE.metrics["monitor_target_up_total"] += up
     STATE.metrics["monitor_target_down_total"] += down
 
+    # Fase 2: proof-steekproef — mismatch wordt dashboard-alert + log
+    proof_check = _verify_recent_proofs()
+    for bad in proof_check.get("invalid", []):
+        alerts.append(
+            {
+                "severity": "critical",
+                "service": f"proof:{bad.get('agent', '?')}",
+                "reason": f"proof_invalid:{bad.get('reason', '?')}"
+                + (f" path={bad.get('path')}" if bad.get("path") else "")
+                + (f" id={bad.get('id')}" if bad.get("id") else ""),
+            }
+        )
+
     summary = {
         "timestamp": time.time(),
         "targets_checked": len(results),
@@ -199,6 +394,7 @@ async def _sweep(targets: Optional[List[Dict[str, Any]]] = None) -> Dict[str, An
         "down": down,
         "alerts": alerts,
         "results": results,
+        "proof_check": proof_check,
     }
     STATE.last_sweep = summary
     return summary
@@ -206,7 +402,59 @@ async def _sweep(targets: Optional[List[Dict[str, Any]]] = None) -> Dict[str, An
 
 @app.get("/health")
 def health() -> Dict[str, str]:
-    return {"status": "ok", "agent": "11_monitor", "version": "0.2.0"}
+    return {"status": "ok", "agent": "11_monitor", "version": "0.3.0"}
+
+
+@app.get("/health/deep")
+async def health_deep() -> Dict[str, Any]:
+    import shutil
+
+    checks: Dict[str, Any] = {
+        "service": "ok",
+        "agent": "11_monitor",
+        "version": "0.3.0",
+        "database": "not_configured",
+        "downstream": {},
+        "disk_space": "unknown",
+        "gates_loaded": bool(GATES.get("gates")),
+    }
+
+    if DATABASE_URL:
+        try:
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=3)
+            conn.close()
+            checks["database"] = "ok"
+        except Exception as e:
+            checks["database"] = f"fail: {type(e).__name__}"
+
+    dep_urls = [
+        ("notification_hub", f"{NOTIFICATION_HUB_URL}/health"),
+    ]
+    async with httpx.AsyncClient() as client:
+        for name, url in dep_urls:
+            try:
+                r = await client.get(url, timeout=3)
+                checks["downstream"][name] = "ok" if r.status_code == 200 else f"http_{r.status_code}"
+            except Exception as e:
+                checks["downstream"][name] = f"unreachable: {type(e).__name__}"
+
+    try:
+        usage = shutil.disk_usage("/")
+        free_gb = usage.free / 1e9
+        checks["disk_space"] = f"{free_gb:.1f}GB free"
+        if free_gb < 1:
+            checks["disk_space_warn"] = True
+    except Exception:
+        pass
+
+    failed = [k for k, v in checks["downstream"].items() if "ok" not in str(v)]
+    if "fail" in str(checks.get("database", "")):
+        failed.append("database")
+    checks["overall"] = "degraded" if failed else "healthy"
+    if failed:
+        checks["failed_checks"] = failed
+
+    return checks
 
 
 @app.get("/status")
@@ -324,6 +572,330 @@ def pipeline_detail(pipeline_id: str) -> Dict[str, Any]:
 def pipeline_history_list(limit: int = 20) -> Dict[str, Any]:
     items = list(PIPELINE_HISTORY)[-min(limit, 200):]
     return {"count": len(items), "events": items}
+
+
+def _get_db():
+    if not DATABASE_URL:
+        return None
+    try:
+        return psycopg2.connect(DATABASE_URL)
+    except Exception:
+        return None
+
+
+class CheckpointBody(BaseModel):
+    stage_name: str
+    stage_index: int = 0
+    stage_state: Optional[Dict[str, Any]] = None
+    output_refs: Optional[Dict[str, Any]] = None
+
+
+class ResumeBody(BaseModel):
+    triggered_by: Optional[str] = None
+
+
+@app.post("/pipeline/{pipeline_id}/checkpoint")
+def save_checkpoint(pipeline_id: str, body: CheckpointBody) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """INSERT INTO pipeline_checkpoints
+                   (pipeline_run_id, stage_name, stage_index, stage_state, output_refs)
+                   VALUES (%s, %s, %s, %s, %s)
+                   RETURNING id, completed_at""",
+                (pipeline_id, body.stage_name, body.stage_index,
+                 psycopg2.extras.Json(body.stage_state or {}),
+                 psycopg2.extras.Json(body.output_refs or {})),
+            )
+            row = cur.fetchone()
+            conn.commit()
+            return {"checkpoint_id": str(row["id"]), "pipeline_id": pipeline_id,
+                    "stage": body.stage_name, "index": body.stage_index,
+                    "saved_at": str(row["completed_at"])}
+    finally:
+        conn.close()
+
+
+@app.get("/pipeline/{pipeline_id}/last_checkpoint")
+def last_checkpoint(pipeline_id: str) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT * FROM pipeline_checkpoints
+                   WHERE pipeline_run_id = %s AND can_resume = TRUE
+                   ORDER BY stage_index DESC LIMIT 1""",
+                (pipeline_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return {"pipeline_id": pipeline_id, "checkpoint": None}
+            return {"pipeline_id": pipeline_id, "checkpoint": {
+                "id": str(row["id"]),
+                "stage_name": row["stage_name"],
+                "stage_index": row["stage_index"],
+                "stage_state": row["stage_state"],
+                "output_refs": row["output_refs"],
+                "completed_at": str(row["completed_at"]),
+            }}
+    finally:
+        conn.close()
+
+
+@app.get("/pipeline/{pipeline_id}/checkpoints")
+def list_checkpoints(pipeline_id: str) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """SELECT * FROM pipeline_checkpoints
+                   WHERE pipeline_run_id = %s ORDER BY stage_index""",
+                (pipeline_id,),
+            )
+            rows = cur.fetchall()
+            return {"pipeline_id": pipeline_id, "checkpoints": [
+                {"id": str(r["id"]), "stage_name": r["stage_name"],
+                 "stage_index": r["stage_index"], "completed_at": str(r["completed_at"]),
+                 "can_resume": r["can_resume"]}
+                for r in rows
+            ]}
+    finally:
+        conn.close()
+
+
+@app.post("/pipeline/{pipeline_id}/resume")
+async def resume_pipeline(pipeline_id: str, body: ResumeBody) -> Dict[str, Any]:
+    cp = last_checkpoint(pipeline_id)
+    if cp.get("error"):
+        return cp
+    if not cp.get("checkpoint"):
+        return {"error": "no_checkpoint_found", "pipeline_id": pipeline_id}
+
+    run = PIPELINE_RUNS.get(pipeline_id)
+    if run:
+        run["status"] = "resuming"
+        run["resume_from"] = cp["checkpoint"]["stage_name"]
+        run["resume_index"] = cp["checkpoint"]["stage_index"]
+
+    PIPELINE_HISTORY.append({
+        "event": "resume", "pipeline_id": pipeline_id,
+        "from_stage": cp["checkpoint"]["stage_name"],
+        "from_index": cp["checkpoint"]["stage_index"],
+        "ts": time.time(),
+    })
+
+    return {
+        "pipeline_id": pipeline_id,
+        "status": "resuming",
+        "from_checkpoint": cp["checkpoint"],
+    }
+
+
+async def _notify_failure(pipeline_id: str, stage: str, error: str, attempt: int):
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(f"{NOTIFICATION_HUB_URL}/notify", json={
+                "severity": "error" if attempt < MAX_RETRIES else "critical",
+                "title": f"Pipeline {stage} failed (attempt {attempt}/{MAX_RETRIES})",
+                "detail": f"Pipeline: {pipeline_id}\nError: {error}",
+                "source": "agent_11_monitor",
+            }, timeout=5)
+    except Exception:
+        pass
+
+
+class AuditBody(BaseModel):
+    actor: str
+    action: str
+    resource_type: Optional[str] = None
+    resource_id: Optional[str] = None
+    project: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@app.post("/audit")
+def post_audit(body: AuditBody) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """INSERT INTO audit_log (actor, action, resource_type, resource_id, project, metadata)
+                   VALUES (%s, %s, %s, %s, %s, %s) RETURNING id, timestamp""",
+                (body.actor, body.action, body.resource_type, body.resource_id,
+                 body.project, psycopg2.extras.Json(body.metadata or {})),
+            )
+            row = cur.fetchone()
+            conn.commit()
+            return {"audit_id": str(row["id"]), "timestamp": str(row["timestamp"])}
+    finally:
+        conn.close()
+
+
+@app.get("/audit")
+def query_audit(actor: Optional[str] = None, resource_type: Optional[str] = None,
+                since: Optional[str] = None, limit: int = 50) -> Dict[str, Any]:
+    conn = _get_db()
+    if not conn:
+        return {"error": "database_unavailable"}
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            conditions = []
+            params: list = []
+            if actor:
+                conditions.append("actor = %s")
+                params.append(actor)
+            if resource_type:
+                conditions.append("resource_type = %s")
+                params.append(resource_type)
+            if since:
+                conditions.append("timestamp >= %s")
+                params.append(since)
+            where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+            cur.execute(
+                f"SELECT * FROM audit_log {where} ORDER BY timestamp DESC LIMIT %s",
+                params + [min(limit, 200)],
+            )
+            rows = cur.fetchall()
+            return {"count": len(rows), "events": [
+                {**r, "id": str(r["id"]), "timestamp": str(r["timestamp"]),
+                 "metadata": r.get("metadata", {})}
+                for r in rows
+            ]}
+    finally:
+        conn.close()
+
+
+@app.get("/audit/recent")
+def audit_recent(limit: int = 50) -> Dict[str, Any]:
+    return query_audit(limit=limit)
+
+
+class GateCheckBody(BaseModel):
+    stage_type: str
+    asset_ref: Optional[str] = None
+    pipeline_id: Optional[str] = None
+    profile: str = "development"
+    bypass: bool = False
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@app.get("/gates")
+def list_gates() -> Dict[str, Any]:
+    gates_cfg = GATES.get("gates", {})
+    profiles = GATES.get("profiles", {})
+    return {"gates": list(gates_cfg.keys()), "profiles": list(profiles.keys()), "loaded": bool(gates_cfg)}
+
+
+@app.post("/gates/check")
+async def gate_check(body: GateCheckBody) -> Dict[str, Any]:
+    gates_cfg = GATES.get("gates", {})
+    profiles = GATES.get("profiles", {})
+
+    gate = gates_cfg.get(body.stage_type)
+    if not gate:
+        _record_gate_verdict("no_gate", body.stage_type, None, {"reason": "no_gate_configured"})
+        return {"verdict": "pass", "reason": "no_gate_configured", "stage_type": body.stage_type}
+
+    profile = profiles.get(body.profile, {})
+    if profile.get("bypass_all") or body.bypass:
+        _record_gate_verdict("bypass", body.stage_type, gate.get("jury_agent"), {"reason": "bypass"})
+        return {"verdict": "pass", "reason": "bypass", "stage_type": body.stage_type, "profile": body.profile}
+
+    base_threshold = gate.get("threshold", 0.7)
+    modifier = profile.get("threshold_modifier", 0)
+    threshold = max(0.0, min(1.0, base_threshold + modifier))
+
+    jury_url = gate.get("jury_url", "")
+    if not jury_url:
+        _record_gate_verdict("no_jury_url", body.stage_type, None, {"reason": "no_jury_url"})
+        return {"verdict": "pass", "reason": "no_jury_url", "stage_type": body.stage_type}
+
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.post(jury_url, json={
+                "action": "evaluate",
+                "asset_ref": body.asset_ref,
+                "pipeline_id": body.pipeline_id,
+                "metadata": body.metadata or {},
+            }, timeout=30)
+
+            if r.status_code != 200:
+                _record_gate_verdict(
+                    "jury_http_fallback",
+                    body.stage_type,
+                    gate.get("jury_agent"),
+                    {"http": r.status_code},
+                )
+                return {"verdict": "pass", "reason": f"jury_http_{r.status_code}", "stage_type": body.stage_type,
+                        "fallback": True}
+
+            result = r.json()
+            score = float(result.get("score", result.get("quality_score", 0)))
+            accepted = score >= threshold
+
+            verdict_result = {
+                "verdict": "accept" if accepted else "reject",
+                "score": score,
+                "threshold": threshold,
+                "profile": body.profile,
+                "stage_type": body.stage_type,
+                "jury_agent": gate.get("jury_agent"),
+                "jury_response": result,
+            }
+
+            if accepted:
+                _record_gate_verdict(
+                    "scored_accept",
+                    body.stage_type,
+                    gate.get("jury_agent"),
+                    {"score": score, "threshold": threshold},
+                )
+            else:
+                _record_gate_verdict(
+                    "scored_reject",
+                    body.stage_type,
+                    gate.get("jury_agent"),
+                    {"score": score, "threshold": threshold},
+                )
+
+            if not accepted and body.pipeline_id:
+                await _notify_failure(body.pipeline_id, body.stage_type,
+                                      f"Quality gate rejected (score={score:.2f}, threshold={threshold:.2f})", 1)
+
+            return verdict_result
+
+    except Exception as e:
+        logger.error(f"Gate check failed for {body.stage_type}: {e}")
+        bypass_on_error = gate.get("bypass_allowed", True) and profile.get("bypass_allowed", True)
+        if bypass_on_error:
+            _record_gate_verdict(
+                "jury_error_pass",
+                body.stage_type,
+                gate.get("jury_agent"),
+                {"error": type(e).__name__},
+            )
+        else:
+            _record_gate_verdict(
+                "jury_error_reject",
+                body.stage_type,
+                gate.get("jury_agent"),
+                {"error": type(e).__name__},
+            )
+        return {
+            "verdict": "pass" if bypass_on_error else "reject",
+            "reason": f"jury_error: {type(e).__name__}",
+            "stage_type": body.stage_type,
+            "fallback": bypass_on_error,
+        }
 
 
 @app.get("/metrics", response_class=PlainTextResponse)
