@@ -1,0 +1,21 @@
+{
+  "normale_fix": {
+    "gepatcht": true,
+    "bak_aanwezig": true,
+    "bak_is_origineel": true
+  },
+  "crash_tussen_write_en_replace": {
+    "crash_gesimuleerd": true,
+    "origineel_intact": true,
+    "bak_aanwezig": true,
+    "bak_is_origineel": true,
+    "tmp_restant": true
+  },
+  "parallax_speeds_fix": {
+    "gepatcht": true,
+    "bak_aanwezig": true,
+    "bak_is_origineel": true
+  },
+  "fase7_uitkomst": "path.write_text() direct: crash mid-patch truncate zonder rollback (structureel, Z5)",
+  "PASS": true
+}

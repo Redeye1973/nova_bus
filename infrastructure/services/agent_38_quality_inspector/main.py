@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -128,6 +129,16 @@ def check_layer_ordering(scene_file: str) -> Optional[str]:
     return "; ".join(issues) if issues else None
 
 
+def _atomic_write_with_backup(path: Path, new_text: str) -> None:
+    """FASE 8 FIX 5 (Z5): backup + temp + os.replace — geen truncate zonder rollback."""
+    bak = path.with_suffix(path.suffix + ".bak")
+    if path.is_file():
+        shutil.copyfile(path, bak)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(new_text, encoding="utf-8")
+    os.replace(tmp, path)
+
+
 def fix_layer_ordering(scene_file: str) -> None:
     path = _resolve_path(scene_file)
     text = path.read_text(encoding="utf-8")
@@ -151,7 +162,9 @@ def fix_layer_ordering(scene_file: str) -> None:
             out.append(f"z_index = {-10 + (idx - 1)}")
             continue
         out.append(line)
-    path.write_text("\n".join(out) + ("\n" if text.endswith("\n") else ""), encoding="utf-8")
+    _atomic_write_with_backup(
+        path, "\n".join(out) + ("\n" if text.endswith("\n") else "")
+    )
 
 
 def _extract_speeds(text: str) -> Optional[list[float]]:
@@ -201,7 +214,7 @@ def fix_parallax_speeds(script_files: list[str]) -> None:
                 f"scroll_speeds = {correct}",
                 text,
             )
-        path.write_text(new, encoding="utf-8")
+        _atomic_write_with_backup(path, new)
 
 
 def check_seamless_tiling(script_files: list[str], scene_file: str) -> Optional[str]:

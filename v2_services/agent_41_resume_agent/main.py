@@ -14,7 +14,7 @@ from pydantic import BaseModel
 sys.path.insert(0, "/nova_shared")
 sys.path.insert(0, r"L:\!Nova V2\shared")
 try:
-    from proof import make_proof, record_proof, verify_proof
+    from proof import make_proof, record_proof, verify_proof, verify_proof_for_task
 except ImportError:  # pragma: no cover
     def make_proof(*_a, **_k):  # type: ignore[misc]
         return {}
@@ -25,13 +25,36 @@ except ImportError:  # pragma: no cover
     def verify_proof(_p):  # type: ignore[misc]
         return {"ok": False, "reason": "proof_module_unavailable"}
 
-app = FastAPI(title="Resume Agent - Agent 41", version="1.1.0")
+    def verify_proof_for_task(_p, **_k):  # type: ignore[misc]
+        return {"ok": False, "reason": "proof_module_unavailable"}
+
+# FASE 8 FIX 1 (Z1 lost-update): serialiseer alle load-modify-save paden achter een
+# CROSS-PROCES file-lock (filelock) zodat gelijktijdige /part-update en /feedback
+# elkaars schrijfacties niet overschrijven. Valt terug op een threading.Lock als
+# filelock ontbreekt (single-proces veiligheid blijft dan behouden).
+try:
+    from filelock import FileLock  # type: ignore
+    _HAVE_FILELOCK = True
+except ImportError:  # pragma: no cover
+    _HAVE_FILELOCK = False
+
+app = FastAPI(title="Resume Agent - Agent 41", version="1.2.0")
 
 AGENT_ID = 41
 PORT = int(os.getenv("RESUME_AGENT_PORT", "8141"))
 PROJECTS_FILE = Path(
     os.getenv("NOVA_PROJECTS_FILE", r"L:\!Nova V2\state\projects.json")
 )
+
+# Eén staat-lock dekt projects.json EN de bible-append (feedback) — correctheid boven
+# doorvoer. Lock-bestand staat naast projects.json.
+_LOCK_PATH = str(PROJECTS_FILE) + ".lock"
+_LOCK_TIMEOUT_S = float(os.getenv("NOVA_STATE_LOCK_TIMEOUT_S", "15"))
+if _HAVE_FILELOCK:
+    STATE_LOCK = FileLock(_LOCK_PATH, timeout=_LOCK_TIMEOUT_S)
+else:
+    import threading as _threading
+    STATE_LOCK = _threading.Lock()  # type: ignore[assignment]
 
 
 class PartUpdate(BaseModel):
@@ -82,12 +105,20 @@ class FeedbackIn(BaseModel):
     patroon: bool = False
 
 
-def _bible_for_asset(asset: str) -> tuple[str, Path]:
+# FASE 8 FIX 6 (Z6): onbekend asset-type valt NIET meer stil terug op de art-bible.
+# Geen keyword-match -> (None, None) zodat de feedback-handler het naar een
+# needs_review-lijst logt i.p.v. een regel in de verkeerde bible te schrijven.
+NEEDS_REVIEW_LOG = Path(
+    os.getenv("NOVA_NEEDS_REVIEW_LOG", r"L:\!Nova V2\status\feedback_needs_review.jsonl")
+)
+
+
+def _bible_for_asset(asset: str) -> tuple[Optional[str], Optional[Path]]:
     low = (asset or "").lower()
     for key, words in _ASSET_BIBLE_KEYWORDS:
         if any(w in low for w in words):
             return key, BIBLES[key]
-    return "art", BIBLES["art"]
+    return None, None
 
 
 def _yaml_quote(s: str) -> str:
@@ -111,7 +142,10 @@ def _append_learned_rule(bible_path: Path, entry: Dict[str, str]) -> Dict[str, A
     if not bible_path.is_file():
         return {"ok": False, "reason": f"bible niet gevonden: {bible_path}"}
     text = bible_path.read_text(encoding="utf-8")
-    if entry["regel"] in _learned_rules_text(bible_path):
+    # FASE 8 FIX 7 (Z7): dedup op EXACTE regel-gelijkheid (volledige quoted scalar +
+    # regel-prefix), niet op losse substring — "uniek 1" is geen duplicaat van "uniek 1X".
+    exact_line = f"    regel: {_yaml_quote(entry['regel'])}\n"
+    if exact_line in _learned_rules_text(bible_path):
         return {"ok": True, "duplicate": True, "bible": str(bible_path)}
     block = ""
     if "\ngeleerde_regels:" not in text and not text.startswith("geleerde_regels:"):
@@ -166,6 +200,14 @@ def feedback(req: FeedbackIn):
     oordeel = req.oordeel.strip().lower()
     if oordeel not in ("reject", "accept"):
         raise HTTPException(status_code=422, detail="oordeel moet 'reject' of 'accept' zijn")
+    # FASE 8 FIX 1 (Z1): serialiseer de hele feedback-mutatie (log + bible-append) achter
+    # de staat-lock zodat 20 gelijktijdige rejects elkaar niet overschrijven.
+    with STATE_LOCK:
+        return _feedback_locked(req)
+
+
+def _feedback_locked(req: FeedbackIn):
+    oordeel = req.oordeel.strip().lower()
     now = datetime.now(timezone.utc)
     bible_key, bible_path = _bible_for_asset(req.asset_of_taak)
     entry: Dict[str, Any] = {
@@ -180,6 +222,21 @@ def feedback(req: FeedbackIn):
     _append_jsonl(FEEDBACK_LOG, entry)
 
     out: Dict[str, Any] = {"ok": True, "gelogd": True, "bible": bible_key}
+
+    # FASE 8 FIX 6 (Z6): geen keyword-match -> niet stil naar art-bible, maar naar
+    # needs_review-lijst; er wordt GEEN geleerde regel weggeschreven.
+    if oordeel == "reject" and req.patroon and bible_key is None:
+        review_entry = dict(entry)
+        review_entry["status"] = "needs_review"
+        review_entry["reason"] = "asset_type_onbekend_geen_bible_match"
+        _append_jsonl(NEEDS_REVIEW_LOG, review_entry)
+        out["needs_review"] = True
+        out["geleerde_regel"] = {
+            "ok": False,
+            "needs_review": True,
+            "reason": "asset_type onbekend — geen bible-match; gelogd voor handmatige review",
+        }
+        return out
 
     if oordeel == "reject" and req.patroon:
         rule = _append_learned_rule(
@@ -365,13 +422,28 @@ def progress_all():
 
 @app.post("/part-update")
 def part_update(req: PartUpdate):
+    # FASE 8 FIX 1 (Z1): verificatie + load-modify-save volledig onder de staat-lock,
+    # zodat gelijktijdige updates voor verschillende parts elkaar niet overschrijven.
+    with STATE_LOCK:
+        return _part_update_locked(req)
+
+
+def _part_update_locked(req: PartUpdate):
     verification: Dict[str, Any] = {}
+    d = load()
+    p = d["projects"].get(req.project)
+    project_path = str((p or {}).get("path") or "")
     if req.completed_task:
-        # Fase 2 bewijs-standaard: completed_task alleen MET geldig proof
-        verification = verify_proof(req.proof)
+        # Fase 2 bewijs-standaard + FASE 8 FIX 3 (Z2): proof moet geldig zijn,
+        # VERS (geen oude/toekomst-timestamp) EN gekoppeld aan deze taak/output.
+        verification = verify_proof_for_task(
+            req.proof,
+            project=req.project,
+            part=req.part,
+            task=req.completed_task,
+            project_path=project_path,
+        )
         if not verification.get("ok"):
-            # Bewust ZONDER id/path geregistreerd: deze claim faalt verificatie,
-            # zodat de Monitor-steekproef hem als proof_invalid rapporteert.
             record_proof(
                 {
                     "type": "report",
@@ -394,8 +466,6 @@ def part_update(req: PartUpdate):
                 },
             )
         record_proof(dict(req.proof or {}), context=f"part_update:{req.project}/{req.part}/{req.completed_task}")
-    d = load()
-    p = d["projects"].get(req.project)
     if not p:
         p = d.setdefault("projects", {})[req.project] = {
             "name": req.project,

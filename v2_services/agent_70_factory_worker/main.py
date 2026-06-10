@@ -31,9 +31,13 @@ _sys.path.insert(0, "/nova_shared")
 _sys.path.insert(0, r"L:\!Nova V2\shared")
 try:
     from proof import make_and_record as _make_and_record_proof
+    from proof import record_job_event as _record_job_event
 except ImportError:  # pragma: no cover
     def _make_and_record_proof(*_a, **_k):  # type: ignore[misc]
         return {}
+
+    def _record_job_event(*_a, **_k):  # type: ignore[misc]
+        return None
 
 WORKER_NAME = "Dale"
 WORKER_PEER_NAME = "Tucker"
@@ -525,7 +529,9 @@ class InvokeRequest(BaseModel):
 
 
 def _execute_shell(command: str) -> Dict[str, Any]:
-    job_id = f"shell_{int(time.time())}"
+    # FASE 8 FIX 2 (Z4): nanoseconde-resolutie i.p.v. int(time.time()) — twee shell-jobs
+    # binnen dezelfde seconde krijgen nu gegarandeerd verschillende job_ids.
+    job_id = f"shell_{time.time_ns()}"
     timeout_s = int(os.getenv("NOVA_DALE_SHELL_TIMEOUT_S", "900"))
     try:
         proc = subprocess.run(
@@ -547,6 +553,9 @@ def _execute_shell(command: str) -> Dict[str, Any]:
             "exit_code": proc.returncode,
         }
         if status == "done":
+            # FASE 8 FIX 4 (Z3): registreer de job-id in het job-events-grootboek zodat
+            # het bijbehorende job-proof cross-checkbaar is (ook bij directe /invoke).
+            _record_job_event(job_id, source="dale_shell", note=f"exit=0 cmd={command[:120]}")
             # Fase 2 bewijs-standaard: ook shell-jobs leveren een proof-object
             out["proof"] = _make_and_record_proof(
                 "job",
@@ -615,7 +624,7 @@ def invoke(body: InvokeRequest) -> Dict[str, Any]:
         job = payload.get("job")
         if not isinstance(job, dict):
             raise HTTPException(400, "payload.job must be object")
-        jid = str(job.get("job_id") or f"job-{int(time.time())}")
+        jid = str(job.get("job_id") or f"job-{time.time_ns()}")  # FASE 8 FIX 2 (Z4)
         path = JOB_DIR / f"{jid}.json"
         job["job_id"] = jid
         job["status"] = "queued"

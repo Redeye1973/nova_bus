@@ -1,0 +1,26 @@
+{
+  "fase7_uitkomst": "verify_proof=OK; 35 sweeps flagden het nooit (3b)",
+  "verify_proof": {
+    "ok": false,
+    "reason": "job_id_not_in_ledger",
+    "id": "nep_job_fase8b_99999",
+    "checks": [
+      "type_ok",
+      "timestamp_ok",
+      "agent_ok",
+      "id_ok"
+    ]
+  },
+  "sweeps": [
+    {
+      "sweep": 1,
+      "sampled": 9,
+      "available": 50,
+      "fake_geflagd": true,
+      "reason": "job_id_not_in_ledger"
+    }
+  ],
+  "geflagd_binnen_sweep": 1,
+  "nep_entry_verwijderd": true,
+  "PASS": true
+}

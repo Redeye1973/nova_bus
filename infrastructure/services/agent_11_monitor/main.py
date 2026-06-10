@@ -93,11 +93,22 @@ PROOF_CHECK_OUT = os.getenv("NOVA_PROOF_CHECK_PATH", "/nova_status/nova_proof_ch
 
 
 def _verify_recent_proofs() -> Dict[str, Any]:
-    """Verifieer N willekeurige recente proofs (bestand bestaat, hash matcht)."""
+    """Verifieer N willekeurige recente proofs (bestand bestaat, hash matcht).
+
+    FASE 8 FIX 4 (Z3): bovenop de random steekproef worden ALLE recente job-proofs
+    per sweep tegen het job-events-grootboek gecontroleerd (verify_proof doet de
+    grootboek-check), zodat een gefabriceerd job-proof deterministisch binnen één
+    sweep wordt geflagd in plaats van afhankelijk te zijn van steekproef-geluk."""
     recent = read_recent_proofs(limit=50)
     if not recent:
         return {"sampled": 0, "invalid": [], "available": 0}
     sample = random.sample(recent, min(PROOF_SAMPLE_N, len(recent)))
+    job_proofs = [p for p in recent if p.get("type") == "job"]
+    seen = {id(p) for p in sample}
+    for jp in job_proofs:
+        if id(jp) not in seen:
+            sample.append(jp)
+            seen.add(id(jp))
     invalid: List[Dict[str, Any]] = []
     checked: List[Dict[str, Any]] = []
     for proof in sample:

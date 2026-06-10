@@ -1,0 +1,66 @@
+{
+  "volledig_default": {
+    "status": 200,
+    "beschikbare_jaargangen": [
+      2018,
+      2019,
+      2020
+    ],
+    "gekozen_jaargang": 2020,
+    "jaargang_bron": "max_beschikbaar",
+    "zip_path": "L:\\! 2 Nova v2 OUTPUT !\\pdok_3d\\basisbestand_gebouwen_terreinen\\17cz2_2020\\17cz2_2020_volledig.zip",
+    "zip_size_bytes": 261349771,
+    "cityjson_validatie": {
+      "valid": true,
+      "methode": "volledige_parse",
+      "checks": {
+        "type_cityjson": true,
+        "heeft_version": true,
+        "heeft_cityobjects": true,
+        "heeft_vertices": true
+      },
+      "version": "1.0",
+      "cityobjects": 3234,
+      "vertices": 3319041,
+      "size_bytes": 259436250
+    },
+    "proof_ok": true,
+    "gekozen_is_max": true
+  },
+  "gebouwen_default": {
+    "status": 200,
+    "beschikbare_jaargangen": [
+      2018,
+      2019,
+      2020
+    ],
+    "gekozen_jaargang": 2020,
+    "cityjson_validatie": {
+      "valid": true,
+      "methode": "volledige_parse",
+      "checks": {
+        "type_cityjson": true,
+        "heeft_version": true,
+        "heeft_cityobjects": true,
+        "heeft_vertices": true
+      },
+      "version": "1.0",
+      "cityobjects": 406,
+      "vertices": 6822,
+      "size_bytes": 687559
+    },
+    "gekozen_is_max": true
+  },
+  "override_2019": {
+    "status": 200,
+    "gekozen_jaargang": 2019,
+    "jaargang_bron": "request_override",
+    "cityjson_valid": true
+  },
+  "override_onbeschikbaar_2099": {
+    "status": 400,
+    "detail": "jaargang 2099 niet beschikbaar voor kaartblad '17cz2'; beschikbaar: [2018, 2019, 2020]",
+    "geweigerd": true
+  },
+  "PASS": true
+}
