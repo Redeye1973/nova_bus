@@ -266,8 +266,14 @@ def load() -> Dict[str, Any]:
 
 
 def save(data: Dict[str, Any]) -> None:
+    """Atomic save (fase 5): temp-file + fsync + os.replace — nooit half projects.json."""
     PROJECTS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    PROJECTS_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp = PROJECTS_FILE.with_suffix(".json.tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, PROJECTS_FILE)
 
 
 def calc_part_pct(part: dict) -> int:
