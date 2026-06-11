@@ -68,8 +68,8 @@
   },
   "fix2_z4_job_id": {
     "fase7_uitkomst": "beide jobs identiek shell_<epoch-sec>",
-    "job_id_1": "shell_1781130200425847900",
-    "job_id_2": "shell_1781130200425771400",
+    "job_id_1": "shell_1781182212810469100",
+    "job_id_2": "shell_1781182212810198800",
     "verschillend": true,
     "ns_resolutie": true,
     "PASS": true
@@ -77,7 +77,7 @@
   "fix3_z2_replay": {
     "fase7_uitkomst": "HTTP 200, pct=100 valse voltooiing (3c); 2099-timestamp geaccepteerd (6d)",
     "replay_status": 422,
-    "replay_reason": "timestamp_too_old:132.4h",
+    "replay_reason": "timestamp_too_old:146.8h",
     "future_status": 422,
     "future_reason": "timestamp_in_future",
     "unbound_status": 422,

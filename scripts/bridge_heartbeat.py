@@ -9,6 +9,7 @@ Runs as Windows Service via NSSM (NOVA_Heartbeat).
 from __future__ import annotations
 
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -25,7 +26,10 @@ logging.basicConfig(
 
 PUSH_URL_FILE = Path(r"L:\tools\nova\secrets\push_url.txt")
 SECRETS = Path(r"L:\!Nova V2\secrets\nova_v2_passwords.txt")
-BRIDGE_URL = "http://localhost:8500/health"
+BRIDGE_URL = os.environ.get(
+    "NOVA_BRIDGE_HEALTH_URL",
+    "http://127.0.0.1:8500/health",
+)
 INTERVAL_SEC = 60
 PING_TIMEOUT = 10
 BRIDGE_TIMEOUT = 5

@@ -4,6 +4,7 @@ Service (NSSM)."""
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -19,7 +20,10 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(message)s",
 )
 
-BRIDGE_URL = "http://localhost:8500/health"
+BRIDGE_URL = os.environ.get(
+    "NOVA_BRIDGE_HEALTH_URL",
+    "http://127.0.0.1:8500/health",
+)
 SERVICE_NAME = "NOVA_Bridge_Service"
 CHECK_INTERVAL = 60
 MAX_FAILURES = 3

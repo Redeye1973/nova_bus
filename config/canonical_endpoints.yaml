@@ -6,6 +6,7 @@
 
 version: "1.2"
 changelog:
+  - "2026-06-11 fase9-afronding: bridge_heartbeat/watchdog default 8500 (NSSM canonical); 8501 legacy inactive"
   - "2026-06-11 fase10: bridge 8501 expliciet inactive; judge/vault als supporting_internal; hetzner_legacy_fleet sectie; agent_42 default model 7b"
   - "2026-06-10 fase4: agent-sanering actieve kern"
 paths:
