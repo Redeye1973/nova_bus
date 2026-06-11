@@ -1,0 +1,26 @@
+{
+  "taak": "T2 — Parallax-fix + stijlconsistentie",
+  "stijlcontract": "docs/smpart1_bewijsrun/stijlcontract.json",
+  "fase91_fix": "docs/fase9_1_async_dispatch.md",
+  "cycli_count": 1,
+  "pogingen": [
+    {
+      "cyclus": 1,
+      "poging": 1,
+      "type": "schone_retry_na_fase91",
+      "opdrachttekst": "SM_Part1 bewijsrun T2 fase91: run parallax agent pipeline SM_Part1 unified stijlcontract 5 lagen",
+      "orchestrator_resultaat": "running — job_id pipeline_* direct (<2s), dispatch-events per laag",
+      "infra_fix": "fase9.1 async dispatch + poll 900s pixellab ceiling",
+      "status": "IN_PROGRESS"
+    }
+  ],
+  "historisch_fail_voor_fix": {
+    "cycli": 2,
+    "reden": "Orchestrator tick timeout 120s, geen job_id",
+    "zie": "pogingen_archief in vorige versie taak_02.json"
+  },
+  "job_ids_orchestrator": ["pipeline_* — zie nova_job_events.jsonl dispatch events"],
+  "jury_8136": {"verdict": "PENDING"},
+  "jury_8137": {"verdict": "PENDING"},
+  "eindstatus": "IN_PROGRESS"
+}

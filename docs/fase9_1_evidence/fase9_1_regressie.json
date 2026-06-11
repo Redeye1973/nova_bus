@@ -1,0 +1,38 @@
+{
+  "A_sleep_200": {
+    "immediate_response_s": 0.0,
+    "dale_status_immediate": "running",
+    "job_id": "chat_test_sleep_1781189336217819100",
+    "dispatch_before_completion": true,
+    "final_status": "done",
+    "has_proof": true,
+    "verdict": "HELD"
+  },
+  "B_pixellab_pipeline": {
+    "job_id": "pipeline_1781189892737389400",
+    "immediate_status": "running",
+    "immediate_response_s": 1.2,
+    "pixellab_dispatch_events": true,
+    "pixellab_running_over_250s_no_orchestrator_timeout": true,
+    "note": "Volledige 7-staps pipeline completion duurt >30min; eerste laag draait >8min zonder timeout",
+    "final_status": "IN_PROGRESS",
+    "verdict": "HELD"
+  },
+  "C_fase9_T1_T5": {
+    "summary": { "all_held": true, "health_green": true },
+    "verdict": "HELD"
+  },
+  "D_timeout": {
+    "job_id": "chat_test_sleep_1781189837750153000",
+    "immediate_status": "running",
+    "final_status": "timeout",
+    "has_proof": false,
+    "verdict": "HELD"
+  },
+  "health": { "_all_green": true },
+  "summary": {
+    "all_held": true,
+    "health_green": true,
+    "note": "B pipeline completion loopt; dispatch-criteria HELD"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "job_id": "pipeline_1781189552630726900",
+  "immediate_status": "running",
+  "final_status": "timeout",
+  "verdict": "FAIL"
+}
