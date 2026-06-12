@@ -45,6 +45,26 @@ Orchestrator (:8000) en Dale (:8170) herstart na patch.
 
 ---
 
+## FASE 9.2 update — heartbeat-ontwerp vervangt totaal-timeout
+
+De vaste max-duur uit fix #3 bleek niet te passen bij werkelijke
+PixelLab-duur (~10 min/laag, zie `fase9_1_evidence/pixellab_werkelijke_duur.json`):
+gezonde jobs werden afgekapt terwijl Dale doorwerkte (regressie B FAIL).
+
+Vervangen door **liveness via heartbeats** (`docs/fase9_2_heartbeat.md`):
+
+- Dale stuurt per lopende job elke 60s een heartbeat
+  (`nova_job_events.jsonl` + compact `nova_job_heartbeats.json`).
+- Orchestrator: geen heartbeat gedurende stall_limit (pixellab 300s,
+  shell/godot 120s) → status **`stalled`**; heartbeat aanwezig → blijft
+  running, ongeacht totale duur. Budget 900s/300s is alleen nog
+  dashboard-waarschuwing (oranje).
+- Pipelines: bewaking per stáp + `step_done`-event per voltooide stap;
+  stall op stap N → `stalled_at_step_N`, proofs van eerdere stappen intact.
+- Poll-beslissingen → `status/nova_liveness_log.jsonl` (Monitor-sweepbaar).
+- D-regressie aangepast naar het stalled-mechanisme; nieuwe G-regressie
+  (20 min trage-maar-levende job → done). Zie `fase9_1_regressie.py`.
+
 ## Volgende stap
 
 Hervat SM Part 1 bewijsrun vanaf schone T2-retry (`docs/smpart1_bewijsrun/RAPPORT.md`).

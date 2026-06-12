@@ -1,0 +1,8 @@
+{
+  "job_id": "chat_test_sleep_1781279493575768900",
+  "final_status": "stalled",
+  "heartbeat_count": 20,
+  "stall_events": 1,
+  "has_proof": false,
+  "verdict": "FAIL"
+}

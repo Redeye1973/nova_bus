@@ -1,0 +1,9 @@
+{
+  "immediate_response_s": 0.0,
+  "dale_status_immediate": "running",
+  "job_id": "chat_test_sleep_1781278662052712300",
+  "dispatch_before_completion": true,
+  "final_status": "stalled",
+  "has_proof": true,
+  "verdict": "FAIL"
+}

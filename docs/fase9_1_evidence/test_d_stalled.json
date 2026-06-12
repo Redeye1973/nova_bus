@@ -1,0 +1,8 @@
+{
+  "job_id": "chat_test_sleep_1781279247747834500",
+  "final_status": "stalled",
+  "stalled_after_s": 125.1,
+  "within_limit": true,
+  "has_proof": false,
+  "verdict": "HELD"
+}

@@ -2,37 +2,117 @@
   "A_sleep_200": {
     "immediate_response_s": 0.0,
     "dale_status_immediate": "running",
-    "job_id": "chat_test_sleep_1781189336217819100",
+    "job_id": "chat_test_sleep_1781278662052712300",
     "dispatch_before_completion": true,
-    "final_status": "done",
+    "final_status": "stalled",
     "has_proof": true,
-    "verdict": "HELD"
-  },
-  "B_pixellab_pipeline": {
-    "job_id": "pipeline_1781189892737389400",
-    "immediate_status": "running",
-    "immediate_response_s": 1.2,
-    "pixellab_dispatch_events": true,
-    "pixellab_running_over_250s_no_orchestrator_timeout": true,
-    "note": "Volledige 7-staps pipeline completion duurt >30min; eerste laag draait >8min zonder timeout",
-    "final_status": "IN_PROGRESS",
-    "verdict": "HELD"
+    "verdict": "FAIL"
   },
   "C_fase9_T1_T5": {
-    "summary": { "all_held": true, "health_green": true },
+    "summary": {
+      "all_held": true,
+      "health_green": true
+    },
     "verdict": "HELD"
   },
-  "D_timeout": {
-    "job_id": "chat_test_sleep_1781189837750153000",
-    "immediate_status": "running",
-    "final_status": "timeout",
+  "D_stalled": {
+    "job_id": "chat_test_sleep_1781279247747834500",
+    "final_status": "stalled",
+    "stalled_after_s": 125.1,
+    "within_limit": true,
     "has_proof": false,
     "verdict": "HELD"
   },
-  "health": { "_all_green": true },
+  "G_slow_alive_20min": {
+    "job_id": "chat_test_sleep_1781279493575768900",
+    "final_status": "stalled",
+    "heartbeat_count": 20,
+    "stall_events": 1,
+    "has_proof": false,
+    "verdict": "FAIL"
+  },
+  "B_pixellab_pipeline": {
+    "job_id": "pipeline_1781281403893119200",
+    "immediate_status": "running",
+    "final_status": "failed",
+    "step_done_count": 5,
+    "step_total": 7,
+    "all_steps_done": false,
+    "heartbeat_jobs": [
+      "chat_pixellab_generate_1781281403893670700",
+      "chat_pixellab_generate_1781281429961595200",
+      "chat_pixellab_generate_1781281476099105500",
+      "chat_pixellab_generate_1781281506168187500",
+      "chat_pixellab_generate_1781281534234362300"
+    ],
+    "pixellab_layers_with_proof": true,
+    "verdict": "FAIL"
+  },
+  "health": {
+    "8000": {
+      "ok": true,
+      "code": "200"
+    },
+    "8101": {
+      "ok": true,
+      "code": "200"
+    },
+    "8111": {
+      "ok": true,
+      "code": "200"
+    },
+    "8116": {
+      "ok": true,
+      "code": "200"
+    },
+    "8129": {
+      "ok": true,
+      "code": "200"
+    },
+    "8136": {
+      "ok": true,
+      "code": "200"
+    },
+    "8137": {
+      "ok": true,
+      "code": "200"
+    },
+    "8138": {
+      "ok": true,
+      "code": "200"
+    },
+    "8139": {
+      "ok": true,
+      "code": "200"
+    },
+    "8140": {
+      "ok": true,
+      "code": "200"
+    },
+    "8141": {
+      "ok": true,
+      "code": "200"
+    },
+    "8142": {
+      "ok": true,
+      "code": "200"
+    },
+    "8170": {
+      "ok": true,
+      "code": "200"
+    },
+    "8191": {
+      "ok": true,
+      "code": "200"
+    },
+    "8500": {
+      "ok": true,
+      "code": "200"
+    },
+    "_all_green": true
+  },
   "summary": {
-    "all_held": true,
-    "health_green": true,
-    "note": "B pipeline completion loopt; dispatch-criteria HELD"
+    "all_held": false,
+    "health_green": true
   }
 }

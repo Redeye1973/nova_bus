@@ -1,6 +1,17 @@
 {
-  "job_id": "pipeline_1781189552630726900",
+  "job_id": "pipeline_1781281403893119200",
   "immediate_status": "running",
-  "final_status": "timeout",
+  "final_status": "failed",
+  "step_done_count": 5,
+  "step_total": 7,
+  "all_steps_done": false,
+  "heartbeat_jobs": [
+    "chat_pixellab_generate_1781281403893670700",
+    "chat_pixellab_generate_1781281429961595200",
+    "chat_pixellab_generate_1781281476099105500",
+    "chat_pixellab_generate_1781281506168187500",
+    "chat_pixellab_generate_1781281534234362300"
+  ],
+  "pixellab_layers_with_proof": true,
   "verdict": "FAIL"
 }
